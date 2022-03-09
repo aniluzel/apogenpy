@@ -6,7 +6,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.service import Service
 import time
 
-
+#For Windows
+#service = Service(r'C:\chromedriver.exe')
 
 
 service = Service("/Users/denis/Documents/CS401/chromedriver")

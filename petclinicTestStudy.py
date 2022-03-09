@@ -3,7 +3,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 import time
-service = Service(r'C:\Users\ozgun\Desktop\pythonWorkspace\chromedriver.exe')
+service = Service(r'C:\Users\ozgun\Desktop\pythonProjects\apogen\chromedriver.exe')
 browser = webdriver.Chrome(service=service)
 
 

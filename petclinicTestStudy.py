@@ -7,7 +7,7 @@ import time
 #For mac OS
 #service = Service("/Users/denis/Documents/CS401/chromedriver")
 
-service = Service(r'C:\Users\ozgun\Desktop\pythonProjects\apogen\chromedriver.exe')
+service = Service(r'C:\chromedriver.exe')
 browser = webdriver.Chrome(service=service)
 
 

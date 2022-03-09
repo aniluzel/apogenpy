@@ -3,10 +3,14 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.chrome.service import Service
 import time
 
 
-driver = webdriver.Chrome("/Users/denis/Downloads/chromedriver")
+
+
+service = Service("/Users/denis/Documents/CS401/chromedriver")
+driver = webdriver.Chrome(service=service)
 driver.get("http://localhost:8080/owners/find")
 driver.maximize_window()
 

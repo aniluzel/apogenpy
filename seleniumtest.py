@@ -5,6 +5,9 @@ from selenium.webdriver.support.ui import Select
 from selenium.webdriver.chrome.service import Service
 import time
 
+#For mac OS
+#service = Service("/Users/denis/Documents/CS401/chromedriver")
+
 service = Service(r'C:\chromedriver.exe')
 driver = webdriver.Chrome(service=service)
 

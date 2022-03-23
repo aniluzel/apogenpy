@@ -7,10 +7,10 @@ from selenium.webdriver.chrome.service import Service
 import time
 
 #For Windows
-#service = Service(r'C:\chromedriver.exe')
+service = Service(r'C:\chromedriver.exe')
 
 
-service = Service("/Users/denis/Documents/CS401/chromedriver")
+#service = Service("/Users/denis/Documents/CS401/chromedriver")
 driver = webdriver.Chrome(service=service)
 driver.get("http://localhost:8080/owners/find")
 driver.maximize_window()

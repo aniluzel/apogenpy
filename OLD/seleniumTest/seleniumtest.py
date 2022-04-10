@@ -25,6 +25,7 @@ class SeleniumTest(object):
         time.sleep(0.5)
         self.AddOwner = driver.find_element(By.XPATH, "//a[text()='Add Owner']")
         self.AddOwner.click()
+
         time.sleep(0.5)
         self.AddOwnerFirstName = driver.find_element(By.XPATH, "//*[@id='firstName']")
         self.AddOwnerFirstName.send_keys("TestName")
@@ -43,6 +44,7 @@ class SeleniumTest(object):
         time.sleep(0.5)
         self.AddOwnerFinish = driver.find_element(By.XPATH, "//button[text()='Add Owner']")
         self.AddOwnerFinish.click()
+
         time.sleep(0.5)
         self.AddPet = driver.find_element(By.XPATH, "//a[normalize-space(text()) = 'Add New Pet']")
         self.AddPet.click()

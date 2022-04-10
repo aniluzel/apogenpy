@@ -33,39 +33,44 @@ with open('output.csv', 'r') as read_obj:
                 test = i.get('href')
                 if test is not None and test not in href:
                     href.append(test)
-            json_appender(href, 'scrappedHrefData.json')
+            json_appender(href, '../../scrappedData/scrappedHrefData.json')
 
             # id data
             for i in divSoup:
+                for foo in soup.find_all('div', attrs={'class': 'foo'}):
+                    foo_descendants = foo.descendants
+                    for d in foo_descendants:
+                        if d.name == 'div' and d.get('class', '') == ['bar']:
+                            print(d.text)
                 test = i.get('id')
-                if test is not None and test not in ids:
+                if test is not None and test not in test:
                     ids.append(test)
-            json_appender(ids, 'scrappedIdData.json')
+            json_appender(ids, '../../scrappedData/scrappedIdData.json')
 
             # button data
             for i in divSoup:
                 buttonSoup = str(soup.find_all('button'))
                 if buttonSoup is not None and buttonSoup not in buttons:
                     buttons.append(buttonSoup)
-            json_appender(buttons, 'scrappedButtonData.json')
+            json_appender(buttons, '../../scrappedData/scrappedButtonData.json')
 
             # class data
             for i in testSoup:
                 test = i.get('class')
                 if test is not None and test not in classes:
                     classes.append(test)
-            json_appender(classes, 'scrappedClassData.json')
+            json_appender(classes, '../../scrappedData/scrappedClassData.json')
 
             # table data
             for i in testSoup:
                 tableSoup = str(soup.find_all('tbody'))
                 if tableSoup is not None and tableSoup not in tables:
                     tables.append(tableSoup)
-            json_appender(tables, 'scrappedTableData.json')
+            json_appender(tables, '../../scrappedData/scrappedTableData.json')
 
             # title data
             for i in testSoup:
                 test = i.get('title')
                 if test is not None and test not in title:
                     title.append(test)
-            json_appender(title, 'scrappedTitleData.json')
+            json_appender(title, '../../scrappedData/scrappedTitleData.json')

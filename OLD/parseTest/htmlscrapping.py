@@ -54,10 +54,10 @@ def jsonAppender(elemToAdd, filename):
         json.dump(elemToAdd, f)
 
 
-jsonAppender(ids,'scrappedData.json')
+jsonAppender(ids, '../../scrappedData/scrappedData.json')
 refs = soup.find_all('a',href=True)
 for i in refs:
-    jsonAppender(i.text, 'scrappedHrefData.json')
+    jsonAppender(i.text, '../../scrappedData/scrappedHrefData.json')
 #print(refs)
 
 

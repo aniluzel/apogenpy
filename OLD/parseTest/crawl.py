@@ -5,9 +5,9 @@ from scrapy.linkextractors import LinkExtractor
 from scrapy.selector import Selector
 
 
+
 class PageInfoItem(Item):
     URL = Field()
-    title = Field()
     pass
 
 

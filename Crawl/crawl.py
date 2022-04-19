@@ -42,11 +42,11 @@ class KrakenSpider(CrawlSpider):
 
 
 # --- run without creating project and save in `output.csv` ---
-c = CrawlerProcess({
-    # save in file as CSV, JSON or XML
-    'FEED_FORMAT': 'csv',  # csv, json, xml
-    'FEED_URI': 'output.csv',  #
-})
-
-c.crawl(KrakenSpider, start_urls=["http://localhost:8080/owners?lastName="])
-c.start()
+# c = CrawlerProcess({
+#     # save in file as CSV, JSON or XML
+#     'FEED_FORMAT': 'csv',  # csv, json, xml
+#     'FEED_URI': 'output.csv',  #
+# })
+#
+# c.crawl(KrakenSpider, start_urls=["http://localhost:8080/owners?lastName="])
+# c.start()

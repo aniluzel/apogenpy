@@ -61,4 +61,4 @@ def sim_check():
 
 
 
-sim_check()
+#sim_check()

@@ -22,20 +22,22 @@ def sim_check():
                 array.append(row)
 
     for i in array:
-        new_array.append(i[0])
+        new_array.append((i[0], requests.get(i[0]).text))
 
     for down in new_array:
         for up in reversed(new_array):
             # Link 1
-            req1 = requests.get(down).text
+            #req1 = requests.get(down).text
+            req1 = down[1]
             # Link 2
-            req2 = requests.get(up).text
+            #req2 = requests.get(up).text
+            req2 = up[1]
             # print("structural sim", structural_similarity(req1, req2))
-            struct.append((structural_similarity(req1, req2), down, up))
+            struct.append((structural_similarity(req1, req2), down[0], up[0]))
             # print("styles =", style_similarity(req1, req2))
-            style.append((style_similarity(req1, req2), down, up))
+            style.append((style_similarity(req1, req2), down[0], up[0]))
             # print("sim", similarity(req1, req2))
-            sim.append((similarity(req1, req2), down, up))
+            sim.append((similarity(req1, req2), down[0], up[0]))
 
     for n in struct:
         if n[0] < 0.48:

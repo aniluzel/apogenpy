@@ -1,9 +1,11 @@
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.service import Service
 from bs4 import BeautifulSoup
 import requests
 import csv
 from csv import reader
 
-csv_id = 0
 href = []
 ids = []
 buttons = []
@@ -11,18 +13,8 @@ classes = []
 tables = []
 title = []
 
-with open("scrappedData.csv", 'w') as csvfile:
-    writer = csv.DictWriter(csvfile, fieldnames=['csv', 'id', 'name', 'xpath', 'text', 'tag', 'class', 'css'])
-    writer.writeheader()
 
-
-def csv_writer(field, data):
-    with open("scrappedData.csv", 'a') as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames=['csv', 'id', 'name', 'xpath', 'text', 'tag', 'class', 'css'])
-        writer.writerows(data)
-
-
-with open('Crawl/output.csv', 'r') as read_obj:
+with open('DEMO_CSV.csv', 'r') as read_obj:
     csv_reader = reader(read_obj, delimiter=',')
     header = next(csv_reader)
 
@@ -40,6 +32,7 @@ with open('Crawl/output.csv', 'r') as read_obj:
                 test = i.get('href')
                 if test is not None and test not in href:
                     href.append(test)
+            print("HREF DATA")
             print(href)
             #csv_writer('xpath',href)
 
@@ -53,6 +46,7 @@ with open('Crawl/output.csv', 'r') as read_obj:
                 test = i.get('id')
                 if test is not None and test not in test:
                     ids.append(test)
+            print("ID DATA")
             print(ids)
             #csv_writer(ids)
 
@@ -61,6 +55,7 @@ with open('Crawl/output.csv', 'r') as read_obj:
                 buttonSoup = str(soup.find_all('button'))
                 if buttonSoup is not None and buttonSoup not in buttons:
                     buttons.append(buttonSoup)
+            print("BUTTON DATA")
             print(buttons)
             #csv_writer(buttons)
 
@@ -69,6 +64,7 @@ with open('Crawl/output.csv', 'r') as read_obj:
                 test = i.get('class')
                 if test is not None and test not in classes:
                     classes.append(test)
+            print("CLASS DATA")
             print(classes)
             #csv_writer(classes)
 
@@ -77,6 +73,7 @@ with open('Crawl/output.csv', 'r') as read_obj:
                 tableSoup = str(soup.find_all('tbody'))
                 if tableSoup is not None and tableSoup not in tables:
                     tables.append(tableSoup)
+            print("TABLE DATA")
             print(tables)
             #csv_writer(tables)
 
@@ -85,6 +82,6 @@ with open('Crawl/output.csv', 'r') as read_obj:
                 test = i.get('title')
                 if test is not None and test not in title:
                     title.append(test)
+            print("TITLE DATA")
             print(title)
             #csv_writer(title)
-

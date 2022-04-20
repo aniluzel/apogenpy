@@ -3,7 +3,7 @@ import requests
 import json
 from csv import reader
 
-with open('output.csv', 'r') as read_obj:
+with open('Crawl/output.csv', 'r') as read_obj:
     csv_reader = reader(read_obj, delimiter=',')
     header = next(csv_reader)
     href = []

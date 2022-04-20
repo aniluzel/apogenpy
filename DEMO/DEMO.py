@@ -15,7 +15,7 @@ title = []
 
 
 def csv_writer(data):
-    with open("DEMO_SCRAP.csv", 'a') as csvfile:
+    with open("GENERATED_CSV/DEMO_SCRAP.csv", 'a') as csvfile:
         writer = csv.writer(csvfile)
 
         writer.writerows(data)
@@ -90,10 +90,10 @@ with open('DEMO_CSV.csv', 'r') as read_obj:
             #print("CSS DATA")
             #print(cssSoup)
 
-with open("DEMO_SCRAP.csv", "r") as myfile:
+with open("GENERATED_CSV/DEMO_SCRAP.csv", "r") as myfile:
     data = myfile.read().replace(',', '\n')
 
-with open("DEMO_SCRAP_ALT.csv", 'w') as csvfile:
+with open("GENERATED_CSV/DEMO_SCRAP_ALT.csv", 'w') as csvfile:
     writer = csv.writer(csvfile)
 
     writer.writerow([data])

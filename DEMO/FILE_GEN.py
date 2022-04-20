@@ -26,7 +26,7 @@ def importgenerator(url):
 
 importgenerator("http://localhost:8080/owners/new")#url from csv as filename
 
-with open("DEMO/DEMO_SCRAP.csv", "r") as f:
+with open("GENERATED_CSV/DEMO_SCRAP.csv", "r") as f:
     reader =csv.reader(f)
     row1=next(reader)
     ids = row1

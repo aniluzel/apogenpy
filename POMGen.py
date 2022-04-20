@@ -6,32 +6,28 @@ from selenium.webdriver.chrome.service import Service
 import time
 
 class ObjectGen:
-    def __init__(self,ID,linktext,classname,CSS,url):
-        self.url=url
-        self.CSS=CSS
-        self.linktext=linktext
-        self.classname=classname
+    def __init__(self,param,url):
+        self.param = param
         service = Service(r'C:\chromedriver.exe')
         self.driver = webdriver.Chrome(service=service)
         self.driver.get(url)
-        self.ID=ID
         try:
-            self.object=self.driver.find_element(By.ID,self.ID)
+            self.object=self.driver.find_element(By.ID,self.param)
             print('Found ID')
         except NoSuchElementException:
             print('Trying to find element by linktext')
         try:
-            self.object=self.driver.find_element(By.PARTIAL_LINK_TEXT,self.linktext)
+            self.object=self.driver.find_element(By.PARTIAL_LINK_TEXT,self.param)
             print('Found Partial Link Text')
         except NoSuchElementException:
             print('Trying to find element by classname')
         try:
-            self.object=self.driver.find_element(By.CLASS_NAME,self.classname)
+            self.object=self.driver.find_element(By.CLASS_NAME,self.param)
             print('Found classname')
         except NoSuchElementException:
             print('Trying to find element by CSSSelect')
         try:
-            self.object=self.driver.find_element(By.CSS_SELECTOR,self.CSS)
+            self.object=self.driver.find_element(By.CSS_SELECTOR,self.param)
             print('Found CSSSelect')
         except NoSuchElementException:
             print('Cannot find element')

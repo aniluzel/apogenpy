@@ -14,6 +14,14 @@ tables = []
 title = []
 
 
+def csv_writer(data):
+    with open("DEMO_SCRAP.csv", 'a') as csvfile:
+        writer = csv.writer(csvfile)
+
+        writer.writerows(data)
+
+
+
 with open('DEMO_CSV.csv', 'r') as read_obj:
     csv_reader = reader(read_obj, delimiter=',')
     header = next(csv_reader)
@@ -24,31 +32,39 @@ with open('DEMO_CSV.csv', 'r') as read_obj:
             page_html = requests.get(url).text
             print("parsing: " + row[0])
             soup = BeautifulSoup(page_html, "html.parser")
+
             testSoup = soup.find_all('a')
             divSoup = soup.find_all('div')
+            #divSoup.append(soup.find_all('form'))
+            idSoup = [tag['id'] for tag in soup.find_all(id=True)]
+            #xpathSoup = [tag['href'] for tag in soup.find_all(href=True) if tag.text]
+            #linkSoup = [a['href'] for a in soup.find_all('a', href=True) if a.text]
+            #nameSoup = [a['name'] for a in soup.find_all('a', name=True)]
+            classSoup = [tag['class'] for tag in soup.find_all(class_=True)]
 
-            # href data
+            # xpath data
             for i in testSoup:
                 test = i.get('href')
                 if test is not None and test not in href:
                     href.append(test)
-            print("HREF DATA")
-            print(href)
+            #print("XPATH DATA")
+            #print(href)
+            #print(xpathSoup)
             #csv_writer('xpath',href)
 
+            # name data
+            #print("NAME DATA")
+            #print(nameSoup)
+
+            # link text data
+            #print("LINK TEXT DATA")
+            #print(linkSoup)
+
             # id data
-            for i in divSoup:
-                for foo in soup.find_all('div', attrs={'class': 'foo'}):
-                    foo_descendants = foo.descendants
-                    for d in foo_descendants:
-                        if d.name == 'div' and d.get('class', '') == ['bar']:
-                            print(d.text)
-                test = i.get('id')
-                if test is not None and test not in test:
-                    ids.append(test)
             print("ID DATA")
-            print(ids)
-            #csv_writer(ids)
+            print(idSoup)
+
+            csv_writer([idSoup])
 
             # button data
             for i in divSoup:
@@ -56,8 +72,9 @@ with open('DEMO_CSV.csv', 'r') as read_obj:
                 if buttonSoup is not None and buttonSoup not in buttons:
                     buttons.append(buttonSoup)
             print("BUTTON DATA")
+
             print(buttons)
-            #csv_writer(buttons)
+            csv_writer([buttons])
 
             # class data
             for i in testSoup:
@@ -65,23 +82,18 @@ with open('DEMO_CSV.csv', 'r') as read_obj:
                 if test is not None and test not in classes:
                     classes.append(test)
             print("CLASS DATA")
-            print(classes)
-            #csv_writer(classes)
+            #print(classes)
+            print(classSoup)
+            csv_writer(classSoup)
 
-            # table data
-            for i in testSoup:
-                tableSoup = str(soup.find_all('tbody'))
-                if tableSoup is not None and tableSoup not in tables:
-                    tables.append(tableSoup)
-            print("TABLE DATA")
-            print(tables)
-            #csv_writer(tables)
+            # css data
+            #print("CSS DATA")
+            #print(cssSoup)
 
-            # title data
-            for i in testSoup:
-                test = i.get('title')
-                if test is not None and test not in title:
-                    title.append(test)
-            print("TITLE DATA")
-            print(title)
-            #csv_writer(title)
+with open("DEMO_SCRAP.csv", "r") as myfile:
+    data = myfile.read().replace(',', '\n')
+
+with open("DEMO_SCRAP_ALT.csv", 'w') as csvfile:
+    writer = csv.writer(csvfile)
+
+    writer.writerow([data])

@@ -11,9 +11,9 @@ service = Service(r'C:\chromedriver.exe')
 browser = webdriver.Chrome(service=service)
 
 
-browser.get("http://localhost:8080/owners/new")
+browser.get("http://localhost:8080/owners/find")
 
-url = "http://localhost:8080/owners/new"
+url = "http://localhost:8080/owners/find"
 
 page_html = requests.get(url).text
 
@@ -47,8 +47,8 @@ refs = soup.find_all('href')
 #print(soup.tbody.contents)
 #print(refs)
 #print(buttons)
-print(ids)
-'''
+#print(ids)
+
 def jsonAppender(elemToAdd, filename):
     with open(filename, mode='w') as f:
         json.dump(elemToAdd, f)
@@ -58,7 +58,6 @@ jsonAppender(ids, '../../scrappedData/scrappedData.json')
 refs = soup.find_all('a',href=True)
 for i in refs:
     jsonAppender(i.text, '../../scrappedData/scrappedHrefData.json')
-'''
 #print(refs)
 
 

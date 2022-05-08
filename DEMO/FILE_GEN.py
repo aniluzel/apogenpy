@@ -8,7 +8,7 @@ def filegenerator(param,url,elemid):
         filename = filename.replace(char, '_').removeprefix('http://localhost:8080')
     with open(filename,'a') as f:
 
-        f.write("\n"+elemid+"=POMGen.ObjectGen(\'"+param+"\',\'"+url+"\')")
+        f.write("\n"+elemid+"=POM_GEN.ObjectGen(\'"+param+"\',\'"+url+"\')")
 
 
 def importgenerator(url):
@@ -17,7 +17,7 @@ def importgenerator(url):
     for char in invalid:
         filename = filename.replace(char, '_').removeprefix('http://localhost:8080')
 
-    imports = "from selenium import webdriver\nfrom selenium.webdriver.common.by import By\nfrom selenium.webdriver.chrome.service import Service\nimport POMGen"
+    imports = "from selenium import webdriver\nfrom selenium.webdriver.common.by import By\nfrom selenium.webdriver.chrome.service import Service\nimport POM_GEN"
     with open(filename,'w') as f:
         f.write(imports)
 

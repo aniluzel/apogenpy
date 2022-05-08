@@ -33,6 +33,3 @@ class ObjectGen:
             print('Cannot find element')
 
 
-#obj=ObjectGen('firstNme','Add Owner','btn btn-primary','.btn-primary','http://localhost:8080/owners/new')
-#obj.object.send_keys('test')
-#obj.object.click()

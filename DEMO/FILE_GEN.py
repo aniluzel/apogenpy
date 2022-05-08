@@ -1,7 +1,7 @@
 import csv
 
 
-def filegenerator(param,url,elemid):
+def filegenerator(param, url, elemid):
     invalid = '<>:"/\|?* '
     filename = url + ".py"
     for char in invalid:
@@ -13,7 +13,7 @@ def filegenerator(param,url,elemid):
 
 def importgenerator(url):
     invalid = '<>:"/\|?* '
-    filename = url+".py"
+    filename = url + ".py"
     for char in invalid:
         filename = filename.replace(char, '_').removeprefix('http://localhost:8080')
 
@@ -28,11 +28,11 @@ def importgenerator(url):
 # DATA FROM CRAWLER NEEDS TO BE FED
 # -------------------------------------------------------------------------------
 
-importgenerator("http://localhost:8080/owners/new")#url from csv as filename
+importgenerator("http://localhost:8080/owners/new")  # url from csv as filename
 
 with open("GENERATED_CSV/DEMO_SCRAP.csv", "r") as f:
-    reader =csv.reader(f)
-    row1=next(reader)
+    reader = csv.reader(f)
+    row1 = next(reader)
     ids = row1
     print(ids)
     next(reader)
@@ -42,8 +42,7 @@ with open("GENERATED_CSV/DEMO_SCRAP.csv", "r") as f:
 
 
     for elem in ids:
-
-        filegenerator(elem,"http://localhost:8080/owners/new",elem.replace('-','_'))
+        filegenerator(elem, "http://localhost:8080/owners/new", elem.replace('-', '_'))
 
     #newbuttons = buttons(list).split(",")
     newlist = [word for line in buttons for word in line.split(",")]
@@ -58,4 +57,4 @@ with open("GENERATED_CSV/DEMO_SCRAP.csv", "r") as f:
 
 
 
-#filegenerator("testid","testlink","testclass","testcss","http://localhost:8080/owners/new")
+# filegenerator("testid","testlink","testclass","testcss","http://localhost:8080/owners/new")

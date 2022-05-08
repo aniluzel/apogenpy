@@ -20,7 +20,8 @@ def csv_writer(data):
 
         writer.writerows(data)
 
-
+#DATA FROM CRAWLER NEEDS TO BE FED
+#-------------------------------------------------------------------------------
 
 with open('DEMO_CSV.csv', 'r') as read_obj:
     csv_reader = reader(read_obj, delimiter=',')

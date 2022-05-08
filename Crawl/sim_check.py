@@ -4,6 +4,8 @@ from html_similarity import style_similarity, structural_similarity, similarity
 from csv import reader
 import requests
 import csv
+import advertools as adv
+import jellyfish
 
 
 def sim_check():
@@ -27,10 +29,10 @@ def sim_check():
     for down in new_array:
         for up in reversed(new_array):
             # Link 1
-            #req1 = requests.get(down).text
+            # req1 = requests.get(down).text
             req1 = down[1]
             # Link 2
-            #req2 = requests.get(up).text
+            # req2 = requests.get(up).text
             req2 = up[1]
             # print("structural sim", structural_similarity(req1, req2))
             struct.append((structural_similarity(req1, req2), down[0], up[0]))
@@ -41,7 +43,7 @@ def sim_check():
 
     for n in struct:
         if n[0] < 0.48:
-            #print(n[0])
+            # print(n[0])
             sorted.append(n[2])
 
     sorted = set(sorted)
@@ -53,14 +55,50 @@ def sim_check():
         if item not in seen:
             seen.add(item)
             result.append(item)
-    # print("list of thinks", len(sorted))
+    # print("list of urls", len(sorted))
     # for i in result:
     #     print(i)
 
-    with open('filtered_output.csv', 'a') as f:
-        writer = csv.writer(f)
-        writer.writerow(result)
+    url_data = adv.url_to_df(result)
+    tmp = url_data.copy()
+    tmp = tmp.set_index("path")
+    tmp.head()
+    # print(url_data["url"])
+    url_cof = []
+    result_final = []
+    domain = url_data["scheme"] + "://" + url_data["netloc"]
 
+    tmp_2=[]
+    for i in url_data["path"]:
+        tmp_2.append(i)
+
+
+    for path in tmp_2:
+        for rev in reversed(tmp_2):
+            #print(jellyfish.jaro_distance(path, rev))
+            #url_cof.append((rev, jellyfish.jaro_distance(path, rev)))
+            if jellyfish.jaro_distance(path, rev) > 0.8:
+                tmp_2.remove(rev)
+                #tmp.drop(path)
+                print("droped")
+                #url_cof.append((rev ,0))
+               # result_final.append(domain[0] + rev["path"])
+            # print(path, rev)
+    print(tmp_2)
+    # for i in url_cof:
+    #     #print(i[0])
+    #     if i[1] < 0.9:
+    #         result_final.append(domain[0] + i[0])
+    result_final = list(set(result_final))
+    print(len(result_final))
+    print(result_final)
+    with open('filtered_output.csv', 'w', newline='') as f:
+        writer = csv.writer(f)
+        # writer.writerow('\n')
+        # old
+        writer.writerow(result)
+        # writer.writerow(result[1])
+        f.close()
 
 
 #sim_check()

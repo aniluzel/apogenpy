@@ -1,5 +1,3 @@
-from collections import OrderedDict
-
 from html_similarity import style_similarity, structural_similarity, similarity
 from csv import reader
 import requests
@@ -7,98 +5,93 @@ import csv
 import advertools as adv
 import jellyfish
 
+# 0.48
+def sim_check(web_page_similarity_percentage=0.60, web_path_similarity_percentage=0.88, param="struct"):
+    links = []
+    base = []
+    urls = []
+    html_text = []
 
-def sim_check():
-    array = []
-    struct = []
-    style = []
-    sim = []
-    sorted = []
-    new_array = []
     with open('output.csv', 'r') as read_obj:
         csv_reader = reader(read_obj, delimiter=',')
         header = next(csv_reader)
 
         if header is not None:
             for row in csv_reader:
-                array.append(row)
+                links.append(row)
 
-    for i in array:
-        new_array.append((i[0], requests.get(i[0]).text))
+        print(len(links))
+    for i in links:
+        html_text.append((i[0], requests.get(i[0]).text))
 
-    for down in new_array:
-        for up in reversed(new_array):
+    for down in html_text:
+        for up in reversed(html_text):
             # Link 1
-            # req1 = requests.get(down).text
             req1 = down[1]
             # Link 2
-            # req2 = requests.get(up).text
             req2 = up[1]
             # print("structural sim", structural_similarity(req1, req2))
-            struct.append((structural_similarity(req1, req2), down[0], up[0]))
+            if param == "struct":
+                base.append((structural_similarity(req1, req2), down[0], up[0]))
             # print("styles =", style_similarity(req1, req2))
-            style.append((style_similarity(req1, req2), down[0], up[0]))
+            elif param == "style":
+                base.append((style_similarity(req1, req2), down[0], up[0]))
             # print("sim", similarity(req1, req2))
-            sim.append((similarity(req1, req2), down[0], up[0]))
-
-    for n in struct:
-        if n[0] < 0.48:
+            else:
+                base.append((similarity(req1, req2), down[0], up[0]))
+    print(len(base))
+    for n in base:
+        if n[0] < web_page_similarity_percentage:
             # print(n[0])
-            sorted.append(n[2])
-
-    sorted = set(sorted)
-    sorted = list(set(sorted))
-
+            urls.append(n[2])
+    print(urls)
+    urls = set(urls)
+    urls = list(set(urls))
+    print(len(urls), "urls")
     seen = set()
     result = []
-    for item in sorted:
+    for item in urls:
         if item not in seen:
             seen.add(item)
             result.append(item)
-    # print("list of urls", len(sorted))
-    # for i in result:
-    #     print(i)
+    # print("list of urls", len(urls))
+    print(len(result))
+    #url_data = adv.url_to_df(result)
+    url_data = adv.url_to_df(urls)
 
-    url_data = adv.url_to_df(result)
-    tmp = url_data.copy()
-    tmp = tmp.set_index("path")
-    tmp.head()
-    # print(url_data["url"])
-    url_cof = []
     result_final = []
     domain = url_data["scheme"] + "://" + url_data["netloc"]
 
-    tmp_2=[]
+    tmp_2 = []
     for i in url_data["path"]:
         tmp_2.append(i)
 
-
+    empty_arr = []
     for path in tmp_2:
         for rev in reversed(tmp_2):
-            #print(jellyfish.jaro_distance(path, rev))
-            #url_cof.append((rev, jellyfish.jaro_distance(path, rev)))
-            if jellyfish.jaro_distance(path, rev) > 0.8:
+            #print(path, "  ", rev, " =", jellyfish.jaro_distance(path, rev))
+            if web_path_similarity_percentage < jellyfish.jaro_distance(path, rev) < 0.99:
+                #print(path, "  ", rev, " =", jellyfish.jaro_distance(path, rev))
+                empty_arr.append(path)
                 tmp_2.remove(rev)
-                #tmp.drop(path)
-                print("droped")
-                #url_cof.append((rev ,0))
-               # result_final.append(domain[0] + rev["path"])
-            # print(path, rev)
+
     print(tmp_2)
-    # for i in url_cof:
-    #     #print(i[0])
-    #     if i[1] < 0.9:
-    #         result_final.append(domain[0] + i[0])
+
+    result_final.append(domain[0])
+    for i in tmp_2:
+        result_final.append(domain[0] + i)
+
     result_final = list(set(result_final))
-    print(len(result_final))
-    print(result_final)
+
     with open('filtered_output.csv', 'w', newline='') as f:
         writer = csv.writer(f)
-        # writer.writerow('\n')
+
         # old
-        writer.writerow(result)
-        # writer.writerow(result[1])
+        # writer.writerow(result)
+
+        # new
+        writer.writerow(result_final)
         f.close()
 
 
-#sim_check()
+sim_check()

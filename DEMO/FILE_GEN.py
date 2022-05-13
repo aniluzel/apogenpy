@@ -51,8 +51,8 @@ with open("GENERATED_CSV/DEMO_SCRAP.csv", "r") as f:
 
         elem=(elem.split(">"))[1].split("<")[0]
         if(len(elem)>1):
-
-            filegenerator(elem, "http://localhost:8080/owners/new", elem.replace(' ', '_'))
+            elem1 = "//button[text()=\\\'"+elem+"\\\']"
+            filegenerator(elem1, "http://localhost:8080/owners/new", elem.replace(' ', '_'))
 
 
 

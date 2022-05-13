@@ -37,7 +37,8 @@ class ObjectGen:
         except NoSuchElementException:
             print('Trying to find element by Xpath')
         try:
-            self.object=driver.find_element(By.XPATH,"//button[text()=\'"+self.param+"\']")
+            #self.object=driver.find_element(By.XPATH,"//button[text()=\'"+self.param+"\']")
+            self.object=driver.find_element(By.XPATH,self.param)
             print('Found XpathSelect')
 
         except NoSuchElementException:

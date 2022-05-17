@@ -14,20 +14,26 @@ tables = []
 title = []
 
 
-def csv_writer(data, filename):
-
+def name_changer(name):
     invalid = '<>:"/\|?* '
     for char in invalid:
-        filename = filename.replace(char, '_').removeprefix('http://localhost:8080')
+        name = name.replace(char, '_').removeprefix('http://localhost:8080')
+    return name
+
+def csv_writer(data, filename):
 
 
-    with open("GENERATED_CSV/"+filename+".csv", 'a') as csvfile:
+
+
+    with open("GENERATED_CSV/"+name_changer(filename)+".csv", 'a') as csvfile:
         writer = csv.writer(csvfile)
 
         writer.writerows(data)
 
 #DATA FROM CRAWLER NEEDS TO BE FED
 #-------------------------------------------------------------------------------
+
+
 
 def demo_fun(array):
     #if header is not None:
@@ -93,15 +99,15 @@ def demo_fun(array):
             # css data
             #print("CSS DATA")
             #print(cssSoup)
+            something(name_changer(row))
 
 
 
 #what this does?????
+def something(filename):
+    with open("GENERATED_CSV/"+filename+".csv", "r") as myfile:
+        data = myfile.read().replace(',', '\n')
 
-# with open("GENERATED_CSV/DEMO_SCRAP.csv", "r") as myfile:
-#     data = myfile.read().replace(',', '\n')
-#
-# with open("GENERATED_CSV/DEMO_SCRAP_ALT.csv", 'w') as csvfile:
-#     writer = csv.writer(csvfile)
-#
-#     writer.writerow([data])
+    with open("GENERATED_CSV/"+filename+"_ALT.csv", 'w') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow([data])

@@ -5,6 +5,8 @@ from selenium.webdriver.support.ui import Select
 from selenium.webdriver.chrome.service import Service
 import time
 
+
+
 #chrome_driver_path = r'C:\chromedriver.exe'
 
 #mac

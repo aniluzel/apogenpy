@@ -4,8 +4,6 @@ import requests
 import csv
 import advertools as adv
 import jellyfish
-import numpy as np
-
 
 # 0.48
 def sim_check(web_page_similarity_percentage=0.60, web_path_similarity_percentage=0.88, param="struct"):
@@ -22,7 +20,7 @@ def sim_check(web_page_similarity_percentage=0.60, web_path_similarity_percentag
             for row in csv_reader:
                 links.append(row)
 
-        # print(len(links))
+        print(len(links))
     for i in links:
         html_text.append((i[0], requests.get(i[0]).text))
 
@@ -41,15 +39,15 @@ def sim_check(web_page_similarity_percentage=0.60, web_path_similarity_percentag
             # print("sim", similarity(req1, req2))
             else:
                 base.append((similarity(req1, req2), down[0], up[0]))
-    # print(len(base))
+    print(len(base))
     for n in base:
         if n[0] < web_page_similarity_percentage:
             # print(n[0])
             urls.append(n[2])
-    # print(urls)
+    print(urls)
     urls = set(urls)
     urls = list(set(urls))
-    # print(len(urls), "urls")
+    print(len(urls), "urls")
     seen = set()
     result = []
     for item in urls:
@@ -57,8 +55,8 @@ def sim_check(web_page_similarity_percentage=0.60, web_path_similarity_percentag
             seen.add(item)
             result.append(item)
     # print("list of urls", len(urls))
-    # print(len(result))
-    # url_data = adv.url_to_df(result)
+    print(len(result))
+    #url_data = adv.url_to_df(result)
     url_data = adv.url_to_df(urls)
 
     result_final = []
@@ -71,30 +69,29 @@ def sim_check(web_page_similarity_percentage=0.60, web_path_similarity_percentag
     empty_arr = []
     for path in tmp_2:
         for rev in reversed(tmp_2):
-            # print(path, "  ", rev, " =", jellyfish.jaro_distance(path, rev))
+            #print(path, "  ", rev, " =", jellyfish.jaro_distance(path, rev))
             if web_path_similarity_percentage < jellyfish.jaro_distance(path, rev) < 0.99:
-                # print(path, "  ", rev, " =", jellyfish.jaro_distance(path, rev))
+                #print(path, "  ", rev, " =", jellyfish.jaro_distance(path, rev))
                 empty_arr.append(path)
                 tmp_2.remove(rev)
 
-    # print(tmp_2)
-    #tmp = domain[0]+"/"
-    result_final.append(domain[0])
+    print(tmp_2)
+
+    result_final.append(domain[0]+"/")
     for i in tmp_2:
         result_final.append(domain[0] + i)
 
     result_final = list(set(result_final))
-    # print(len(result_final))
-    with open('filtered_output.csv', 'a') as f:
-        # writer = csv.writer(f,delimiter=',')
+
+    with open('filtered_output.csv', 'w', newline='') as f:
+        writer = csv.writer(f)
 
         # old
         # writer.writerow(result)
 
         # new
-        for i in result_final:
-            f.write(i + ",")
+        writer.writerow(result_final)
         f.close()
 
 
-sim_check()
+#sim_check()

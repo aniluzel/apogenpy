@@ -40,7 +40,7 @@ def gen(url):
         reader = csv.reader(f)
         row1 = next(reader)
         ids = row1
-        print(ids)
+        #print(ids)
         next(reader)
         row2 = next(reader)
         buttons = row2

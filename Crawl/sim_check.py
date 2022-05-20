@@ -47,15 +47,15 @@ def sim_check(web_page_similarity_percentage=0.60, web_path_similarity_percentag
             # print(n[0])
             urls.append(n[2])
     # print(urls)
-    urls = set(urls)
-    urls = list(set(urls))
+    #urls = set(urls)
+    #urls = list(set(urls))
     # print(len(urls), "urls")
-    seen = set()
-    result = []
-    for item in urls:
-        if item not in seen:
-            seen.add(item)
-            result.append(item)
+    # seen = set()
+    # result = []
+    # for item in urls:
+    #     if item not in seen:
+    #         seen.add(item)
+    #         result.append(item)
     # print("list of urls", len(urls))
     # print(len(result))
     # url_data = adv.url_to_df(result)

@@ -39,24 +39,21 @@ def sim_check(web_page_similarity_percentage=0.60, web_path_similarity_percentag
             # print("sim", similarity(req1, req2))
             else:
                 base.append((similarity(req1, req2), down[0], up[0]))
-    print(len(base))
+
     for n in base:
         if n[0] < web_page_similarity_percentage:
-            # print(n[0])
             urls.append(n[2])
-    print(urls)
-    urls = set(urls)
-    urls = list(set(urls))
-    print(len(urls), "urls")
-    seen = set()
-    result = []
-    for item in urls:
-        if item not in seen:
-            seen.add(item)
-            result.append(item)
-    # print("list of urls", len(urls))
-    print(len(result))
-    #url_data = adv.url_to_df(result)
+
+
+    # urls = set(urls)
+    # urls = list(set(urls))
+    # seen = set()
+    # result = []
+    # for item in urls:
+    #     if item not in seen:
+    #         seen.add(item)
+    #         result.append(item)
+
     url_data = adv.url_to_df(urls)
 
     result_final = []
@@ -75,7 +72,7 @@ def sim_check(web_page_similarity_percentage=0.60, web_path_similarity_percentag
                 empty_arr.append(path)
                 tmp_2.remove(rev)
 
-    print(tmp_2)
+
 
     result_final.append(domain[0]+"/")
     for i in tmp_2:
@@ -85,11 +82,6 @@ def sim_check(web_page_similarity_percentage=0.60, web_path_similarity_percentag
 
     with open('filtered_output.csv', 'w', newline='') as f:
         writer = csv.writer(f)
-
-        # old
-        # writer.writerow(result)
-
-        # new
         writer.writerow(result_final)
         f.close()
 

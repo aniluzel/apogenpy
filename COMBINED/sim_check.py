@@ -73,8 +73,10 @@ def sim_check(web_page_similarity_percentage=0.60, web_path_similarity_percentag
                 tmp_2.remove(rev)
 
 
-
+    #adding root of domain
     result_final.append(domain[0]+"/")
+
+    #add rest filtered paths to array
     for i in tmp_2:
         result_final.append(domain[0] + i)
 

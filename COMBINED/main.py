@@ -14,7 +14,7 @@ c = CrawlerProcess({
     'FEED_URI': 'output.csv',
 })
 # find all cites
-c.crawl(crawl.KrakenSpider, start_urls=["http://localhost:8080/owners?lastName="])
+c.crawl(crawl.CrawlingSpider, start_urls=["http://localhost:8080/owners?lastName="])
 c.start()
 
 # filter

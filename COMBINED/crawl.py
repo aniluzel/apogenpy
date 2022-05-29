@@ -11,7 +11,7 @@ class PageInfoItem(Item):
     pass
 
 
-class KrakenSpider(CrawlSpider):
+class CrawlingSpider(CrawlSpider):
 
     name = 'Kraken'
 
@@ -31,7 +31,7 @@ class KrakenSpider(CrawlSpider):
     rules = [Rule(LinkExtractor(), callback='parse_pageinfo', follow=True)]
 
     def parse_pageinfo(self, response):
-        sel = Selector(response)
+        #sel = Selector(response)
         item = PageInfoItem()
         item['URL'] = response.url
         # Specify which part of the page to scrape

@@ -7,10 +7,10 @@ import time
 
 
 
-#chrome_driver_path = r'C:\chromedriver.exe'
+chrome_driver_path = r'C:\chromedriver.exe'
 
 #mac
-chrome_driver_path = r'/Users/denis/Documents/CS401/'
+#chrome_driver_path = r'/Users/denis/Documents/CS401/'
 
 class Driver:
     def __init__(self, url):

@@ -9,7 +9,7 @@ import FILE_GEN
 import DEMO
 
 c = CrawlerProcess({
-
+    #'USER_AGENT': 'Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.93 Safari/537.36',
     'FEED_FORMAT': 'csv',
     'FEED_URI': 'output.csv',
 })

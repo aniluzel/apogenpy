@@ -31,12 +31,8 @@ class CrawlingSpider(CrawlSpider):
     rules = [Rule(LinkExtractor(), callback='parse_pageinfo', follow=True)]
 
     def parse_pageinfo(self, response):
-        #sel = Selector(response)
         item = PageInfoItem()
         item['URL'] = response.url
-        # Specify which part of the page to scrape
-        # In addition to specifying in xPath format, it is also possible to specify in CSS format
-        #item['title'] = sel.xpath('/html/head/title/text()').extract()
         return item
 
 

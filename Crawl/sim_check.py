@@ -6,7 +6,14 @@ import advertools as adv
 import jellyfish
 import numpy as np
 
-
+def write_to_csv(list_input):
+    # The scraped info will be written to a CSV here.
+    try:
+        with open("filtered.csv", 'w', newline='') as fopen:  # Open the csv file.
+            for domain in list_input:
+                fopen.write(domain + '\n')
+    except:
+        return False
 # 0.48
 def sim_check(web_page_similarity_percentage=0.60, web_path_similarity_percentage=0.88, param="struct"):
     links = []
@@ -14,7 +21,7 @@ def sim_check(web_page_similarity_percentage=0.60, web_path_similarity_percentag
     urls = []
     html_text = []
 
-    with open('output.csv', 'r') as read_obj:
+    with open('URls.csv', 'r') as read_obj:
         csv_reader = reader(read_obj, delimiter=',')
         header = next(csv_reader)
 
@@ -84,17 +91,18 @@ def sim_check(web_page_similarity_percentage=0.60, web_path_similarity_percentag
         result_final.append(domain[0] + i)
 
     result_final = list(set(result_final))
-    # print(len(result_final))
-    with open('filtered_output.csv', 'a') as f:
-        # writer = csv.writer(f,delimiter=',')
-
-        # old
-        # writer.writerow(result)
-
-        # new
-        for i in result_final:
-            f.write(i + ",")
-        f.close()
+    print(len(result_final))
+    # with open('filtered_output.csv', 'a') as f:
+    #     # writer = csv.writer(f,delimiter=',')
+    #
+    #     # old
+    #     # writer.writerow(result)
+    #
+    #     # new
+    #     for i in result_final:
+    #         f.write(i + ",")
+    #     f.close()
+    write_to_csv(result_final)
 
 
 sim_check()

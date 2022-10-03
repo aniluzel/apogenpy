@@ -23,7 +23,8 @@ def write_to_csv(list_input):
 chrome_options = Options()
 chrome_options.add_argument("--headless")  # Hides the browser window
 # Reference the local Chromedriver instance
-chrome_path = r'C:\chromedriver.exe'
+#chrome_path = r'C:\chromedriver.exe'
+chrome_path = r'/Users/denis/Documents/CS401/chromedriver'
 driver = webdriver.Chrome(executable_path=chrome_path, options=chrome_options)
 # Run the Webdriver, save page an quit browser
 driver.get("http://localhost:8080/owners/find")
@@ -185,7 +186,6 @@ def crawl_one(page_url, domain):
 
 
 def looping(array, domain):
-    global num
     for i in array:
         if i not in checked:
             checked.append(i)

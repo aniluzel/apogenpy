@@ -1,0 +1,38 @@
+main-navbar
+"[<button class=""navbar-toggler"" data-bs-target=""#main-navbar"" data-bs-toggle=""collapse"" type=""button"">
+<span class=""navbar-toggler-icon""></span>
+</button>]","[<button class=""navbar-toggler"" data-bs-target=""#main-navbar"" data-bs-toggle=""collapse"" type=""button"">
+<span class=""navbar-toggler-icon""></span>
+</button>, <button class=""btn btn-primary"" type=""submit"">Add Pet</button>]"
+navbar,navbar-expand-lg,navbar-dark
+container-fluid
+navbar-brand
+navbar-toggler
+navbar-toggler-icon
+collapse,navbar-collapse
+nav,navbar-nav,me-auto
+nav-item
+nav-link
+fa,fa-home
+nav-item
+nav-link,active
+fa,fa-search
+nav-item
+nav-link
+fa,fa-th-list
+nav-item
+nav-link
+fa,fa-exclamation-triangle
+container-fluid
+container,xd-container
+table,table-striped
+btn,btn-primary
+btn,btn-primary
+table,table-striped
+dl-horizontal
+table-condensed
+dl-horizontal
+table-condensed
+container
+row
+col-12,text-center

@@ -1,0 +1,31 @@
+main-navbar
+"[<button class=""navbar-toggler"" data-bs-target=""#main-navbar"" data-bs-toggle=""collapse"" type=""button"">
+<span class=""navbar-toggler-icon""></span>
+</button>]"
+navbar,navbar-expand-lg,navbar-dark
+container-fluid
+navbar-brand
+navbar-toggler
+navbar-toggler-icon
+collapse,navbar-collapse
+nav,navbar-nav,me-auto
+nav-item
+nav-link,active
+fa,fa-home
+nav-item
+nav-link
+fa,fa-search
+nav-item
+nav-link
+fa,fa-th-list
+nav-item
+nav-link
+fa,fa-exclamation-triangle
+container-fluid
+container,xd-container
+row
+col-md-12
+img-responsive
+container
+row
+col-12,text-center

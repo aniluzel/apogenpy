@@ -21,14 +21,14 @@ c = CrawlerProcess({
 
 
 def main():
-    sg.theme('DarkAmber')   # Add a touch of color
+    sg.theme('Dark Blue')  # Add a touch of color
     # All the stuff inside your window.
-    layout = [  [sg.Text('Past link below that you want to crawl')],
+    layout = [[sg.Text('Past link below that you want to crawl')],
             [sg.Text('Crawl domain'), sg.InputText()],
             [sg.Button('Crawl'), sg.Button('exit')] ]
 
     # Create the Window
-    window = sg.Window('Window Title', layout)
+    window = sg.Window('ApogenPy', layout, size=(600, 250))
     #   Event Loop to process "events" and get the "values" of the inputs
     while True:
         event, values = window.read()
@@ -36,12 +36,17 @@ def main():
             # find all cites
             c.crawl(crawl.CrawlingSpider, start_urls=[values[0]])
             c.start()
+
             # filter
-            sim_check()
+            #sim_check()
+
+            #close window before entering new
+            window.close()
             #next window
             table_test.open_window()
-            window.close()
+
         elif event == sg.WIN_CLOSED or event == 'exit': # if user closes window or clicks cancel
+            window.close()
             break
         #print(values[0])
 

@@ -1,4 +1,5 @@
 import csv
+import threading
 
 import PySimpleGUI as sg
 
@@ -7,6 +8,7 @@ from scrapy.crawler import CrawlerProcess
 
 import table_test
 import crawl
+import loading_window
 
 from sim_check import sim_check
 # crawl functions
@@ -33,15 +35,54 @@ def main():
     while True:
         event, values = window.read()
         if event == 'Crawl':
-            # find all cites
+            print("here")
+
+            # def run():
+            #     while True:
+            #         print('thread running')
+            #         loading_window.loading_win()
+            #         global stop_threads
+            #         if stop_threads:
+            #             break
+
+            def image_loading():
+                global flag
+                flag = True
+                while flag:
+                    sg.popup_animated(sg.DEFAULT_BASE64_LOADING_GIF, no_titlebar=True)
+
+                sg.PopupAnimated(image_source=None)
+
+
             c.crawl(crawl.CrawlingSpider, start_urls=[values[0]])
+            #t1 = threading.Thread(target=run())
+            #t2 = threading.Thread(target=c.crawl())
+           ## t2.start()
+          #  t1.start()
+            #tmp = loading_window.loading_win()
+
+
+            #c.start()
+            t = threading.Thread(target=image_loading().start)
+            flag = False
             c.start()
+            t.join(c)
+            #loading animation
+
+            # find all cites
+
+
 
             # filter
             #sim_check()
+            #end loading animation
 
             #close window before entering new
+
             window.close()
+            stop_threads = True
+            #t1.join()
+            print("thread killed")
             #next window
             table_test.open_window()
 

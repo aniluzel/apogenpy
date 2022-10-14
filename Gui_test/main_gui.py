@@ -27,7 +27,8 @@ def main():
     # All the stuff inside your window.
     layout = [[sg.Text('Past link below that you want to crawl')],
             [sg.Text('Crawl domain'), sg.InputText()],
-            [sg.Button('Crawl'), sg.Button('exit')] ]
+            [sg.Button('Crawl'), sg.Button('exit')], sg.Button('Settings')
+              ]
 
     # Create the Window
     window = sg.Window('ApogenPy', layout, size=(600, 250))
@@ -63,10 +64,10 @@ def main():
 
 
             #c.start()
-            t = threading.Thread(target=image_loading().start)
+           # t = threading.Thread(target=image_loading().start)
             flag = False
             c.start()
-            t.join(c)
+            #t.join(c)
             #loading animation
 
             # find all cites
@@ -85,6 +86,9 @@ def main():
             print("thread killed")
             #next window
             table_test.open_window()
+        elif event == 'Settings':
+
+            window.close()
 
         elif event == sg.WIN_CLOSED or event == 'exit': # if user closes window or clicks cancel
             window.close()

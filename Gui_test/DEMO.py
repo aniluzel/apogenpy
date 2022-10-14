@@ -22,9 +22,6 @@ def name_changer(name):
 
 def csv_writer(data, filename):
 
-
-
-
     with open("GENERATED_CSV/"+name_changer(filename)+".csv", 'a') as csvfile:
         writer = csv.writer(csvfile)
 

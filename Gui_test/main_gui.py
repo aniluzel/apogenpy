@@ -9,6 +9,7 @@ from scrapy.crawler import CrawlerProcess
 import table_test
 import crawl
 import loading_window
+import settings
 
 from sim_check import sim_check
 # crawl functions
@@ -18,6 +19,14 @@ c = CrawlerProcess({
     'FEED_URI': 'output.csv',
 })
 
+def read_settings():
+    current_settings = []
+    with open('settings.csv', 'r') as read_obj:
+        file_read = csv.reader(read_obj)
+        for i in file_read:
+            current_settings.append(i)
+        read_obj.close()
+        return current_settings
 
 
 
@@ -27,9 +36,8 @@ def main():
     # All the stuff inside your window.
     layout = [[sg.Text('Past link below that you want to crawl')],
             [sg.Text('Crawl domain'), sg.InputText()],
-            [sg.Button('Crawl'), sg.Button('exit')], sg.Button('Settings')
-              ]
-
+            [sg.Button('Crawl'), sg.Button('exit')], [sg.Button('Settings')]]
+    current_settings = read_settings()
     # Create the Window
     window = sg.Window('ApogenPy', layout, size=(600, 250))
     #   Event Loop to process "events" and get the "values" of the inputs
@@ -74,21 +82,20 @@ def main():
 
 
 
-            # filter
+            # filtering functions
+            # APPLY SETTINGS LATER
+            #if current_settings[0][0] == "sim_check = yes":
             #sim_check()
-            #end loading animation
+
 
             #close window before entering new
-
             window.close()
-            stop_threads = True
-            #t1.join()
-            print("thread killed")
+
             #next window
             table_test.open_window()
         elif event == 'Settings':
+            settings.settings_window()
 
-            window.close()
 
         elif event == sg.WIN_CLOSED or event == 'exit': # if user closes window or clicks cancel
             window.close()

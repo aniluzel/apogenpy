@@ -66,8 +66,8 @@ def main():
             c.crawl(crawl.CrawlingSpider, start_urls=[values[0]])
             #t1 = threading.Thread(target=run())
             #t2 = threading.Thread(target=c.crawl())
-           ## t2.start()
-          #  t1.start()
+            ## t2.start()
+            #  t1.start()
             #tmp = loading_window.loading_win()
 
 

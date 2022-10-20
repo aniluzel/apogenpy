@@ -39,16 +39,16 @@ class CrawlingSpider(CrawlSpider):
 
 # simcheck
 # 0.48
-def sim_check(data=[], web_page_similarity_percentage=0.92, web_path_similarity_percentage=0.88, param="struct",
-              check_sim="sim_check = yes", check_url_sim="url_sim = no"):
+def sim_check(data=[], web_page_similarity_percentage=0.92, web_path_similarity_percentage=0.88, param="Structural similarity",
+              check_sim=True, check_url_sim=False):
     base = []
     urls = []
     html_text = []
     result_final = []
-
-    if check_sim == "sim_check = yes":
+    if check_sim:
         for i in data:
             html_text.append([i, requests.get(i).text])
+
 
         for down in html_text:
             for up in reversed(html_text):
@@ -57,25 +57,25 @@ def sim_check(data=[], web_page_similarity_percentage=0.92, web_path_similarity_
                 # Link 2
                 req2 = up[1]
                 # print("structural sim", structural_similarity(req1, req2))
-                if param == "struct":
+                if param == "Structural similarity":
                     # if (structural_similarity(req1, req2), down[0], up[0]) < web_page_similarity_percentage:
                     if down[0] != up[0]:
                         if structural_similarity(req1, req2) > web_page_similarity_percentage:
-                            # print("similarity ratio is = ",(structural_similarity(req1, req2))," first link = ", down[0]," second link = ",up[0])
+                            #print("similarity ratio is = ",(structural_similarity(req1, req2))," first link = ", down[0]," second link = ",up[0])
                             html_text.remove(up)
 
 
-                elif param == "style":
+                elif param == "Style similarity":
                     base.append((style_similarity(req1, req2), down[0], up[0]))
                     if down[0] != up[0]:
                         if style_similarity(req1, req2) > web_page_similarity_percentage:
-                            # print("similarity ratio is = ",(structural_similarity(req1, req2))," first link = ", down[0]," second link = ",up[0])
+                            print("similarity ratio is = ",(structural_similarity(req1, req2))," first link = ", down[0]," second link = ",up[0])
                             html_text.remove(up)
 
-                else:
+                elif param == "Joint similarity":
                     if down[0] != up[0]:
                         if similarity(req1, req2, 0.3) > web_page_similarity_percentage:
-                            # print("similarity ratio is = ",(structural_similarity(req1, req2))," first link = ", down[0]," second link = ",up[0])
+                            print("similarity ratio is = ",(structural_similarity(req1, req2))," first link = ", down[0]," second link = ",up[0])
                             html_text.remove(up)
 
         # adds filtered urls
@@ -88,7 +88,7 @@ def sim_check(data=[], web_page_similarity_percentage=0.92, web_path_similarity_
             result_final.append(i[0])
 
     # url check
-    if check_url_sim == "url_sim = yes":
+    if check_url_sim:
         url_data = adv.url_to_df(result_final)
         domain = url_data["scheme"] + "://" + url_data["netloc"]
 

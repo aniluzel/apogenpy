@@ -3,7 +3,7 @@ import crawl
 import pomgen
 
 
-def gui_run(check_sim, check_url_sim):
+def gui_run():
     sg.theme('Dark Blue')
     layout = [[sg.Text('Enter the URL of a domain that you want to crawl')],
               [sg.Text('URL'), sg.InputText()],
@@ -13,23 +13,42 @@ def gui_run(check_sim, check_url_sim):
     while True:
         event, values = window.read()
         if event == 'Crawl':
-            def image_loading():
-                global flag
-                flag = True
-                while flag:
-                    sg.popup_animated(sg.DEFAULT_BASE64_LOADING_GIF, no_titlebar=True)
+            filtered_data = []
+            def loading(val):
+                layout = [[sg.T("Crawling",key="crawl_text")],[sg.ProgressBar(100, orientation='h',k="loading_bar")]]
 
-                sg.PopupAnimated(image_source=None)
+                window = sg.Window('Loading', layout,finalize=True, size=(300, 300))
 
-            c = crawl.CrawlerProcess({})
-            c.crawl(crawl.CrawlingSpider, start_urls=[values[0]])
-            c.start()
+                window['loading_bar'].update(10)
+                # crawling
+                c = crawl.CrawlerProcess({})
+                c.crawl(crawl.CrawlingSpider, start_urls=[val])
+                c.start()
+                window['loading_bar'].update(50)
+                window['crawl_text'].update("Similarity Check")
+                # filtering
 
-            filtered_data = crawl.sim_check(data=crawl.crawled_links, check_sim=check_sim, check_url_sim=check_url_sim)
+                filtered_data = crawl.sim_check(data=crawl.crawled_links, check_sim=default_settings[0],
+                                                check_url_sim=default_settings[1],param=default_settings[2])
+                print(filtered_data)
+                window['loading_bar'].update(100)
+                window.close()
 
+                while True:
+                    event, values = window.read()
+                    if event == sg.WIN_CLOSED or event == "Exit":
+                        break
+                    # True values of settings
+
+                return filtered_data
+                window.close()
+
+            print(filtered_data)
+            #close current window
             window.close()
+            #open table window
+            open_table_window(loading(values[0]))
 
-            open_table_window(filtered_data)
         elif event == 'Settings':
             settings_window()
 
@@ -40,13 +59,19 @@ def gui_run(check_sim, check_url_sim):
     window.close()
 
 
-default_settings = ["sim_check = no", "url_sim = no"]
+# default loaded settings
+default_settings = [True, False, "Structural similarity"]
 
 
 def settings_window():
     layout = [[sg.T("")], [sg.T("        "), sg.Button('Save Settings', size=(20, 4), key="save_button")], [sg.T("")],
-              [sg.T("                   "), sg.Checkbox('Structure Similarity Check', default=False, key="sim_check")],
-              [sg.T("                   "), sg.Checkbox('URL Similarity Check', default=False, key="url_sim")]]
+              [sg.T("                   "),
+               sg.Checkbox('Structure Similarity Check', default=default_settings[0], key="sim_check")],
+              [sg.T("                   "),
+               sg.Checkbox('URL Similarity Check', default=default_settings[1], key="url_sim")],
+              [sg.T("Choose Similarity"),
+               sg.OptionMenu(["Joint similarity", "Structural similarity", "Style similarity"],
+                             default_value=default_settings[2], key='sim_type')]]
 
     window = sg.Window('Settings', layout, size=(300, 300))
 
@@ -55,21 +80,11 @@ def settings_window():
         if event == sg.WIN_CLOSED or event == "Exit":
             break
         # True values of settings
-        elif values["url_sim"] and values["sim_check"] and event == 'save_button':
-            default_settings[0] = "sim_check = yes"
-            default_settings[1] = "url_sim = yes"
-        elif values["sim_check"] and event == 'save_button':
-            default_settings[0] = "sim_check = yes"
-        elif values["url_sim"] and event == 'save_button':
-            default_settings[1] = "url_sim = yes"
-        # False values of settings
-        elif not values["url_sim"] and not values["sim_check"] and event == 'save_button':
-            default_settings[0] = "sim_check = no"
-            default_settings[1] = "url_sim = no"
-        elif not values["sim_check"] and event == 'save_button':
-            default_settings[0] = "sim_check = no"
-        elif not values["url_sim"] and event == 'save_button':
-            default_settings[1] = "url_sim = no"
+        elif event == 'save_button':
+            default_settings[0] = values["url_sim"]
+            default_settings[1] = values["sim_check"]
+            default_settings[2] = values["sim_type"]
+            print(default_settings)
 
     window.close()
 

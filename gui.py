@@ -14,40 +14,13 @@ def gui_run():
         event, values = window.read()
         if event == 'Crawl':
             filtered_data = []
-            def loading(val):
-                layout = [[sg.T("Crawling",key="crawl_text")],[sg.ProgressBar(100, orientation='h',k="loading_bar")]]
 
-                window = sg.Window('Loading', layout,finalize=True, size=(300, 300))
-
-                window['loading_bar'].update(10)
-                # crawling
-                c = crawl.CrawlerProcess({})
-                c.crawl(crawl.CrawlingSpider, start_urls=[val])
-                c.start()
-                window['loading_bar'].update(50)
-                window['crawl_text'].update("Similarity Check")
-                # filtering
-
-                filtered_data = crawl.sim_check(data=crawl.crawled_links, check_sim=default_settings[0],
-                                                check_url_sim=default_settings[1],param=default_settings[2])
-                print(filtered_data)
-                window['loading_bar'].update(100)
-                window.close()
-
-                while True:
-                    event, values = window.read()
-                    if event == sg.WIN_CLOSED or event == "Exit":
-                        break
-                    # True values of settings
-
-                return filtered_data
-                window.close()
 
             print(filtered_data)
             #close current window
             window.close()
             #open table window
-            open_table_window(loading(values[0]))
+            open_table_window(loading_crawl(values[0]))
 
         elif event == 'Settings':
             settings_window()
@@ -60,7 +33,7 @@ def gui_run():
 
 
 # default loaded settings
-default_settings = [True, False, "Structural similarity"]
+default_settings = [True, False, "Structural similarity",0.92,0.88,None]
 
 
 def settings_window():
@@ -68,7 +41,7 @@ def settings_window():
               [sg.T("                   "),
                sg.Checkbox('Structure Similarity Check', default=default_settings[0], key="sim_check")],
               [sg.T("                   "),
-               sg.Checkbox('URL Similarity Check', default=default_settings[1], key="url_sim")],
+               sg.Checkbox('URL Similarity Check', default=default_settings[1], key="url_sim")],[sg.T("Similarity percentage value"),sg.InputText("",key="sim_input")],[sg.T("Url Similarity percentage value"),sg.InputText("",key="url_input")],[sg.T("Enter domain "),sg.InputText("",key="domain_input")],
               [sg.T("Choose Similarity"),
                sg.OptionMenu(["Joint similarity", "Structural similarity", "Style similarity"],
                              default_value=default_settings[2], key='sim_type')]]
@@ -81,13 +54,46 @@ def settings_window():
             break
         # True values of settings
         elif event == 'save_button':
-            default_settings[0] = values["url_sim"]
-            default_settings[1] = values["sim_check"]
+            default_settings[0] = values["sim_check"]
+            default_settings[1] = values["url_sim"]
             default_settings[2] = values["sim_type"]
-            print(default_settings)
+            default_settings[3] = values["sim_input"]
+            default_settings[4] = values["url_input"]
+            default_settings[5] = values["domain_input"]
+            #print(default_settings)
+            window.close()
 
     window.close()
 
+
+def loading_crawl(val):
+    layout = [[sg.T("Crawling", key="crawl_text")], [sg.ProgressBar(100, orientation='h', k="loading_bar")]]
+
+    window = sg.Window('Loading', layout, finalize=True, size=(300, 300))
+
+    window['loading_bar'].update(10)
+    # crawling
+    c = crawl.CrawlerProcess({})
+    c.crawl(crawl.CrawlingSpider, start_urls=[val],allowed_domains=default_settings[5])
+    c.start()
+    window['loading_bar'].update(50)
+    window['crawl_text'].update("Similarity Check")
+    # filtering
+    print(default_settings[3],"def")
+    filtered_data = crawl.sim_check(data=crawl.crawled_links, check_sim=default_settings[0],
+                                    check_url_sim=default_settings[1], param=default_settings[2],web_page_similarity_percentage=default_settings[3],web_path_similarity_percentage=default_settings[4])
+    print(filtered_data)
+    window['loading_bar'].update(100)
+    window.close()
+
+    while True:
+        event, values = window.read()
+        if event == sg.WIN_CLOSED or event == "Exit":
+            break
+        # True values of settings
+
+    return filtered_data
+    window.close()
 
 def open_table_window(filtered):
     sg.theme('Dark Blue')

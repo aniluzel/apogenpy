@@ -146,14 +146,22 @@ def gui_run():
         elif event == 'Continue with All':
             for i in data:
                 # DEMO.demo_fun(i[0])
-                pomgen.file_gen(i[0])
+
+                #web stuf
+                web_list(i[0],pomgen.idfinder(i[0]))
+
+                #pomgen.file_gen(i[0])
 
         elif event == 'Continue with Selected':
             needed = value_to_nums(values)
             for i in needed:
                 # added_links_array.append(array[0][i])
                 # DEMO.demo_fun(data[i][0]
-                pomgen.file_gen(data[i][0])
+
+                #add data later
+                #web_list(data[i][0],pomgen.idfinder(data[i][0]))
+
+                pomgen.file_gen(data[i][0],pomgen.elemfinder(data[i][0]))
 
         # adds url to current set
         elif event == 'Add URL':
@@ -204,19 +212,27 @@ data_tmp = ["Item 1","Item 2","Item 3","item 4"]
 
 
 
-def web_list():
+#global counter
+def web_list(url,data=data_tmp):
+    # counter
+    # def on_click(web, first):
+    #     web.load(QUrl(url[counter+1]))
+    #     counter += 1
     app = QApplication(sys.argv)
     listWidget = ListWidget()
     mainWindow = QMainWindow()
     widget = QWidget()
     web = QWebView()
-    web.load(QUrl("http://localhost:8080"))
+    web.load(QUrl(url))
+    # button = QPushButton('Next page')
+    # button.actionEvent(on_click(web))
     #print(get_url_from_web_view(web))
     hor_Layout = QHBoxLayout()
     hor_Layout.addWidget(web)
     listWidget.resize(300, 120)
-    add_item_windget(listWidget, data_tmp)
+    add_item_windget(listWidget, data)
     listWidget.itemClicked.connect(listWidget.clicked)
+
 
     hor_Layout.addWidget(listWidget)
     widget.setLayout(hor_Layout)

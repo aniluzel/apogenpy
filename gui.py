@@ -144,24 +144,35 @@ def gui_run():
             sg.popup_auto_close("Saved", auto_close_duration=1, no_titlebar=True)
 
         elif event == 'Continue with All':
+            tmp = []
             for i in data:
+                tmp.append(i[0])
                 # DEMO.demo_fun(i[0])
 
                 #web stuf
-                web_list(i[0],pomgen.idfinder(i[0]))
+            print("data =" ,data)
+            window.close()
+            web_list(tmp)
+
 
                 #pomgen.file_gen(i[0])
 
         elif event == 'Continue with Selected':
             needed = value_to_nums(values)
+            print("needed = ",needed)
+            selected_urls =[]
             for i in needed:
+                selected_urls.append(data[i][0])
+
                 # added_links_array.append(array[0][i])
                 # DEMO.demo_fun(data[i][0]
 
                 #add data later
-                #web_list(data[i][0],pomgen.idfinder(data[i][0]))
+                #print("selected urls = ",selected_urls)
+            window.close()
+            web_list(selected_urls)
 
-                pomgen.file_gen(data[i][0],pomgen.elemfinder(data[i][0]))
+                #pomgen.file_gen(data[i][0],pomgen.elemfinder(data[i][0]))
 
         # adds url to current set
         elif event == 'Add URL':
@@ -210,37 +221,94 @@ def get_url_from_web_view(web_view):
 #temp data for list
 data_tmp = ["Item 1","Item 2","Item 3","item 4"]
 
+def update_counter(val):
+    global counter
+    counter = val
+    return counter
 
 
-#global counter
-def web_list(url,data=data_tmp):
-    # counter
-    # def on_click(web, first):
-    #     web.load(QUrl(url[counter+1]))
-    #     counter += 1
+#counter = 0
+def on_click(web,button,url,listWidget,counter):
+
+    if counter == len(url) - 1:
+        button.hide()
+    else:
+        counter += 1
+        web.load(QUrl(url[counter]))
+        data = pomgen.idfinder(url[counter])
+        listWidget.clear()
+        for i in data:
+            listWidget.addItem(i)
+            listWidget.repaint()
+    #print("next button clicked")
+    update_counter(counter)
+def web_list(url):
+    global counter
+    counter = 0
+
     app = QApplication(sys.argv)
-    listWidget = ListWidget()
+    listWidget = QListWidget()
     mainWindow = QMainWindow()
     widget = QWidget()
     web = QWebView()
-    web.load(QUrl(url))
-    # button = QPushButton('Next page')
-    # button.actionEvent(on_click(web))
+    web.load(QUrl(url[counter]))
+    data = pomgen.idfinder(url[counter])
+    next_button = QPushButton('Next page')
+    generate_button = QPushButton('Generate for selected')
+    gen_all_button = QPushButton('Generate all for this page')
+
+    next_button.clicked.connect(lambda: on_click(web,next_button,url,listWidget,counter))
+    generate_button.clicked.connect(generate_button_clicked)
+    gen_all_button.clicked.connect(lambda: gen_all_button_cliked(url[counter]))
+
     #print(get_url_from_web_view(web))
-    hor_Layout = QHBoxLayout()
-    hor_Layout.addWidget(web)
+    main_layout = QHBoxLayout()
+    but_list_layout = QVBoxLayout()
+    but_list_layout.addWidget(listWidget)
+    but_list_layout.addWidget(next_button)
+    but_list_layout.addWidget(generate_button)
+    but_list_layout.addWidget(gen_all_button)
+
+    main_layout.addWidget(web)
+
     listWidget.resize(300, 120)
     add_item_windget(listWidget, data)
-    listWidget.itemClicked.connect(listWidget.clicked)
+    listWidget.setSelectionMode(QAbstractItemView.MultiSelection)
+    listWidget.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
+    #listWidget.itemClicked.connect(listWidget.clicked)
+    listWidget.itemClicked.connect(lambda: printItemText(listWidget))
 
-
-    hor_Layout.addWidget(listWidget)
-    widget.setLayout(hor_Layout)
+    #hor_Layout.addWidget(listWidget)
+    #hor_Layout.addWidget(button)
+    main_layout.addLayout(but_list_layout)
+    mainWindow.resize(1000,800)
+    widget.setLayout(main_layout)
     mainWindow.setCentralWidget(widget)
-    mainWindow.setWindowTitle("apogenpy")
+    mainWindow.setWindowTitle("Apogenpy")
 
     mainWindow.show()
     sys.exit(app.exec_())
+
+def printItemText(listWidget):
+        items = listWidget.selectedItems()
+        global selected
+        selected = []
+        for i in range(len(items)):
+            selected.append(str(listWidget.selectedItems()[i].text()))
+
+
+def generate_button_clicked():
+    global selected
+    for item in selected:
+        # genrete
+        print("generated for ",item)
+
+def gen_all_button_cliked(data):
+    #data takes url
+    for i in data:
+        #genrate
+        print(i)
+
 
 #old gui
 # def gui_run():

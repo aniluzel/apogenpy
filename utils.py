@@ -40,6 +40,6 @@ def chromedriver_path_name():
         raise RuntimeError('Cannot determine platform')
     return path
 
-print(chromedriver_path_name())
+
 
 

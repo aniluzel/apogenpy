@@ -19,6 +19,7 @@ def file_gen(url, elems):
                     elem = "//button[text()=\\\'" + elem + "\\\']"
             else:
                 elem_name = elem.replace('-', '_')
+                elem_name=elem_name.replace(" ","_")
 
             f.write("\ndef " + elem_name + "(input=\"\"):\n\t" + elem_name + " = POM_GEN.ObjectGen(\'" + elem + "\', driver.driver)"
             "\n\tif not input:\n\t\t" + elem_name + ".object.click()\n\telse:\n\t\t" + elem_name + ".object.send_keys(input)\n\n")
@@ -43,11 +44,29 @@ def buttonfinder(url):
     divSoup = soup.find_all('div')
     for i in divSoup:
         buttonSoup = str(soup.find_all('button'))
-        #if buttonSoup is not None and buttonSoup not in buttons:
-         #   buttons.append(buttonSoup)
+        if buttonSoup is not None and buttonSoup not in buttons:
+            buttons.append(buttonSoup)
+    returnarray = []
+    buttons[0]=buttons[0].removesuffix("]")
+    buttons[0] = buttons[0].removeprefix("[")
+    buttons[0]=" ".join(buttons[0].split())
+    #print(buttons[0])
+    subs= ">, <"
+    for i in buttons[0].split(subs):
+        str1 =""
+        if i == buttons[0].split(subs)[0]:
+            str1 = i+">"
+        elif i == buttons[0].split(subs)[len(buttons[0].split(subs))-1]:
+            str1="<"+i
+        else:
+            str1="<"+i+">"
+        returnarray.append(str1)
 
 
-    return buttonSoup
+
+
+    return returnarray
+
 
 # alt commente bak öyle çıkıyor 2 dimension array
 # ['[<button class="navbar-toggler" data-bs-target="#main-navbar" data-bs-toggle="collapse"
@@ -72,17 +91,28 @@ def classfinder(url):
         test = i.get('class')
         if test is not None and test not in classes:
             classes.append(test)
-    return classes
+    returnarray=[]
+    for i in classes:
 
-url = "http://localhost:8080/owners/new"
-#print(idfinder(url))
+        if len(i) > 1:
+            str1 = ""
+
+            for j in i:
+                str1 = str1 + str(j) + " "
+            str1 = str1.removesuffix(" ")
+            returnarray.append(str1)
+        else:
+            returnarray.append(i[0])
+    return returnarray
+
+def elemfinder(url):
+    elems = idfinder(url)+buttonfinder(url)+classfinder(url)
+
+    return elems
+
 #print(buttonfinder(url))
 #print(classfinder(url))
-def elemfinder(url):
-    test1= idfinder(url)
-    test2 = buttonfinder(url)
-    test1.append(test2)
-    testclass= classfinder(url)
-    test1.append(testclass)
-    return test1
-print(elemfinder(url))
+
+
+
+

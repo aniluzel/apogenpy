@@ -7,7 +7,7 @@ from PyQt5.QtWebEngineWidgets import QWebEngineView as QWebView
 import sys
 import crawl
 import pomgen
-
+import main
 
 default_settings = [True, False, 1, 0.92, 0.88, None]
 filtered_data = []
@@ -74,6 +74,7 @@ class Ui_Main(QtWidgets.QWidget):
 
         if reply == QMessageBox.Close:
             #app.quit()
+
             print("quit")
             #remake quit
         else:
@@ -253,13 +254,13 @@ class Ui_Main(QtWidgets.QWidget):
         listWidget = QListWidget()
         web = QWebView()
         web.load(QUrl(url[counter]))
-        data = pomgen.idfinder(url[counter])
+        data = pomgen.elemfinder(url[counter])
         next_button = QPushButton('Next page')
         generate_button = QPushButton('Generate for selected')
         gen_all_button = QPushButton('Generate all for this page')
 
         next_button.clicked.connect(lambda: self.table_cleaner(web, next_button, url, listWidget, counter))
-        generate_button.clicked.connect(self.generate_button_clicked)
+        generate_button.clicked.connect(lambda: self.generate_button_clicked(url[counter]))
         gen_all_button.clicked.connect(lambda: self.gen_all_button_cliked(url[counter]))
         if(len(url) == 1):
             next_button.hide()
@@ -294,7 +295,7 @@ class Ui_Main(QtWidgets.QWidget):
         else:
             counter += 1
             web.load(QUrl(url[counter]))
-            data = pomgen.idfinder(url[counter])
+            data = pomgen.elemfinder(url[counter])
             listWidget.clear()
             for i in data:
                 listWidget.addItem(i)
@@ -309,17 +310,18 @@ class Ui_Main(QtWidgets.QWidget):
             for i in range(len(items)):
                 selected.append(str(listWidget.selectedItems()[i].text()))
 
-    def generate_button_clicked(self):
+    def generate_button_clicked(self,url):
         global selected
-        for item in selected:
-            # genrete
-            print("generated for ", item)
+       # for item in selected:
+        print(selected)
+        pomgen.file_gen(url,selected) #### burası fixlencek
+        #print("generated for ", item)
 
     def gen_all_button_cliked(self,data):
         # data takes url
-        for i in data:
-            # genrate
-            print(i)
+        pomgen.file_gen(data,pomgen.elemfinder(data))
+        ####burası fixlencek
+        #print(i)
 
     def add_item_windget(self, windget, data):
         for i in data:
@@ -339,4 +341,6 @@ class Main(QMainWindow, Ui_Main):
 
     def OpenWindow2(self):
         self.QtStack.setCurrentIndex(2)
+
+
 

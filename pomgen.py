@@ -81,7 +81,8 @@ url = "http://localhost:8080/owners/new"
 def elemfinder(url):
     test1= idfinder(url)
     test2 = buttonfinder(url)
-    test1.append("<button class=\"btn btn-primary\" type=\"submit\">Add Owner</button>")
+    test1.append(test2)
+    testclass= classfinder(url)
+    test1.append(testclass)
     return test1
 print(elemfinder(url))
-

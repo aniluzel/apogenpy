@@ -31,9 +31,9 @@ def chrome_driver_downloader():
 
 def chromedriver_path_name():
     if sys.platform.startswith('linux'):
-        path = chromedriver_autoinstaller.get_chrome_version().split(".")[0] + '/chromedriver'
+        path = chromedriver_autoinstaller.get_chrome_version().split(".")[0] +'/chromedriver'
     elif sys.platform == 'darwin':
-        path = chromedriver_autoinstaller.get_chrome_version().split(".")[0] + '/chromedriver'
+        path = chromedriver_autoinstaller.get_chrome_version().split(".")[0] +'/chromedriver'
     elif sys.platform.startswith('win'):
         path = chromedriver_autoinstaller.get_chrome_version().split(".")[0] + '\chromedriver.exe'
     else:

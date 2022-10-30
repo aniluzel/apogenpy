@@ -1,295 +1,154 @@
-import PySimpleGUI as sg
+from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtCore import QUrl
+from PyQt5.QtWidgets import QApplication, QMainWindow, QLineEdit, QVBoxLayout, QProgressBar, QPushButton, QListWidget, \
+    QAbstractItemView, QWidget, QHBoxLayout, QCheckBox, QComboBox, QMessageBox
+from PyQt5.QtWidgets import QLabel
+from PyQt5.QtWebEngineWidgets import QWebEngineView as QWebView
+import sys
 import crawl
 import pomgen
-import sys
-from PyQt5.QtWidgets import QMainWindow,QWidget,QApplication
-from PyQt5.QtWebEngineWidgets import QWebEngineView as QWebView
-from PyQt5.QtCore import QUrl
-from PyQt5.QtCore import *
-from PyQt5.QtWidgets import *
 
 
-default_settings = [True, False, "Structural similarity", 0.92, 0.88, None]
-def gui_run():
-    def table_data(filtered):
-        sg.theme('Dark Blue')
+default_settings = [True, False, 1, 0.92, 0.88, None]
+filtered_data = []
+class Ui_Main(QtWidgets.QWidget):
+    def setupUi(self, Main):
+        Main.setObjectName("Main")
+        Main.resize(800, 480)
 
-        def make_table(num_rows, num_cols):
-            data = [[j for j in range(num_cols)] for i in range(num_rows)]
-            for i in range(len(filtered)):
-                data[i] = [filtered[i]]
+        self.QtStack = QtWidgets.QStackedLayout()
 
-            return data
+        self.stack1 = QtWidgets.QWidget()
+        self.stack2 = QtWidgets.QWidget()
+        self.stack3 = QtWidgets.QWidget()
+        self.stack4 = QtWidgets.QWidget()
 
-        table_size = len(filtered)
-        if table_size > 15:
-            table_size = 15
+        self.first_page()
+        #self.tableUI()
+        #self.settings()
 
-        data = make_table(num_rows=table_size, num_cols=1)
-        return data
+        self.QtStack.addWidget(self.stack1)
+        self.QtStack.addWidget(self.stack2)
+        self.QtStack.addWidget(self.stack3)
+        self.QtStack.addWidget(self.stack4)
 
-    def value_to_nums(val):
-        tmp = val["-TABLE-"]
-        return tmp
+    def first_page(self):
+        layout = QVBoxLayout()
+        self.stack1.resize(800, 480)
+        label1 = QLabel("Enter the URL of a domain that you want to crawl")
+        textbox = QLineEdit()
+        textbox.move(20, 20)
+        textbox.resize(280, 40)
+        #PushButton1#
+        PushButton1 = QtWidgets.QPushButton()
+        PushButton1.setText("Crawl")
+        PushButton1.setGeometry(QtCore.QRect(10, 10, 100, 100))
+        PushButton1.clicked.connect(lambda: self.on_click(textbox))
 
-    def loading_crawl(val):
-        layout = [[sg.T("Crawling", key="crawl_text")], [sg.ProgressBar(100, orientation='h', k="loading_bar")]]
+        #PushButton2#
+        setting_button = QtWidgets.QPushButton()
+        setting_button.setText("Settings")
+        setting_button.setGeometry(QtCore.QRect(150, 150, 100, 100))
+        setting_button.clicked.connect(self.settings_clicked)
 
-        window = sg.Window('Loading', layout, finalize=True, size=(300, 300))
+        # PushButton3#
+        exit_button = QtWidgets.QPushButton()
+        exit_button.setText("Exit")
+        exit_button.setGeometry(QtCore.QRect(150, 150, 100, 100))
+        exit_button.clicked.connect(self.closeEvent)
 
-        window['loading_bar'].update(10)
-        # crawling
-        c = crawl.CrawlerProcess({})
-        c.crawl(crawl.CrawlingSpider, start_urls=[val], allowed_domains=default_settings[5])
-        c.start()
-        window['loading_bar'].update(50)
-        window['crawl_text'].update("Similarity Check")
-        # filtering
-        filtered_data = crawl.sim_check(data=crawl.crawled_links, check_sim=default_settings[0],
-                                        check_url_sim=default_settings[1], param=default_settings[2],
-                                        web_page_similarity_percentage=default_settings[3],
-                                        web_path_similarity_percentage=default_settings[4])
-        #print(filtered_data)
-        window['loading_bar'].update(100)
-        window.close()
+        #layout
+        layout.addWidget(label1)
+        layout.addWidget(textbox)
+        layout.addWidget(PushButton1)
+        layout.addWidget(setting_button)
+        layout.addWidget(exit_button)
+        self.stack1.setLayout(layout)
 
-        while True:
-            event, values = window.read()
-            if event == sg.WIN_CLOSED or event == "Exit":
-                break
-            # True values of settings
+    def closeEvent(self, event):
 
-        return filtered_data
-        window.close()
+        reply = QMessageBox.question(
+            self, "Message",
+            "Are you sure you want to quit? Any unsaved work will be lost.",
+             QMessageBox.Close | QMessageBox.Cancel)
 
+        if reply == QMessageBox.Close:
+            #app.quit()
+            print("quit")
+            #remake quit
+        else:
+            pass
 
-    # ----------- Create the 3 layouts this Window will display -----------
-    start_layout = [[sg.Text('Enter the URL of a domain that you want to crawl')],
-                    [sg.Text('URL'), sg.InputText()],
-                    [sg.Button('Crawl'), sg.Button('Exit')], [sg.Button('Settings')]]
+    def settings_clicked(self):
+        self.settings()
+        self.QtStack.setCurrentIndex(3)
 
-    # table stuff
-    filtered = []
-
-    data = table_data(filtered)
-    headings = ["                    Crawled Links     "]
-    table_layout = [[sg.Table(values=data[0:][:], headings=headings, max_col_width=500,
-                              auto_size_columns=True,
-                              display_row_numbers=True,
-                              justification='right',
-                              num_rows=10,
-                              alternating_row_color='#000020',
-                              select_mode=sg.TABLE_SELECT_MODE_EXTENDED,
-                              enable_events=True,
-                              key='-TABLE-',
-                              col_widths=400,
-                              row_height=35)],
-                    [sg.Text('Additional URL'), sg.InputText(key='url'), sg.Button('Add URL')],
-                    [sg.Button('Continue with All'), sg.Button('Continue with Selected')],
-                    [sg.Text('Add URL = Adds a new domain to the list')],
-                    [sg.Text('Continue with All = Generate files with all available URLs')],
-                    [sg.Text('Continue with Selected = Generate files with selected URLs')]]
-    # table stuf end
-
-    settings_layout = [[sg.T("")], [sg.T("        "), sg.Button('Save Settings', size=(20, 4), key="save_button")],
-                       [sg.T("")],
-                       [sg.T("                   "),
-                        sg.Checkbox('Structure Similarity Check', default=default_settings[0], key="sim_check")],
-                       [sg.T("                   "),
-                        sg.Checkbox('URL Similarity Check', default=default_settings[1], key="url_sim")],
-                       [sg.T("Similarity percentage value"), sg.InputText("", key="sim_input")],
-                       [sg.T("Url Similarity percentage value"), sg.InputText("", key="url_input")],
-                       [sg.T("Enter domain "), sg.InputText("", key="domain_input")],
-                       [sg.T("Choose Similarity"),
-                        sg.OptionMenu(["Joint similarity", "Structural similarity", "Style similarity"],
-                                      default_value=default_settings[2], key='sim_type')]]
-
-    # ----------- Create actual layout using Columns and a row of Buttons
-    layout = [[sg.Column(start_layout, key='-COL1-'), sg.Column(settings_layout, visible=False, key='-COL2-'),
-               sg.Column(table_layout, visible=False, key='-COL3-')]]
-
-    window = sg.Window('Swapping the contents of a window', layout)
-    table = window['-TABLE-']
-    user_click = True
-    selected = []
-    layout = 1  # The currently visible layout
-    while True:
-        event, values = window.read()
-        print(event, values)
-        if event in (sg.WIN_CLOSED, 'Exit'):
-            break
-        elif event == 'Crawl':
-
-            window[f'-COL1-'].update(visible=False)
-            filtered_data = loading_crawl(values[0])
-            data = table_data(filtered_data)
-            window['-TABLE-'].update(values=data)
-            window[f'-COL3-'].update(visible=True)
-
-        elif event == 'Settings':
-            window[f'-COL1-'].update(visible=False)
-            window[f'-COL2-'].update(visible=True)
-        elif event == 'save_button':
-            default_settings[0] = values["sim_check"]
-            default_settings[1] = values["url_sim"]
-            default_settings[2] = values["sim_type"]
-            if values["sim_input"] != '':
-                default_settings[3] = values["sim_input"]
-            if values["url_input"] != '':
-                default_settings[4] = values["url_input"]
-            default_settings[5] = values["domain_input"]
-            # print(default_settings)
-            window[f'-COL2-'].update(visible=False)
-            window[f'-COL1-'].update(visible=True)
-            sg.popup_auto_close("Saved", auto_close_duration=1, no_titlebar=True)
-
-        elif event == 'Continue with All':
-            tmp = []
-            for i in data:
-                tmp.append(i[0])
-                # DEMO.demo_fun(i[0])
-
-                #web stuf
-            print("data =" ,data)
-            window.close()
-            web_list(tmp)
-
-
-                #pomgen.file_gen(i[0])
-
-        elif event == 'Continue with Selected':
-            needed = value_to_nums(values)
-            print("needed = ",needed)
-            selected_urls =[]
-            for i in needed:
-                selected_urls.append(data[i][0])
-
-                # added_links_array.append(array[0][i])
-                # DEMO.demo_fun(data[i][0]
-
-                #add data later
-                #print("selected urls = ",selected_urls)
-            window.close()
-            web_list(selected_urls)
-
-                #pomgen.file_gen(data[i][0],pomgen.elemfinder(data[i][0]))
-
-        # adds url to current set
-        elif event == 'Add URL':
-            # print(data[0])
-            data.append([values['url']])
-            # print(data)
-            window['-TABLE-'].update(values=data)
-            # print("url appended", values['url'])
-
-        # table click stuff
-        elif event == '-TABLE-':
-            if user_click:
-                if len(values['-TABLE-']) == 1:
-                    select = values['-TABLE-'][0]
-                    if select in selected:
-                        selected.remove(select)
-                    else:
-                        selected.append(select)
-                    table.update(select_rows=selected)
-                    user_click = False
-            else:
-                user_click = True
-        elif event == sg.WIN_CLOSED or event == 'Exit':
-            window.close()
-            break
-    window.close()
-
-
-
-#web page and list function
-class ListWidget(QListWidget):
-    def clicked(self, item):
-        #when clicked element selected higlight form html code
-        QMessageBox.information(self, "ListWidget", "ListWidget: " + item.text())
-
-
-# array with elment that are needed for web testing here
-def add_item_windget(windget, data):
-    for i in data:
-        windget.addItem(i)
-
-
-def get_url_from_web_view(web_view):
-    return web_view.url().toString()
-
-#temp data for list
-data_tmp = ["Item 1","Item 2","Item 3","item 4"]
-
-def update_counter(val):
-    global counter
-    counter = val
-    return counter
-
-
-#counter = 0
-def on_click(web,button,url,listWidget,counter):
-
-    if counter == len(url) - 1:
-        button.hide()
-    else:
-        counter += 1
-        web.load(QUrl(url[counter]))
-        data = pomgen.idfinder(url[counter])
-        listWidget.clear()
+    def update_table_with_arr(self, table, data):
         for i in data:
-            listWidget.addItem(i)
-            listWidget.repaint()
-    #print("next button clicked")
-    update_counter(counter)
-def web_list(url):
-    global counter
-    counter = 0
+            table.addItem(i)
+        table.repaint()
 
-    app = QApplication(sys.argv)
-    listWidget = QListWidget()
-    mainWindow = QMainWindow()
-    widget = QWidget()
-    web = QWebView()
-    web.load(QUrl(url[counter]))
-    data = pomgen.idfinder(url[counter])
-    next_button = QPushButton('Next page')
-    generate_button = QPushButton('Generate for selected')
-    gen_all_button = QPushButton('Generate all for this page')
+    def update_table(self, table, data):
+        table.addItem(data)
+        table.repaint()
 
-    next_button.clicked.connect(lambda: on_click(web,next_button,url,listWidget,counter))
-    generate_button.clicked.connect(generate_button_clicked)
-    gen_all_button.clicked.connect(lambda: gen_all_button_cliked(url[counter]))
+    def tableUI(self):
+        global filtered_data
+        self.stack2.resize(800, 480)
+        print(filtered_data,"sadfasdf")
+        data = filtered_data
+        table_layout = QVBoxLayout()
+        table = QListWidget()
+        table.resize(300, 120)
+        #update_table(table)
+        for i in data:
+            print(i)
+            table.addItem(i)
+        table.setSelectionMode(QAbstractItemView.MultiSelection)
+        table.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
+        table.repaint()
+        table.update()
+        table.itemClicked.connect(lambda: self.add_selected(table))
 
-    #print(get_url_from_web_view(web))
-    main_layout = QHBoxLayout()
-    but_list_layout = QVBoxLayout()
-    but_list_layout.addWidget(listWidget)
-    but_list_layout.addWidget(next_button)
-    but_list_layout.addWidget(generate_button)
-    but_list_layout.addWidget(gen_all_button)
+        add_url_layout = QHBoxLayout()
+        add_url_label = QLabel("Similarity percentage value")
+        add_url_textbox = QLineEdit()
+        add_url_layout.addWidget(add_url_label)
+        add_url_layout.addWidget(add_url_textbox)
 
-    main_layout.addWidget(web)
 
-    listWidget.resize(300, 120)
-    add_item_windget(listWidget, data)
-    listWidget.setSelectionMode(QAbstractItemView.MultiSelection)
-    listWidget.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
-    #listWidget.itemClicked.connect(listWidget.clicked)
-    listWidget.itemClicked.connect(lambda: printItemText(listWidget))
+        #print(filtered_data )
+        #self.table_layout.addWidget()
+        #self.stack2.setLayout(self.load_layout)
 
-    #hor_Layout.addWidget(listWidget)
-    #hor_Layout.addWidget(button)
-    main_layout.addLayout(but_list_layout)
-    mainWindow.resize(1000,800)
-    widget.setLayout(main_layout)
-    mainWindow.setCentralWidget(widget)
-    mainWindow.setWindowTitle("Apogenpy")
+        sel = QPushButton('Selected')
+        all_sel = QPushButton('All')
+        add = QPushButton('add url')
 
-    mainWindow.show()
-    sys.exit(app.exec_())
+        sel.clicked.connect(lambda: self.selected_url_click())
+        all_sel.clicked.connect(lambda: self.all_sel_click(data))
+        add.clicked.connect(lambda: self.add_click(table,add_url_textbox.text()) )
+        #self.all_sel.clicked.connect()
+        #self.add.clicked.connect()
 
-def printItemText(listWidget):
+
+        table_layout.addWidget(table)
+        table_layout.addLayout(add_url_layout)
+        table_layout.addWidget(sel)
+        table_layout.addWidget(all_sel)
+        table_layout.addWidget(add)
+
+        #if (not self.stack2.layout()):
+        self.stack2.setLayout(table_layout)
+
+    def all_sel_click(self,data):
+        self.web_list(data)
+        self.QtStack.setCurrentIndex(2)
+
+    def add_click(self, table,data):
+        self.update_table(table,data)
+
+    def add_selected(self,listWidget):
         items = listWidget.selectedItems()
         global selected
         selected = []
@@ -297,195 +156,187 @@ def printItemText(listWidget):
             selected.append(str(listWidget.selectedItems()[i].text()))
 
 
-def generate_button_clicked():
-    global selected
-    for item in selected:
-        # genrete
-        print("generated for ",item)
+    def selected_url_click(self):
+        global selected
+        self.web_list(selected)
+        self.QtStack.setCurrentIndex(2)
 
-def gen_all_button_cliked(data):
-    #data takes url
-    for i in data:
-        #genrate
-        print(i)
+    def settings(self):
+        self.stack3.resize(800, 480)
+        settings_layout = QVBoxLayout()
+        #performing sim similarity check
+        checkbox_layout = QHBoxLayout()
+        sim_check = QCheckBox("Structure Similarity Check")
+        sim_check.setChecked(default_settings[0])
+        checkbox_layout.addWidget(sim_check)
+
+        #perfroming url similarity check
+        url_sim = QCheckBox("URL Similarity Check")
+        url_sim.setChecked(default_settings[1])
+        checkbox_layout.addWidget(url_sim)
+        #
+        percentage_layout = QHBoxLayout()
+        percentage_sim_label = QLabel("Similarity percentage value")
+        percentage_sim_textbox = QLineEdit()
+        percentage_layout.addWidget(percentage_sim_label)
+        percentage_layout.addWidget(percentage_sim_textbox)
+        #
+        url_layout =QHBoxLayout()
+        percentage_url_label = QLabel("Url Similarity percentage value")
+        percentage_url_textbox = QLineEdit()
+        url_layout.addWidget(percentage_url_label)
+        url_layout.addWidget(percentage_url_textbox)
+
+        domain_layout = QHBoxLayout()
+        domain_label = QLabel("Enter domain ")
+        domain_textbox = QLineEdit()
+        domain_layout.addWidget(domain_label)
+        domain_layout.addWidget(domain_textbox)
+
+        combobox1 = QComboBox()
+        combobox1.addItem('Joint similarity')
+        combobox1.addItem('Structural similarity')
+        combobox1.addItem('Style similarity')
+
+        combobox1.setCurrentIndex(default_settings[2])
+
+        save_button = QPushButton("Save")
+        save_button.clicked.connect(lambda: self.save_cliked(sim_check.isChecked(),url_sim.isChecked(),combobox1.currentIndex(),percentage_sim_textbox.text(),percentage_url_textbox.text(),domain_textbox.text()))
+
+        settings_layout.addLayout(checkbox_layout)
+        settings_layout.addLayout(percentage_layout)
+        settings_layout.addLayout(url_layout)
+        settings_layout.addLayout(domain_layout)
+        settings_layout.addWidget(combobox1)
+        settings_layout.addWidget(save_button)
+        self.stack4.setLayout(settings_layout)
 
 
-#old gui
-# def gui_run():
-#     sg.theme('Dark Blue')
-#     layout = [[sg.Text('Enter the URL of a domain that you want to crawl')],
-#               [sg.Text('URL'), sg.InputText()],
-#               [sg.Button('Crawl'), sg.Button('Exit')], [sg.Button('Settings')]]
-#     window = sg.Window('ApogenPy', layout, size=(600, 250))
-#
-#     while True:
-#         event, values = window.read()
-#         if event == 'Crawl':
-#             filtered_data = []
-#
-#
-#             print(filtered_data)
-#             #close current window
-#             window.close()
-#             #open table window
-#             open_table_window(loading_crawl(values[0]))
-#
-#         elif event == 'Settings':
-#             settings_window()
-#
-#         elif event == sg.WIN_CLOSED or event == 'Exit':
-#             window.close()
-#             break
-#
-#     window.close()
-#
-#
-# # default loaded settings
-# default_settings = [True, False, "Structural similarity",0.92,0.88,None]
-#
-#
-# def settings_window():
-#     layout = [[sg.T("")], [sg.T("        "), sg.Button('Save Settings', size=(20, 4), key="save_button")], [sg.T("")],
-#               [sg.T("                   "),
-#                sg.Checkbox('Structure Similarity Check', default=default_settings[0], key="sim_check")],
-#               [sg.T("                   "),
-#                sg.Checkbox('URL Similarity Check', default=default_settings[1], key="url_sim")],[sg.T("Similarity percentage value"),sg.InputText("",key="sim_input")],[sg.T("Url Similarity percentage value"),sg.InputText("",key="url_input")],[sg.T("Enter domain "),sg.InputText("",key="domain_input")],
-#               [sg.T("Choose Similarity"),
-#                sg.OptionMenu(["Joint similarity", "Structural similarity", "Style similarity"],
-#                              default_value=default_settings[2], key='sim_type')]]
-#
-#     window = sg.Window('Settings', layout, size=(300, 300))
-#
-#     while True:
-#         event, values = window.read()
-#         if event == sg.WIN_CLOSED or event == "Exit":
-#             break
-#         # True values of settings
-#         elif event == 'save_button':
-#             default_settings[0] = values["sim_check"]
-#             default_settings[1] = values["url_sim"]
-#             default_settings[2] = values["sim_type"]
-#             default_settings[3] = values["sim_input"]
-#             default_settings[4] = values["url_input"]
-#             default_settings[5] = values["domain_input"]
-#             #print(default_settings)
-#             window.close()
-#             sg.popup_auto_close("Saved",auto_close_duration=1,no_titlebar=True)
-#
-#
-#     window.close()
-#
-#
-# def loading_crawl(val):
-#     layout = [[sg.T("Crawling", key="crawl_text")], [sg.ProgressBar(100, orientation='h', k="loading_bar")]]
-#
-#     window = sg.Window('Loading', layout, finalize=True, size=(300, 300))
-#
-#     window['loading_bar'].update(10)
-#     # crawling
-#     c = crawl.CrawlerProcess({})
-#     c.crawl(crawl.CrawlingSpider, start_urls=[val],allowed_domains=default_settings[5])
-#     c.start()
-#     window['loading_bar'].update(50)
-#     window['crawl_text'].update("Similarity Check")
-#     # filtering
-#     print(default_settings[3],"def")
-#     filtered_data = crawl.sim_check(data=crawl.crawled_links, check_sim=default_settings[0],
-#                                     check_url_sim=default_settings[1], param=default_settings[2],web_page_similarity_percentage=default_settings[3],web_path_similarity_percentage=default_settings[4])
-#     print(filtered_data)
-#     window['loading_bar'].update(100)
-#     window.close()
-#
-#     while True:
-#         event, values = window.read()
-#         if event == sg.WIN_CLOSED or event == "Exit":
-#             break
-#         # True values of settings
-#
-#     return filtered_data
-#     window.close()
-#
-# def open_table_window(filtered):
-#     sg.theme('Dark Blue')
-#
-#     def value_to_nums(val):
-#         tmp = val["-TABLE-"]
-#         return tmp
-#
-#     def make_table(num_rows, num_cols):
-#         data = [[j for j in range(num_cols)] for i in range(num_rows)]
-#         for i in range(len(filtered)):
-#             data[i] = [filtered[i]]
-#
-#         return data
-#
-#     table_size = len(filtered)
-#     if table_size > 15:
-#         table_size = 15
-#
-#     data = make_table(num_rows=table_size, num_cols=1)
-#     headings = ["                    Crawled Links     "]
-#
-#     layout = [[sg.Table(values=data[0:][:], headings=headings, max_col_width=500,
-#                         auto_size_columns=True,
-#                         display_row_numbers=True,
-#                         justification='right',
-#                         num_rows=table_size,
-#                         alternating_row_color='#000020',
-#                         select_mode=sg.TABLE_SELECT_MODE_EXTENDED,
-#                         enable_events=True,
-#                         key='-TABLE-',
-#                         col_widths=400,
-#                         row_height=35)],
-#               [sg.Text('Additional URL'), sg.InputText(key='url'), sg.Button('Add URL')],
-#               [sg.Button('Continue with All'), sg.Button('Continue with Selected')],
-#               [sg.Text('Add URL = Adds a new domain to the list')],
-#               [sg.Text('Continue with All = Generate files with all available URLs')],
-#               [sg.Text('Continue with Selected = Generate files with selected URLs')]]
-#
-#     window = sg.Window('ApogenPy', layout, finalize=True, size=(520, 530))
-#     table = window['-TABLE-']
-#
-#     user_click = True
-#     selected = []
-#     added_links_array = []
-#     while True:
-#         event, values = window.read()
-#         if event == sg.WIN_CLOSED:
-#             break
-#             window['-TABLE-'].update(values=data)
-#         elif event == 'Continue with All':
-#             for i in data:
-#                 # DEMO.demo_fun(i[0])
-#                 pomgen.file_gen(i[0])
-#
-#         elif event == 'Continue with Selected':
-#             needed = value_to_nums(values)
-#             for i in needed:
-#                 # added_links_array.append(array[0][i])
-#                 # DEMO.demo_fun(data[i][0]
-#                 pomgen.file_gen(data[i][0])
-#
-#         # adds url to current set
-#         elif event == 'Add URL':
-#             # print(data[0])
-#             data.append([values['url']])
-#             # print(data)
-#             window['-TABLE-'].update(values=data)
-#             # print("url appended", values['url'])
-#
-#         # table click stuff
-#         elif event == '-TABLE-':
-#             if user_click:
-#                 if len(values['-TABLE-']) == 1:
-#                     select = values['-TABLE-'][0]
-#                     if select in selected:
-#                         selected.remove(select)
-#                     else:
-#                         selected.append(select)
-#                     table.update(select_rows=selected)
-#                     user_click = False
-#             else:
-#                 user_click = True
-#
-#     window.close()
+    def save_cliked(self,sim, url, index,per_sim,per_url,dom):
+        #print("saved")
+        default_settings[0] = sim
+        default_settings[1] = url
+        default_settings[2] = index
+        if per_sim != '':
+            default_settings[3] = per_sim
+        if per_url != '':
+            default_settings[4] = per_url
+        default_settings[5] = dom
+        self.QtStack.setCurrentIndex(0)
+        print(default_settings)
+
+    def on_click(self,textbox):
+        global filtered_data
+        self.QtStack.setCurrentIndex(1)
+        c = crawl.CrawlerProcess({})
+
+        c.crawl(crawl.CrawlingSpider, start_urls=[textbox.text()], allowed_domains=default_settings[5])
+        c.start()
+
+        # filtering
+        filtered_data = crawl.sim_check(data=crawl.crawled_links, check_sim=default_settings[0],
+                                        check_url_sim=default_settings[1], param=default_settings[2],
+                                        web_page_similarity_percentage=default_settings[3],
+                                        web_path_similarity_percentage=default_settings[4])
+
+        self.tableUI()
+        #update_table(self.st)
+
+        #print(filtered_data)
+
+        #self.QtStack.addWidget(self.tableUI)
+         # crawling
+
+    def web_list(self,url):
+        global counter
+        counter = 0
+        listWidget = QListWidget()
+        web = QWebView()
+        web.load(QUrl(url[counter]))
+        data = pomgen.idfinder(url[counter])
+        next_button = QPushButton('Next page')
+        generate_button = QPushButton('Generate for selected')
+        gen_all_button = QPushButton('Generate all for this page')
+
+        next_button.clicked.connect(lambda: self.table_cleaner(web, next_button, url, listWidget, counter))
+        generate_button.clicked.connect(self.generate_button_clicked)
+        gen_all_button.clicked.connect(lambda: self.gen_all_button_cliked(url[counter]))
+        if(len(url) == 1):
+            next_button.hide()
+
+        main_layout = QHBoxLayout()
+        but_list_layout = QVBoxLayout()
+        but_list_layout.addWidget(listWidget)
+        but_list_layout.addWidget(next_button)
+        but_list_layout.addWidget(generate_button)
+        but_list_layout.addWidget(gen_all_button)
+
+        main_layout.addWidget(web)
+
+        listWidget.resize(300, 120)
+        self.add_item_windget(listWidget, data)
+        listWidget.setSelectionMode(QAbstractItemView.MultiSelection)
+        listWidget.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
+        listWidget.itemClicked.connect(lambda: self.printItemText(listWidget))
+
+
+        main_layout.addLayout(but_list_layout)
+        self.stack3.setLayout(main_layout)
+
+    def update_counter(self,val):
+        global counter
+        counter = val
+        return counter
+
+    def table_cleaner(self,web, button, url, listWidget, counter):
+        if counter == len(url) - 1:
+            button.hide()
+        else:
+            counter += 1
+            web.load(QUrl(url[counter]))
+            data = pomgen.idfinder(url[counter])
+            listWidget.clear()
+            for i in data:
+                listWidget.addItem(i)
+                listWidget.repaint()
+        # print("next button clicked")
+        self.update_counter(counter)
+
+    def printItemText(self,listWidget):
+            items = listWidget.selectedItems()
+            global selected
+            selected = []
+            for i in range(len(items)):
+                selected.append(str(listWidget.selectedItems()[i].text()))
+
+    def generate_button_clicked(self):
+        global selected
+        for item in selected:
+            # genrete
+            print("generated for ", item)
+
+    def gen_all_button_cliked(self,data):
+        # data takes url
+        for i in data:
+            # genrate
+            print(i)
+
+    def add_item_windget(self, windget, data):
+        for i in data:
+            windget.addItem(i)
+
+class Main(QMainWindow, Ui_Main):
+    def __init__(self, parent=None):
+        super(Main, self).__init__(parent)
+        self.setupUi(self)
+
+
+       # self.PushButton1.clicked.connect(self.OpenWindow1)
+        #self.PushButton2.clicked.connect(self.OpenWindow2)
+
+    # def OpenWindow1(self):
+    #     self.QtStack.setCurrentIndex(1)
+
+    def OpenWindow2(self):
+        self.QtStack.setCurrentIndex(2)
+

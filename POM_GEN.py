@@ -7,12 +7,13 @@ import time
 import utils
 
 # new_path
+# utils.chrome_driver_downloader()
 #path utils.chromedriver_autoinstaller.get_chrome_version().split(".")[0]+'\chromedriver.exe
 chrome_driver_path = utils.chromedriver_path_name()
 print(chrome_driver_path)
-#service = Service(chrome_driver_path)
-#driver = webdriver.Chrome(service=service) test
-#driver.get("https://www.google.com")
+# service = Service(chrome_driver_path)
+# driver = webdriver.Chrome(service=service)
+# driver.get("https://www.google.com")
 # windows_old
 # chrome_driver_path = r'C:\chromedriver.exe'
 

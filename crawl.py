@@ -57,7 +57,7 @@ def sim_check(data=[], web_page_similarity_percentage=0.92, web_path_similarity_
                 # Link 2
                 req2 = up[1]
                 # print("structural sim", structural_similarity(req1, req2))
-                if param == "Structural similarity":
+                if param == 1:
                     # if (structural_similarity(req1, req2), down[0], up[0]) < web_page_similarity_percentage:
                     if down[0] != up[0]:
                         if structural_similarity(req1, req2) > float(web_page_similarity_percentage):
@@ -65,13 +65,13 @@ def sim_check(data=[], web_page_similarity_percentage=0.92, web_path_similarity_
                             html_text.remove(up)
 
 
-                elif param == "Style similarity":
+                elif param == 2:
                     if down[0] != up[0]:
                         if style_similarity(req1, req2) > float(web_page_similarity_percentage):
                             #print("similarity ratio is = ",(style_similarity(req1, req2))," first link = ", down[0]," second link = ",up[0])
                             html_text.remove(up)
 
-                elif param == "Joint similarity":
+                elif param == 0:
                     if down[0] != up[0]:
                         if similarity(req1, req2, 0.3) > float(web_page_similarity_percentage):
                             #print("similarity ratio is = ",(similarity(req1, req2,0.3))," first link = ", down[0]," second link = ",up[0])

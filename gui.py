@@ -1,5 +1,5 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtCore import QUrl
+from PyQt5.QtCore import QUrl, QCoreApplication
 from PyQt5.QtWidgets import QApplication, QMainWindow, QLineEdit, QVBoxLayout, QProgressBar, QPushButton, QListWidget, \
     QAbstractItemView, QWidget, QHBoxLayout, QCheckBox, QComboBox, QMessageBox
 from PyQt5.QtWidgets import QLabel
@@ -7,7 +7,7 @@ from PyQt5.QtWebEngineWidgets import QWebEngineView as QWebView
 import sys
 import crawl
 import pomgen
-import main
+
 
 default_settings = [True, False, 1, 0.92, 0.88, None]
 filtered_data = []
@@ -55,7 +55,7 @@ class Ui_Main(QtWidgets.QWidget):
         exit_button = QtWidgets.QPushButton()
         exit_button.setText("Exit")
         exit_button.setGeometry(QtCore.QRect(150, 150, 100, 100))
-        exit_button.clicked.connect(self.closeEvent)
+        exit_button.clicked.connect(QCoreApplication.instance().quit)
 
         #layout
         layout.addWidget(label1)
@@ -65,20 +65,6 @@ class Ui_Main(QtWidgets.QWidget):
         layout.addWidget(exit_button)
         self.stack1.setLayout(layout)
 
-    def closeEvent(self, event):
-
-        reply = QMessageBox.question(
-            self, "Message",
-            "Are you sure you want to quit? Any unsaved work will be lost.",
-             QMessageBox.Close | QMessageBox.Cancel)
-
-        if reply == QMessageBox.Close:
-            #app.quit()
-
-            print("quit")
-            #remake quit
-        else:
-            pass
 
     def settings_clicked(self):
         self.settings()
@@ -344,3 +330,7 @@ class Main(QMainWindow, Ui_Main):
 
 
 
+def gui_start():
+    app = QApplication(sys.argv)
+    showMain = Main()
+    sys.exit(app.exec_())

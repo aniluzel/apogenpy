@@ -1,3 +1,4 @@
+from urllib.parse import urlparse
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import QUrl, QCoreApplication
 from PyQt5.QtWidgets import QApplication, QMainWindow, QLineEdit, QVBoxLayout, QProgressBar, QPushButton, QListWidget, \
@@ -9,23 +10,26 @@ import crawl
 import pomgen
 
 
+
 default_settings = [True, False, 1, 0.92, 0.88, None]
 filtered_data = []
 class Ui_Main(QtWidgets.QWidget):
     def setupUi(self, Main):
         Main.setObjectName("Main")
         Main.resize(800, 480)
-
         self.QtStack = QtWidgets.QStackedLayout()
+
 
         self.stack1 = QtWidgets.QWidget()
         self.stack2 = QtWidgets.QWidget()
         self.stack3 = QtWidgets.QWidget()
         self.stack4 = QtWidgets.QWidget()
-
+        self.stack1.setWindowTitle("ApogenPy")
+        self.stack2.setWindowTitle("ApogenPy")
+        self.stack3.setWindowTitle("ApogenPy")
+        self.stack4.setWindowTitle("ApogenPy")
         self.first_page()
-        #self.tableUI()
-        #self.settings()
+
 
         self.QtStack.addWidget(self.stack1)
         self.QtStack.addWidget(self.stack2)
@@ -33,8 +37,9 @@ class Ui_Main(QtWidgets.QWidget):
         self.QtStack.addWidget(self.stack4)
 
     def first_page(self):
+
         layout = QVBoxLayout()
-        self.stack1.resize(800, 480)
+        #self.stack1.resize(800, 480)
         label1 = QLabel("Enter the URL of a domain that you want to crawl")
         textbox = QLineEdit()
         textbox.move(20, 20)
@@ -81,8 +86,7 @@ class Ui_Main(QtWidgets.QWidget):
 
     def tableUI(self):
         global filtered_data
-        self.stack2.resize(800, 480)
-        print(filtered_data,"sadfasdf")
+        #self.stack2.resize(800, 480)
         data = filtered_data
         table_layout = QVBoxLayout()
         table = QListWidget()
@@ -187,7 +191,7 @@ class Ui_Main(QtWidgets.QWidget):
 
         combobox1.setCurrentIndex(default_settings[2])
 
-        save_button = QPushButton("Save")
+        save_button = QPushButton("Save and Close")
         save_button.clicked.connect(lambda: self.save_cliked(sim_check.isChecked(),url_sim.isChecked(),combobox1.currentIndex(),percentage_sim_textbox.text(),percentage_url_textbox.text(),domain_textbox.text()))
 
         settings_layout.addLayout(checkbox_layout)
@@ -210,29 +214,38 @@ class Ui_Main(QtWidgets.QWidget):
             default_settings[4] = per_url
         default_settings[5] = dom
         self.QtStack.setCurrentIndex(0)
-        print(default_settings)
+
+
+    from urllib.parse import urlparse
+
+    def valid_url(self,to_validate: str) -> bool:
+        o = urlparse(to_validate)
+        return True if o.scheme and o.netloc else False
+
 
     def on_click(self,textbox):
         global filtered_data
         self.QtStack.setCurrentIndex(1)
         c = crawl.CrawlerProcess({})
+        #url validation
+        try:
+            if self.valid_url(textbox.text()):
+                c.crawl(crawl.CrawlingSpider, start_urls=[textbox.text()], allowed_domains=default_settings[5])
+                c.start()
 
-        c.crawl(crawl.CrawlingSpider, start_urls=[textbox.text()], allowed_domains=default_settings[5])
-        c.start()
+                # filtering
+                filtered_data = crawl.sim_check(data=crawl.crawled_links, check_sim=default_settings[0],
+                                                check_url_sim=default_settings[1], param=default_settings[2],
+                                                web_page_similarity_percentage=default_settings[3],
+                                                web_path_similarity_percentage=default_settings[4])
 
-        # filtering
-        filtered_data = crawl.sim_check(data=crawl.crawled_links, check_sim=default_settings[0],
-                                        check_url_sim=default_settings[1], param=default_settings[2],
-                                        web_page_similarity_percentage=default_settings[3],
-                                        web_path_similarity_percentage=default_settings[4])
+                self.tableUI()
+            else:
+                self.QtStack.setCurrentIndex(0)
+                QMessageBox.about(self, "Error", "Url is not valid")
+        except Exception as e:
+            QMessageBox.about(self, "Error has acquired", e)
 
-        self.tableUI()
-        #update_table(self.st)
-
-        #print(filtered_data)
-
-        #self.QtStack.addWidget(self.tableUI)
-         # crawling
 
     def web_list(self,url):
         global counter
@@ -244,15 +257,18 @@ class Ui_Main(QtWidgets.QWidget):
         next_button = QPushButton('Next page')
         generate_button = QPushButton('Generate for selected')
         gen_all_button = QPushButton('Generate all for this page')
+        current_url_label = QLabel("Elements of "+url[counter])
 
-        next_button.clicked.connect(lambda: self.table_cleaner(web, next_button, url, listWidget, counter))
+        next_button.clicked.connect(lambda: self.table_cleaner(web, next_button, url, listWidget, counter,current_url_label))
         generate_button.clicked.connect(lambda: self.generate_button_clicked(url[counter]))
         gen_all_button.clicked.connect(lambda: self.gen_all_button_cliked(url[counter]))
         if(len(url) == 1):
             next_button.hide()
 
+
         main_layout = QHBoxLayout()
         but_list_layout = QVBoxLayout()
+        but_list_layout.addWidget(current_url_label)
         but_list_layout.addWidget(listWidget)
         but_list_layout.addWidget(next_button)
         but_list_layout.addWidget(generate_button)
@@ -275,7 +291,7 @@ class Ui_Main(QtWidgets.QWidget):
         counter = val
         return counter
 
-    def table_cleaner(self,web, button, url, listWidget, counter):
+    def table_cleaner(self,web, button, url, listWidget, counter,current_url_label):
         if counter == len(url) - 1:
             button.hide()
         else:
@@ -287,6 +303,7 @@ class Ui_Main(QtWidgets.QWidget):
                 listWidget.addItem(i)
                 listWidget.repaint()
         # print("next button clicked")
+        current_url_label.setText("Elements of "+url[counter])
         self.update_counter(counter)
 
     def printItemText(self,listWidget):
@@ -317,18 +334,6 @@ class Main(QMainWindow, Ui_Main):
     def __init__(self, parent=None):
         super(Main, self).__init__(parent)
         self.setupUi(self)
-
-
-       # self.PushButton1.clicked.connect(self.OpenWindow1)
-        #self.PushButton2.clicked.connect(self.OpenWindow2)
-
-    # def OpenWindow1(self):
-    #     self.QtStack.setCurrentIndex(1)
-
-    def OpenWindow2(self):
-        self.QtStack.setCurrentIndex(2)
-
-
 
 def gui_start():
     app = QApplication(sys.argv)

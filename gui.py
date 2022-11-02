@@ -8,10 +8,11 @@ from PyQt5.QtWebEngineWidgets import QWebEngineView as QWebView
 import sys
 import crawl
 import pomgen
+import advertools as adv
 
 
 
-default_settings = [True, False, 1, 0.92, 0.88, None]
+default_settings = [False, False, 1, 0.92, 0.88, None,True]
 filtered_data = []
 class Ui_Main(QtWidgets.QWidget):
     def setupUi(self, Main):
@@ -24,6 +25,7 @@ class Ui_Main(QtWidgets.QWidget):
         self.stack2 = QtWidgets.QWidget()
         self.stack3 = QtWidgets.QWidget()
         self.stack4 = QtWidgets.QWidget()
+        self.stack5 = QtWidgets.QWidget()
         self.stack1.setWindowTitle("ApogenPy")
         self.stack2.setWindowTitle("ApogenPy")
         self.stack3.setWindowTitle("ApogenPy")
@@ -35,6 +37,7 @@ class Ui_Main(QtWidgets.QWidget):
         self.QtStack.addWidget(self.stack2)
         self.QtStack.addWidget(self.stack3)
         self.QtStack.addWidget(self.stack4)
+        self.QtStack.addWidget(self.stack5)
 
     def first_page(self):
 
@@ -48,11 +51,12 @@ class Ui_Main(QtWidgets.QWidget):
         PushButton1 = QtWidgets.QPushButton()
         PushButton1.setText("Crawl")
         PushButton1.setGeometry(QtCore.QRect(10, 10, 100, 100))
-        PushButton1.clicked.connect(lambda: self.on_click(textbox))
+        PushButton1.clicked.connect(lambda: self.crawl_button_action(textbox))
 
         #PushButton2#
         setting_button = QtWidgets.QPushButton()
         setting_button.setText("Settings")
+        self.settings()
         setting_button.setGeometry(QtCore.QRect(150, 150, 100, 100))
         setting_button.clicked.connect(self.settings_clicked)
 
@@ -72,7 +76,6 @@ class Ui_Main(QtWidgets.QWidget):
 
 
     def settings_clicked(self):
-        self.settings()
         self.QtStack.setCurrentIndex(3)
 
     def update_table_with_arr(self, table, data):
@@ -86,7 +89,7 @@ class Ui_Main(QtWidgets.QWidget):
 
     def tableUI(self):
         global filtered_data
-        #self.stack2.resize(800, 480)
+        self.stack2.resize(700, 400)
         data = filtered_data
         table_layout = QVBoxLayout()
         table = QListWidget()
@@ -102,7 +105,7 @@ class Ui_Main(QtWidgets.QWidget):
         table.itemClicked.connect(lambda: self.add_selected(table))
 
         add_url_layout = QHBoxLayout()
-        add_url_label = QLabel("Similarity percentage value")
+        add_url_label = QLabel("Additional url")
         add_url_textbox = QLineEdit()
         add_url_layout.addWidget(add_url_label)
         add_url_layout.addWidget(add_url_textbox)
@@ -114,7 +117,7 @@ class Ui_Main(QtWidgets.QWidget):
 
         sel = QPushButton('Selected')
         all_sel = QPushButton('All')
-        add = QPushButton('add url')
+        add = QPushButton('Add url')
 
         sel.clicked.connect(lambda: self.selected_url_click())
         all_sel.clicked.connect(lambda: self.all_sel_click(data))
@@ -165,6 +168,11 @@ class Ui_Main(QtWidgets.QWidget):
         url_sim = QCheckBox("URL Similarity Check")
         url_sim.setChecked(default_settings[1])
         checkbox_layout.addWidget(url_sim)
+        #advanced crawl
+        add_crawl = QCheckBox("Advanced crawling")
+        add_crawl.setChecked(default_settings[6])
+        checkbox_layout.addWidget(add_crawl)
+
         #
         percentage_layout = QHBoxLayout()
         percentage_sim_label = QLabel("Similarity percentage value")
@@ -192,7 +200,7 @@ class Ui_Main(QtWidgets.QWidget):
         combobox1.setCurrentIndex(default_settings[2])
 
         save_button = QPushButton("Save and Close")
-        save_button.clicked.connect(lambda: self.save_cliked(sim_check.isChecked(),url_sim.isChecked(),combobox1.currentIndex(),percentage_sim_textbox.text(),percentage_url_textbox.text(),domain_textbox.text()))
+        save_button.clicked.connect(lambda: self.save_cliked(sim_check.isChecked(),url_sim.isChecked(),combobox1.currentIndex(),percentage_sim_textbox.text(),percentage_url_textbox.text(),domain_textbox.text(),add_crawl.isChecked()))
 
         settings_layout.addLayout(checkbox_layout)
         settings_layout.addLayout(percentage_layout)
@@ -203,17 +211,36 @@ class Ui_Main(QtWidgets.QWidget):
         self.stack4.setLayout(settings_layout)
 
 
-    def save_cliked(self,sim, url, index,per_sim,per_url,dom):
+    def save_cliked(self,sim, url, index,per_sim,per_url,dom,add_crawl):
         #print("saved")
         default_settings[0] = sim
         default_settings[1] = url
         default_settings[2] = index
+        default_settings[6] = add_crawl
+        all_correct = True;
         if per_sim != '':
-            default_settings[3] = per_sim
+            if 0.1 <= float(per_sim) < 0.99:
+                default_settings[3] = per_sim
+            else:
+                all_correct = False
+                QMessageBox.about(self, "Input error", "Input must be between 0.1 < 0.99")
         if per_url != '':
-            default_settings[4] = per_url
-        default_settings[5] = dom
-        self.QtStack.setCurrentIndex(0)
+            if 0.1 <= float(per_url) < 0.99:
+                default_settings[4] = per_url
+            else:
+                all_correct = False
+                QMessageBox.about(self, "Input error", "Input must be between 0.1 < 0.99")
+
+        if dom != '':
+            if self.valid_url(dom):
+                default_settings[5] = dom
+            else:
+                all_correct = False
+                QMessageBox.about(self, "Error", "Url is not valid")
+        if all_correct:
+            self.QtStack.setCurrentIndex(0)
+        else:
+            self.QtStack.setCurrentIndex(3)
 
 
     from urllib.parse import urlparse
@@ -222,29 +249,74 @@ class Ui_Main(QtWidgets.QWidget):
         o = urlparse(to_validate)
         return True if o.scheme and o.netloc else False
 
+    def loadingUI(self,textbox):
 
-    def on_click(self,textbox):
+        # creating progress bar
+        loading_layout = QVBoxLayout()
+        self.loading_label = QLabel("Crawling")
+        self.pbar = QProgressBar(self)
+
+        # setting its geometry
+        self.pbar.setGeometry(30, 40, 200, 25)
+        loading_layout.addWidget(self.loading_label)
+        loading_layout.addWidget(self.pbar)
+
+        self.stack5.setLayout(loading_layout)
+
+
+
+
+
+    def crawl_filter_func(self,textbox):
         global filtered_data
-        self.QtStack.setCurrentIndex(1)
         c = crawl.CrawlerProcess({})
-        #url validation
+        # url validation
         try:
             if self.valid_url(textbox.text()):
+                self.loading_label.setText("Crawling")
+                self.pbar.setValue(10)
                 c.crawl(crawl.CrawlingSpider, start_urls=[textbox.text()], allowed_domains=default_settings[5])
                 c.start()
 
+                self.pbar.setValue(30)
+                url_data = adv.url_to_df(textbox.text())
+                domain = url_data["scheme"] + "://" + url_data["netloc"]
+                # print(domain[0],"<- domain")
+                tmp = []
+                self.pbar.setValue(50)
+                if default_settings[6]:
+
+                    if default_settings[5] == None:
+                        tmp = crawl.looping(crawl.crawl_one(textbox.text(), domain[0]), domain[0])
+                    else:
+                        tmp = crawl.looping(crawl.crawl_one(textbox.text(), default_settings[5]), default_settings[5])
+
+                for i in tmp:
+                    if i not in crawl.crawled_links:
+                        crawl.crawled_links.append(i)
+
                 # filtering
+                self.loading_label.setText("Filtering")
+                self.pbar.setValue(70)
                 filtered_data = crawl.sim_check(data=crawl.crawled_links, check_sim=default_settings[0],
                                                 check_url_sim=default_settings[1], param=default_settings[2],
                                                 web_page_similarity_percentage=default_settings[3],
                                                 web_path_similarity_percentage=default_settings[4])
 
+                self.pbar.setValue(100)
                 self.tableUI()
+                self.QtStack.setCurrentIndex(1)
             else:
                 self.QtStack.setCurrentIndex(0)
                 QMessageBox.about(self, "Error", "Url is not valid")
         except Exception as e:
             QMessageBox.about(self, "Error has acquired", e)
+
+    def crawl_button_action(self,textbox):
+        self.QtStack.setCurrentIndex(4)
+        self.loadingUI(textbox)
+        self.crawl_filter_func(textbox)
+
 
 
     def web_list(self,url):

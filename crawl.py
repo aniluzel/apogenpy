@@ -219,7 +219,7 @@ class CrawlingSpider(CrawlSpider):
 
 # simcheck
 # 0.48
-def sim_check(data=[], web_page_similarity_percentage=0.92, web_path_similarity_percentage=0.88, param="Structural similarity",
+def sim_check(data=[], web_page_similarity_percentage=0.92, web_path_similarity_percentage=0.91, param="Structural similarity",
               check_sim=True, check_url_sim=False):
     html_text = []
     result_final = []
@@ -229,18 +229,28 @@ def sim_check(data=[], web_page_similarity_percentage=0.92, web_path_similarity_
             html_text.append([i, requests.get(i).text])
 
         for down in html_text:
-            for up in reversed(html_text):
-                # Link 1
+            for up in html_text:
+                # Link 1 text
                 req1 = down[1]
-                # Link 2
+                # Link 2 text
                 req2 = up[1]
+
                 # print("structural sim", structural_similarity(req1, req2))
-                if param == 1:
-                    # if (structural_similarity(req1, req2), down[0], up[0]) < web_page_similarity_percentage:
-                    if down[0] != up[0]:
+
+                if param ==1:
+                    if req1 != req2:
                         if structural_similarity(req1, req2) > float(web_page_similarity_percentage):
-                            #print("similarity ratio is = ",(structural_similarity(req1, req2))," first link = ", down[0]," second link = ",up[0])
+                            print("similarity ratio is = ", (structural_similarity(req1, req2)), " first link = ",
+                                  down[0], " second link = ", up[0])
                             html_text.remove(up)
+
+
+                # if param == 1:
+                #     #
+                #     if down[0] != up[0]:
+                #         if structural_similarity(req1, req2) > float(web_page_similarity_percentage):
+                #             #print("similarity ratio is = ",(structural_similarity(req1, req2))," first link = ", down[0]," second link = ",up[0])
+                #             html_text.remove(up)
 
 
                 elif param == 2:

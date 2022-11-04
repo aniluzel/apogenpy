@@ -290,7 +290,7 @@ class Ui_Main(QtWidgets.QWidget):
                         tmp = crawl.looping(crawl.crawl_one(textbox.text(), domain[0]), domain[0])
                     else:
                         tmp = crawl.looping(crawl.crawl_one(textbox.text(), default_settings[5]), default_settings[5])
-
+                    crawl.driver.quit()
                 for i in tmp:
                     if i not in crawl.crawled_links:
                         crawl.crawled_links.append(i)
@@ -391,12 +391,14 @@ class Ui_Main(QtWidgets.QWidget):
         print(selected)
         pomgen.file_gen(url,selected) #### burası fixlencek
         #print("generated for ", item)
+        QMessageBox.about(self, "Generated", "For selected")
 
     def gen_all_button_cliked(self,data):
         # data takes url
         pomgen.file_gen(data,pomgen.elemfinder(data))
         ####burası fixlencek
         #print(i)
+        QMessageBox.about(self, "Generated", "For all")
 
     def add_item_windget(self, windget, data):
         for i in data:

@@ -12,7 +12,8 @@ import advertools as adv
 
 
 
-default_settings = [False, False, 1, 0.92, 0.88, None,True]
+
+default_settings = [False, False, 1, 0.92, 0.88, None,True,2]
 filtered_data = []
 class Ui_Main(QtWidgets.QWidget):
     def setupUi(self, Main):
@@ -94,9 +95,7 @@ class Ui_Main(QtWidgets.QWidget):
         table_layout = QVBoxLayout()
         table = QListWidget()
         table.resize(300, 120)
-        #update_table(table)
         for i in data:
-            print(i)
             table.addItem(i)
         table.setSelectionMode(QAbstractItemView.MultiSelection)
         table.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
@@ -151,9 +150,15 @@ class Ui_Main(QtWidgets.QWidget):
 
 
     def selected_url_click(self):
-        global selected
-        self.web_list(selected)
-        self.QtStack.setCurrentIndex(2)
+        try:
+            global selected
+            self.web_list(selected)
+            self.QtStack.setCurrentIndex(2)
+        except NameError:
+            QMessageBox.about(self, "Generated", "No links were selected")
+
+
+
 
     def settings(self):
         self.stack3.resize(800, 480)
@@ -232,18 +237,16 @@ class Ui_Main(QtWidgets.QWidget):
                 QMessageBox.about(self, "Input error", "Input must be between 0.1 < 0.99")
 
         if dom != '':
-            if self.valid_url(dom):
+            #if self.valid_url(dom):
                 default_settings[5] = dom
-            else:
-                all_correct = False
-                QMessageBox.about(self, "Error", "Url is not valid")
+            #else:
+            #    all_correct = False
+            #    QMessageBox.about(self, "Error", "Url is not valid")
         if all_correct:
             self.QtStack.setCurrentIndex(0)
         else:
             self.QtStack.setCurrentIndex(3)
 
-
-    from urllib.parse import urlparse
 
     def valid_url(self,to_validate: str) -> bool:
         o = urlparse(to_validate)
@@ -269,33 +272,40 @@ class Ui_Main(QtWidgets.QWidget):
 
     def crawl_filter_func(self,textbox):
         global filtered_data
-        c = crawl.CrawlerProcess({})
+
         # url validation
         try:
             if self.valid_url(textbox.text()):
                 self.loading_label.setText("Crawling")
                 self.pbar.setValue(10)
-                c.crawl(crawl.CrawlingSpider, start_urls=[textbox.text()], allowed_domains=default_settings[5])
+                c = crawl.CrawlerProcess({})
+                if(default_settings[5]== None):
+                    c.crawl(crawl.CrawlingSpider, start_urls=[textbox.text()], allowed_domains=default_settings[5])
+                else:
+                    c.crawl(crawl.CrawlingSpider, start_urls=[textbox.text()], allowed_domains=[default_settings[5]])
                 c.start()
 
                 self.pbar.setValue(30)
                 url_data = adv.url_to_df(textbox.text())
                 domain = url_data["scheme"] + "://" + url_data["netloc"]
-                # print(domain[0],"<- domain")
+                print(domain[0],"<- domain")
                 tmp = []
                 self.pbar.setValue(50)
                 if default_settings[6]:
-
                     if default_settings[5] == None:
-                        tmp = crawl.looping(crawl.crawl_one(textbox.text(), domain[0]), domain[0])
+                        tmp = crawl.looping(crawl.crawl_one(textbox.text(), domain[0]), domain[0], limit=20)
                     else:
-                        tmp = crawl.looping(crawl.crawl_one(textbox.text(), default_settings[5]), default_settings[5])
+                        tmp = crawl.looping(crawl.crawl_one(textbox.text(), default_settings[5]), default_settings[5], limit=20)
                     crawl.driver.quit()
+                #print(len(tmp),"tmp")
+
                 for i in tmp:
                     if i not in crawl.crawled_links:
-                        crawl.crawled_links.append(i)
+                        if domain[0] in str(i):
+                            crawl.crawled_links.append(i)
 
                 # filtering
+                #print(len(crawl.crawled_links),"crweld")
                 self.loading_label.setText("Filtering")
                 self.pbar.setValue(70)
                 filtered_data = crawl.sim_check(data=crawl.crawled_links, check_sim=default_settings[0],
@@ -309,12 +319,13 @@ class Ui_Main(QtWidgets.QWidget):
             else:
                 self.QtStack.setCurrentIndex(0)
                 QMessageBox.about(self, "Error", "Url is not valid")
-        except Exception as e:
-            QMessageBox.about(self, "Error has acquired", e)
+        except TypeError as e:
+             QMessageBox.about(self, "Error has acquired", str(e))
 
     def crawl_button_action(self,textbox):
-        self.QtStack.setCurrentIndex(4)
         self.loadingUI(textbox)
+        self.QtStack.setCurrentIndex(4)
+
         self.crawl_filter_func(textbox)
 
 
@@ -364,41 +375,41 @@ class Ui_Main(QtWidgets.QWidget):
         return counter
 
     def table_cleaner(self,web, button, url, listWidget, counter,current_url_label):
+        counter += 1
         if counter == len(url) - 1:
             button.hide()
-        else:
-            counter += 1
-            web.load(QUrl(url[counter]))
-            data = pomgen.elemfinder(url[counter])
-            listWidget.clear()
-            for i in data:
-                listWidget.addItem(i)
-                listWidget.repaint()
+        web.load(QUrl(url[counter]))
+        data = pomgen.elemfinder(url[counter])
+        listWidget.clear()
+        for i in data:
+            listWidget.addItem(i)
+            listWidget.repaint()
         # print("next button clicked")
         current_url_label.setText("Elements of "+url[counter])
         self.update_counter(counter)
 
     def printItemText(self,listWidget):
             items = listWidget.selectedItems()
-            global selected
-            selected = []
+            global selected_elements
+            selected_elements = []
             for i in range(len(items)):
-                selected.append(str(listWidget.selectedItems()[i].text()))
+                selected_elements.append(str(listWidget.selectedItems()[i].text()))
 
     def generate_button_clicked(self,url):
-        global selected
-       # for item in selected:
-        print(selected)
-        pomgen.file_gen(url,selected) #### burası fixlencek
-        #print("generated for ", item)
-        QMessageBox.about(self, "Generated", "For selected")
+        try:
+            global selected_elements
+            pomgen.file_gen(url, selected_elements)  #### burası fixlencek
+        except NameError:
+            QMessageBox.about(self, "Generated", "No elements were selected")
+        else:
+            #print("generated for ", item)
+            QMessageBox.about(self, "Generated", "Generated for selected")
 
     def gen_all_button_cliked(self,data):
         # data takes url
         pomgen.file_gen(data,pomgen.elemfinder(data))
         ####burası fixlencek
-        #print(i)
-        QMessageBox.about(self, "Generated", "For all")
+        QMessageBox.about(self, "Generated", "Generated for all")
 
     def add_item_windget(self, windget, data):
         for i in data:

@@ -1,5 +1,7 @@
+import selenium
 from scrapy.crawler import CrawlerProcess
 from scrapy import Item, Field
+from scrapy.spidermiddlewares import offsite
 from scrapy.spiders import CrawlSpider, Rule
 from scrapy.linkextractors import LinkExtractor
 from html_similarity import style_similarity, structural_similarity, similarity
@@ -13,6 +15,8 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
+import utils
+import re
 
 crawled_links = []
 # Define Browser Options
@@ -20,8 +24,10 @@ chrome_options = Options()
 chrome_options.add_argument("--headless")  # Hides the browser window
 # Reference the local Chromedriver instance
 #chrome_path = r'C:\chromedriver.exe'
-chrome_path = r'/Users/denis/Documents/CS401/apogenpyfolder/apogenpy/106/chromedriver'
-driver = webdriver.Chrome(executable_path=chrome_path, options=chrome_options)
+#chrome_path = r'/Users/denis/Documents/CS401/apogenpyfolder/apogenpy/106/chromedriver'
+chrome_driver_path = utils.chromedriver_path_name()
+print(chrome_driver_path)
+driver = webdriver.Chrome(executable_path=chrome_driver_path, options=chrome_options)
 # Run the Webdriver, save page an quit browser
 #driver.get("http://localhost:8080/owners/find")
 
@@ -63,27 +69,11 @@ def crawl_one(page_url, domain):
                 if driver.current_url + link.get('href') not in checked:
                     if driver.current_url + "/" + link.get('href') not in checked:
                         prev = driver.current_url
-                        # print(prev)
-                        # print(link.text)
-                        #  if "\n" not in link.text:
-                        #     # print("here")
-                        #      bt = driver.find_element(By.PARTIAL_LINK_TEXT, link.text)
-                        #  else:
-                        #      # print(link.text)
-                        #      yyt = link.text.split("\n", 1)
-                        #
-                        #      yyt = yyt[0] + yyt[1]
-                        #
-                        #      yyt = yyt.split(" ", 1)
-                        #    #  print(yyt[0])
-                        #      yyt = yyt[0].replace(" ", "") +" "+ yyt[1].lstrip(' ')
-                        #      # print(len(yyt))
-                        #    #  print(yyt + " ytt")
-                        #      bt = driver.find_element(By.PARTIAL_LINK_TEXT, yyt)
                         bt = WebDriverWait(driver, 10).until(
                             EC.element_to_be_clickable((By.XPATH, '//a[@href="' + link.get('href') + '"]')))
                         bt.click()
-                        print(driver.current_url + " == btn")
+                        #print(driver.current_url + " == btn")
+                        #if(domain in str(driver.current_url) ):
                         general.append(driver.current_url)
                         driver.get(prev)
 
@@ -92,6 +82,7 @@ def crawl_one(page_url, domain):
             elif link.get('class')[0] == "nav-link":
                 if domain + link.get('href') not in checked:
                     print(domain + link.get('href') + " == navlink")
+                    #if(domain in str(domain + link.get('href'))):
                     general.append(domain + link.get('href'))
 
             else:
@@ -101,14 +92,18 @@ def crawl_one(page_url, domain):
                 if link.get('class')[0] == "fa":
                     if domain + link.get('href') not in checked:
                         print(domain + link.get('href') + " == forward")
+                        #if(domain in str(domain + link.get('href'))):
                         general.append(domain + link.get('href'))
 
                 elif driver.current_url + link.get('href') not in checked:
-                    if driver.current_url + "/" + tmp3[1] not in checked:
+                    if(len(tmp3) >= 2):
                         if tmp3[1] != "":
-                            print(driver.current_url + "/" + tmp3[1] + " == not btn")
-
-                            general.append(driver.current_url + "/" + tmp3[1])
+                            if driver.current_url + "/" + tmp3[1] not in checked:
+                                print(driver.current_url + "/" + tmp3[1] + " == not btn")
+                                print(str(driver.current_url + "/" + tmp3[1]),"sd;fasdfsdf")
+                                print(domain,'dsfasdfs')
+                                #if(domain in str(driver.current_url + "/" + tmp3[1])):
+                                general.append(driver.current_url + "/" + tmp3[1])
 
 
 
@@ -117,76 +112,47 @@ def crawl_one(page_url, domain):
             tmp2 = tmp2.split("/", 1)
 
             if driver.current_url + link.get('href') not in checked:
+              if len(tmp2) >=2:
                 if driver.current_url + "/" + tmp2[1] not in checked:
                     prev1 = driver.current_url
                     # print(driver.current_url + " ==  current page")
                     # press = driver.find_element(By.PARTIAL_LINK_TEXT, element[0].lstrip(" ") + " " + element[1].lstrip(" "))
-
-                    press = WebDriverWait(driver, 10).until(
-                        EC.element_to_be_clickable((By.XPATH, '//a[@href="' + link.get('href') + '"]')))
-
-                    # press = driver.find_element(By.XPATH, '//a[@href="'+link.get('href')+'"]')
                     try:
+                        press = WebDriverWait(driver, 30).until(
+                            EC.element_to_be_clickable((By.XPATH, '//a[@href="' + link.get('href') + '"]')))
                         press.click()
                         print(driver.current_url + " == no class")
+                        #if(domain in str(driver.current_url)):
                         general.append(driver.current_url)
                         driver.get(prev1)
-                    except WebDriverException:
-                        print("Element is not clickable")
-                    # else:
-                    #
-                    #
-                    #     # if len(element) == 1:
-                    #     # # element[0] = element[0].replace("'", "")
-                    #     # # element[0] = element[0].replace("'", "")
-                    #     #     press = driver.find_element(By.PARTIAL_LINK_TEXT, str(element[0]))
-                    #     # else:
-                    #     #     press = driver.find_element(By.PARTIAL_LINK_TEXT, element)
-                    #     press = WebDriverWait(driver, 10).until(
-                    #         EC.element_to_be_clickable((By.XPATH, '//a[@href="' + link.get('href') + '"]')))
-                    #     press.click()
+                    except (selenium.common.exceptions.TimeoutException , WebDriverException , NameError, selenium.common.exceptions.StaleElementReferenceException,UnboundLocalError)as r:
+                        print(r)
 
-    # else:
-    #     # print(link.get('href'))
-    #     # print("not here")
-    #     tmp2 = link.get('href')
-    #     tmp2 = tmp2.split("/", 1)
-    #     if link.get('class') is not None:
-    #
-    #         # print(link.get('class')[0])
-    #         if link.get('class')[0] == "nav-link":
-    #             if domain + link.get('href')not in checked:
-    #                 print(domain + link.get('href')+" == navlink 2")
-    #                 general.append(domain + link.get('href'))
-    #                 count.append(0)
-    #     else:
-    #      if driver.current_url + link.get('href') not in checked:
-    #         if driver.current_url + "/" + tmp2[1] not in checked:
-    #             print(driver.current_url + "/" + tmp2[1] + " == array empty")
-    #             general.append(driver.current_url + link.get('href'))
-    #             count.append(0)
+
 
     for button_case in soup.find_all("button", type='submit'):
         if button_case.get('class')[1] == "btn-primary":
-
             button = driver.find_element(By.CLASS_NAME, button_case.get("class")[1])
             button.click()
-
             item = driver.current_url
 
             if item not in checked:
                 print(item + " == submit button")
+                #if(domain in str(item)):
                 general.append(item)
 
     return general
 
-
-def looping(array, domain):
+counter = 0
+def looping(array,domain,limit=15):
+    global counter
     for i in array:
         if i not in checked:
-            #if(i.__contains__(domain)):
+                if (counter == limit):
+                    break
                 checked.append(i)
-                looping(crawl_one(i, domain), domain)
+                counter += 1
+                looping(crawl_one(i, domain),domain,limit)
     return checked
 
 
@@ -194,13 +160,29 @@ class PageInfoItem(Item):
     URL = Field()
     pass
 
+class OffsiteMiddleware(offsite.OffsiteMiddleware):
+    def get_host_regex(self, spider):
+        regex = super().get_host_regex(spider)
+        # Remove optional .* (any subdomains) from regex
+        regex = regex.pattern.replace("(.*\.)?", "(www\.)?", 1)
+        return re.compile(regex)
+
 
 class CrawlingSpider(CrawlSpider):
     name = 'Kraken'
 
-    def __init__(self, allowed_domains=None, start_urls=None):
-        super().__init__()
+    custom_settings = {
+        "DEPTH_LIMIT": 50,
+        "SPIDER_MIDDLEWARES":{"scrapy.spidermiddlewares.offsite.OffsiteMiddleware": None,
+        OffsiteMiddleware: 500,},
+        "LOG_ENABLED": False,
+        "AJAXCRAWL_ENABLED": True,
+        "COOKIES_ENABLED": False
+    }
 
+    def __init__(self, allowed_domains=None, start_urls=None):
+
+        super().__init__()
         if allowed_domains is None:
             self.allowed_domains = []
         else:
@@ -211,14 +193,16 @@ class CrawlingSpider(CrawlSpider):
         else:
             self.start_urls = start_urls
 
+
+
     rules = [Rule(LinkExtractor(), callback='parse_pageinfo', follow=True)]
+
 
     def parse_pageinfo(self, response):
         crawled_links.append(response.url)
 
 
 # simcheck
-# 0.48
 def sim_check(data=[], web_page_similarity_percentage=0.92, web_path_similarity_percentage=0.91, param="Structural similarity",
               check_sim=True, check_url_sim=False):
     html_text = []

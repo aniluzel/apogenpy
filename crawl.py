@@ -43,111 +43,113 @@ def crawl_one(page_url, domain):
     driver.get(page_url)
     # Scroll page to load whole content
     last_height = driver.execute_script("return document.body.scrollHeight")
-    while True:
-        # Scroll down to the bottom.
-        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        # Wait to load the page
-        # time.sleep(2)
-        # Calculate new scroll height and compare with last height.
-        new_height = driver.execute_script("return document.body.scrollHeight")
-        if new_height == last_height:
-            break
-        last_height = new_height
+    try:
+        while True:
+            # Scroll down to the bottom.
+            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            # Wait to load the page
+            # time.sleep(2)
+            # Calculate new scroll height and compare with last height.
+            new_height = driver.execute_script("return document.body.scrollHeight")
+            if new_height == last_height:
+                break
+            last_height = new_height
 
-    htmltext = driver.page_source
+        htmltext = driver.page_source
 
-    # Parse HTML structure
-    soup = BeautifulSoup(htmltext, "html.parser")
+        # Parse HTML structure
+        soup = BeautifulSoup(htmltext, "html.parser")
 
-    for link in soup.find_all("a", href=True):
+        for link in soup.find_all("a", href=True):
 
-        if link.get('class') is not None:
+            if link.get('class') is not None:
 
-            if link.get('class')[0] == "btn":
-                tmp = link.get('href')
-                tmp = tmp.split("/", 2)
-                if driver.current_url + link.get('href') not in checked:
-                    if driver.current_url + "/" + link.get('href') not in checked:
-                        prev = driver.current_url
-                        bt = WebDriverWait(driver, 10).until(
-                            EC.element_to_be_clickable((By.XPATH, '//a[@href="' + link.get('href') + '"]')))
-                        bt.click()
-                        #print(driver.current_url + " == btn")
-                        #if(domain in str(driver.current_url) ):
-                        general.append(driver.current_url)
-                        driver.get(prev)
+                if link.get('class')[0] == "btn":
+
+                    if driver.current_url + link.get('href') not in checked:
+                        if driver.current_url + "/" + link.get('href') not in checked:
+                            prev = driver.current_url
+                            bt = WebDriverWait(driver, 10).until(
+                                EC.element_to_be_clickable((By.XPATH, '//a[@href="' + link.get('href') + '"]')))
+                            bt.click()
+                            #print(driver.current_url + " == btn")
+                            #if(domain in str(driver.current_url) ):
+                            general.append(driver.current_url)
+                            driver.get(prev)
 
 
-            # navlink parsing
-            elif link.get('class')[0] == "nav-link":
-                if domain + link.get('href') not in checked:
-                    print(domain + link.get('href') + " == navlink")
-                    #if(domain in str(domain + link.get('href'))):
-                    general.append(domain + link.get('href'))
-
-            else:
-                tmp3 = link.get('href')
-                tmp3 = tmp3.split("/", 1)
-
-                if link.get('class')[0] == "fa":
+                # navlink parsing
+                elif link.get('class')[0] == "nav-link":
                     if domain + link.get('href') not in checked:
-                        print(domain + link.get('href') + " == forward")
+                        print(domain + link.get('href') + " == navlink")
                         #if(domain in str(domain + link.get('href'))):
                         general.append(domain + link.get('href'))
 
-                elif driver.current_url + link.get('href') not in checked:
-                    if(len(tmp3) >= 2):
-                        if tmp3[1] != "":
-                            if driver.current_url + "/" + tmp3[1] not in checked:
-                                print(driver.current_url + "/" + tmp3[1] + " == not btn")
-                                print(str(driver.current_url + "/" + tmp3[1]),"sd;fasdfsdf")
-                                print(domain,'dsfasdfs')
-                                #if(domain in str(driver.current_url + "/" + tmp3[1])):
-                                general.append(driver.current_url + "/" + tmp3[1])
+                else:
+                    tmp3 = link.get('href')
+                    tmp3 = tmp3.split("/", 1)
+
+                    if link.get('class')[0] == "fa":
+                        if domain + link.get('href') not in checked:
+                            print(domain + link.get('href') + " == forward")
+                            #if(domain in str(domain + link.get('href'))):
+                            general.append(domain + link.get('href'))
+
+                    elif driver.current_url + link.get('href') not in checked:
+                        if(len(tmp3) >= 2):
+                            if tmp3[1] != "":
+                                if driver.current_url + "/" + tmp3[1] not in checked:
+                                    print(driver.current_url + "/" + tmp3[1] + " == not btn")
+                                    print(str(driver.current_url + "/" + tmp3[1]),"sd;fasdfsdf")
+                                    print(domain,'dsfasdfs')
+                                    #if(domain in str(driver.current_url + "/" + tmp3[1])):
+                                    general.append(driver.current_url + "/" + tmp3[1])
 
 
 
-        else:
-            tmp2 = link.get('href')
-            tmp2 = tmp2.split("/", 1)
+            else:
+                tmp2 = link.get('href')
+                tmp2 = tmp2.split("/", 1)
 
-            if driver.current_url + link.get('href') not in checked:
-              if len(tmp2) >=2:
-                if driver.current_url + "/" + tmp2[1] not in checked:
-                    prev1 = driver.current_url
-                    # print(driver.current_url + " ==  current page")
-                    # press = driver.find_element(By.PARTIAL_LINK_TEXT, element[0].lstrip(" ") + " " + element[1].lstrip(" "))
-                    try:
+                if driver.current_url + link.get('href') not in checked:
+                  if len(tmp2) >=2:
+                    if driver.current_url + "/" + tmp2[1] not in checked:
+                        prev1 = driver.current_url
+                        # print(driver.current_url + " ==  current page")
+                        # press = driver.find_element(By.PARTIAL_LINK_TEXT, element[0].lstrip(" ") + " " + element[1].lstrip(" "))
                         press = WebDriverWait(driver, 30).until(
-                            EC.element_to_be_clickable((By.XPATH, '//a[@href="' + link.get('href') + '"]')))
+                                EC.element_to_be_clickable((By.XPATH, '//a[@href="' + link.get('href') + '"]')))
                         press.click()
                         print(driver.current_url + " == no class")
                         #if(domain in str(driver.current_url)):
                         general.append(driver.current_url)
                         driver.get(prev1)
-                    except (selenium.common.exceptions.TimeoutException , WebDriverException , NameError, selenium.common.exceptions.StaleElementReferenceException,UnboundLocalError)as r:
-                        print(r)
 
 
 
-    for button_case in soup.find_all("button", type='submit'):
-        if button_case.get('class')[1] == "btn-primary":
-            button = driver.find_element(By.CLASS_NAME, button_case.get("class")[1])
-            button.click()
-            item = driver.current_url
+        for button_case in soup.find_all("button", type='submit'):
+            if button_case.get('class')[1] == "btn-primary":
+                button = driver.find_element(By.CLASS_NAME, button_case.get("class")[1])
+                button.click()
+                item = driver.current_url
 
-            if item not in checked:
-                print(item + " == submit button")
-                #if(domain in str(item)):
-                general.append(item)
+                if item not in checked:
+                    print(item + " == submit button")
+                    #if(domain in str(item)):
+                    general.append(item)
 
+    except (selenium.common.exceptions.TimeoutException, WebDriverException, NameError,
+        selenium.common.exceptions.StaleElementReferenceException, UnboundLocalError) as r:
+        print(r)
     return general
+
 
 counter = 0
 def looping(array,domain,limit=15):
     global counter
     for i in array:
         if i not in checked:
+            if str(domain) in str(i):
                 if (counter == limit):
                     break
                 checked.append(i)
@@ -194,13 +196,11 @@ class CrawlingSpider(CrawlSpider):
             self.start_urls = start_urls
 
 
-
     rules = [Rule(LinkExtractor(), callback='parse_pageinfo', follow=True)]
 
 
     def parse_pageinfo(self, response):
         crawled_links.append(response.url)
-
 
 # simcheck
 def sim_check(data=[], web_page_similarity_percentage=0.92, web_path_similarity_percentage=0.91, param="Structural similarity",

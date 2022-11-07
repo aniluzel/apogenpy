@@ -10,17 +10,15 @@ import crawl
 import pomgen
 import advertools as adv
 
-
-
-
-default_settings = [False, False, 1, 0.92, 0.88, None,True,2]
+default_settings = [False, False, 1, 0.92, 0.88, None, True, 2]
 filtered_data = []
+
+
 class Ui_Main(QtWidgets.QWidget):
     def setupUi(self, Main):
         Main.setObjectName("Main")
         Main.resize(800, 480)
         self.QtStack = QtWidgets.QStackedLayout()
-
 
         self.stack1 = QtWidgets.QWidget()
         self.stack2 = QtWidgets.QWidget()
@@ -31,6 +29,7 @@ class Ui_Main(QtWidgets.QWidget):
         self.stack2.setWindowTitle("ApogenPy")
         self.stack3.setWindowTitle("ApogenPy")
         self.stack4.setWindowTitle("ApogenPy")
+        self.stack5.setWindowTitle("ApogenPy")
         self.first_page()
 
 
@@ -43,21 +42,23 @@ class Ui_Main(QtWidgets.QWidget):
     def first_page(self):
 
         layout = QVBoxLayout()
-        #self.stack1.resize(800, 480)
+        # self.stack1.resize(800, 480)
         label1 = QLabel("Enter the URL of a domain that you want to crawl")
         textbox = QLineEdit()
         textbox.move(20, 20)
         textbox.resize(280, 40)
-        #PushButton1#
+        # PushButton1#
         PushButton1 = QtWidgets.QPushButton()
         PushButton1.setText("Crawl")
         PushButton1.setGeometry(QtCore.QRect(10, 10, 100, 100))
+        self.loadingUI()
         PushButton1.clicked.connect(lambda: self.crawl_button_action(textbox))
 
-        #PushButton2#
+        # PushButton2#
         setting_button = QtWidgets.QPushButton()
         setting_button.setText("Settings")
         self.settings()
+        #self.loadingUI()
         setting_button.setGeometry(QtCore.QRect(150, 150, 100, 100))
         setting_button.clicked.connect(self.settings_clicked)
 
@@ -67,14 +68,13 @@ class Ui_Main(QtWidgets.QWidget):
         exit_button.setGeometry(QtCore.QRect(150, 150, 100, 100))
         exit_button.clicked.connect(QCoreApplication.instance().quit)
 
-        #layout
+        # layout
         layout.addWidget(label1)
         layout.addWidget(textbox)
         layout.addWidget(PushButton1)
         layout.addWidget(setting_button)
         layout.addWidget(exit_button)
         self.stack1.setLayout(layout)
-
 
     def settings_clicked(self):
         self.QtStack.setCurrentIndex(3)
@@ -109,10 +109,9 @@ class Ui_Main(QtWidgets.QWidget):
         add_url_layout.addWidget(add_url_label)
         add_url_layout.addWidget(add_url_textbox)
 
-
-        #print(filtered_data )
-        #self.table_layout.addWidget()
-        #self.stack2.setLayout(self.load_layout)
+        # print(filtered_data )
+        # self.table_layout.addWidget()
+        # self.stack2.setLayout(self.load_layout)
 
         sel = QPushButton('Selected')
         all_sel = QPushButton('All')
@@ -120,10 +119,9 @@ class Ui_Main(QtWidgets.QWidget):
 
         sel.clicked.connect(lambda: self.selected_url_click())
         all_sel.clicked.connect(lambda: self.all_sel_click(data))
-        add.clicked.connect(lambda: self.add_click(table,add_url_textbox.text()) )
-        #self.all_sel.clicked.connect()
-        #self.add.clicked.connect()
-
+        add.clicked.connect(lambda: self.add_click(table, add_url_textbox.text()))
+        # self.all_sel.clicked.connect()
+        # self.add.clicked.connect()
 
         table_layout.addWidget(table)
         table_layout.addLayout(add_url_layout)
@@ -131,23 +129,22 @@ class Ui_Main(QtWidgets.QWidget):
         table_layout.addWidget(all_sel)
         table_layout.addWidget(add)
 
-        #if (not self.stack2.layout()):
+        # if (not self.stack2.layout()):
         self.stack2.setLayout(table_layout)
 
-    def all_sel_click(self,data):
+    def all_sel_click(self, data):
         self.web_list(data)
         self.QtStack.setCurrentIndex(2)
 
-    def add_click(self, table,data):
-        self.update_table(table,data)
+    def add_click(self, table, data):
+        self.update_table(table, data)
 
-    def add_selected(self,listWidget):
+    def add_selected(self, listWidget):
         items = listWidget.selectedItems()
         global selected
         selected = []
         for i in range(len(items)):
             selected.append(str(listWidget.selectedItems()[i].text()))
-
 
     def selected_url_click(self):
         try:
@@ -157,23 +154,20 @@ class Ui_Main(QtWidgets.QWidget):
         except NameError:
             QMessageBox.about(self, "Generated", "No links were selected")
 
-
-
-
     def settings(self):
         self.stack3.resize(800, 480)
         settings_layout = QVBoxLayout()
-        #performing sim similarity check
+        # performing sim similarity check
         checkbox_layout = QHBoxLayout()
         sim_check = QCheckBox("Structure Similarity Check")
         sim_check.setChecked(default_settings[0])
         checkbox_layout.addWidget(sim_check)
 
-        #perfroming url similarity check
+        # perfroming url similarity check
         url_sim = QCheckBox("URL Similarity Check")
         url_sim.setChecked(default_settings[1])
         checkbox_layout.addWidget(url_sim)
-        #advanced crawl
+        # advanced crawl
         add_crawl = QCheckBox("Advanced crawling")
         add_crawl.setChecked(default_settings[6])
         checkbox_layout.addWidget(add_crawl)
@@ -185,7 +179,7 @@ class Ui_Main(QtWidgets.QWidget):
         percentage_layout.addWidget(percentage_sim_label)
         percentage_layout.addWidget(percentage_sim_textbox)
         #
-        url_layout =QHBoxLayout()
+        url_layout = QHBoxLayout()
         percentage_url_label = QLabel("Url Similarity percentage value")
         percentage_url_textbox = QLineEdit()
         url_layout.addWidget(percentage_url_label)
@@ -205,7 +199,10 @@ class Ui_Main(QtWidgets.QWidget):
         combobox1.setCurrentIndex(default_settings[2])
 
         save_button = QPushButton("Save and Close")
-        save_button.clicked.connect(lambda: self.save_cliked(sim_check.isChecked(),url_sim.isChecked(),combobox1.currentIndex(),percentage_sim_textbox.text(),percentage_url_textbox.text(),domain_textbox.text(),add_crawl.isChecked()))
+        save_button.clicked.connect(
+            lambda: self.save_cliked(sim_check.isChecked(), url_sim.isChecked(), combobox1.currentIndex(),
+                                     percentage_sim_textbox.text(), percentage_url_textbox.text(),
+                                     domain_textbox.text(), add_crawl.isChecked()))
 
         settings_layout.addLayout(checkbox_layout)
         settings_layout.addLayout(percentage_layout)
@@ -215,9 +212,8 @@ class Ui_Main(QtWidgets.QWidget):
         settings_layout.addWidget(save_button)
         self.stack4.setLayout(settings_layout)
 
-
-    def save_cliked(self,sim, url, index,per_sim,per_url,dom,add_crawl):
-        #print("saved")
+    def save_cliked(self, sim, url, index, per_sim, per_url, dom, add_crawl):
+        # print("saved")
         default_settings[0] = sim
         default_settings[1] = url
         default_settings[2] = index
@@ -237,23 +233,21 @@ class Ui_Main(QtWidgets.QWidget):
                 QMessageBox.about(self, "Input error", "Input must be between 0.1 < 0.99")
 
         if dom != '':
-            #if self.valid_url(dom):
-                default_settings[5] = dom
-            #else:
-            #    all_correct = False
-            #    QMessageBox.about(self, "Error", "Url is not valid")
+            # if self.valid_url(dom):
+            default_settings[5] = dom
+        # else:
+        #    all_correct = False
+        #    QMessageBox.about(self, "Error", "Url is not valid")
         if all_correct:
             self.QtStack.setCurrentIndex(0)
         else:
             self.QtStack.setCurrentIndex(3)
 
-
-    def valid_url(self,to_validate: str) -> bool:
+    def valid_url(self, to_validate: str) -> bool:
         o = urlparse(to_validate)
         return True if o.scheme and o.netloc else False
 
-    def loadingUI(self,textbox):
-
+    def loadingUI(self):
         # creating progress bar
         loading_layout = QVBoxLayout()
         self.loading_label = QLabel("Crawling")
@@ -267,19 +261,17 @@ class Ui_Main(QtWidgets.QWidget):
         self.stack5.setLayout(loading_layout)
 
 
-
-
-
-    def crawl_filter_func(self,textbox):
+    def crawl_filter_func(self, textbox):
         global filtered_data
-
+        #self.stack5.update()
+        self.QtStack.setCurrentIndex(4)
         # url validation
         try:
             if self.valid_url(textbox.text()):
                 self.loading_label.setText("Crawling")
                 self.pbar.setValue(10)
                 c = crawl.CrawlerProcess({})
-                if(default_settings[5]== None):
+                if (default_settings[5] == None):
                     c.crawl(crawl.CrawlingSpider, start_urls=[textbox.text()], allowed_domains=default_settings[5])
                 else:
                     c.crawl(crawl.CrawlingSpider, start_urls=[textbox.text()], allowed_domains=[default_settings[5]])
@@ -288,24 +280,22 @@ class Ui_Main(QtWidgets.QWidget):
                 self.pbar.setValue(30)
                 url_data = adv.url_to_df(textbox.text())
                 domain = url_data["scheme"] + "://" + url_data["netloc"]
-                print(domain[0],"<- domain")
+                # print(domain[0],"<- domain")
                 tmp = []
                 self.pbar.setValue(50)
                 if default_settings[6]:
                     if default_settings[5] == None:
-                        tmp = crawl.looping(crawl.crawl_one(textbox.text(), domain[0]), domain[0], limit=20)
+                        tmp = crawl.looping(crawl.crawl_one(textbox.text(), domain[0]), domain[0], limit=20000)
                     else:
-                        tmp = crawl.looping(crawl.crawl_one(textbox.text(), default_settings[5]), default_settings[5], limit=20)
+                        tmp = crawl.looping(crawl.crawl_one(textbox.text(), default_settings[5]), default_settings[5],
+                                            limit=20000)
                     crawl.driver.quit()
-                #print(len(tmp),"tmp")
-
+                print(len(tmp),"tmp")
                 for i in tmp:
                     if i not in crawl.crawled_links:
                         if domain[0] in str(i):
                             crawl.crawled_links.append(i)
 
-                # filtering
-                #print(len(crawl.crawled_links),"crweld")
                 self.loading_label.setText("Filtering")
                 self.pbar.setValue(70)
                 filtered_data = crawl.sim_check(data=crawl.crawled_links, check_sim=default_settings[0],
@@ -320,17 +310,15 @@ class Ui_Main(QtWidgets.QWidget):
                 self.QtStack.setCurrentIndex(0)
                 QMessageBox.about(self, "Error", "Url is not valid")
         except TypeError as e:
-             QMessageBox.about(self, "Error has acquired", str(e))
+            QMessageBox.about(self, "Error has acquired", str(e))
 
-    def crawl_button_action(self,textbox):
-        self.loadingUI(textbox)
+    def crawl_button_action(self, textbox):
+        self.loadingUI()
         self.QtStack.setCurrentIndex(4)
 
         self.crawl_filter_func(textbox)
 
-
-
-    def web_list(self,url):
+    def web_list(self, url):
         global counter
         counter = 0
         listWidget = QListWidget()
@@ -340,14 +328,14 @@ class Ui_Main(QtWidgets.QWidget):
         next_button = QPushButton('Next page')
         generate_button = QPushButton('Generate for selected')
         gen_all_button = QPushButton('Generate all for this page')
-        current_url_label = QLabel("Elements of "+url[counter])
+        current_url_label = QLabel("Elements of " + url[counter])
 
-        next_button.clicked.connect(lambda: self.table_cleaner(web, next_button, url, listWidget, counter,current_url_label))
+        next_button.clicked.connect(
+            lambda: self.table_cleaner(web, next_button, url, listWidget, counter, current_url_label))
         generate_button.clicked.connect(lambda: self.generate_button_clicked(url[counter]))
         gen_all_button.clicked.connect(lambda: self.gen_all_button_cliked(url[counter]))
-        if(len(url) == 1):
+        if (len(url) == 1):
             next_button.hide()
-
 
         main_layout = QHBoxLayout()
         but_list_layout = QVBoxLayout()
@@ -365,16 +353,15 @@ class Ui_Main(QtWidgets.QWidget):
         listWidget.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
         listWidget.itemClicked.connect(lambda: self.printItemText(listWidget))
 
-
         main_layout.addLayout(but_list_layout)
         self.stack3.setLayout(main_layout)
 
-    def update_counter(self,val):
+    def update_counter(self, val):
         global counter
         counter = val
         return counter
 
-    def table_cleaner(self,web, button, url, listWidget, counter,current_url_label):
+    def table_cleaner(self, web, button, url, listWidget, counter, current_url_label):
         counter += 1
         if counter == len(url) - 1:
             button.hide()
@@ -385,29 +372,29 @@ class Ui_Main(QtWidgets.QWidget):
             listWidget.addItem(i)
             listWidget.repaint()
         # print("next button clicked")
-        current_url_label.setText("Elements of "+url[counter])
+        current_url_label.setText("Elements of " + url[counter])
         self.update_counter(counter)
 
-    def printItemText(self,listWidget):
-            items = listWidget.selectedItems()
-            global selected_elements
-            selected_elements = []
-            for i in range(len(items)):
-                selected_elements.append(str(listWidget.selectedItems()[i].text()))
+    def printItemText(self, listWidget):
+        items = listWidget.selectedItems()
+        global selected_elements
+        selected_elements = []
+        for i in range(len(items)):
+            selected_elements.append(str(listWidget.selectedItems()[i].text()))
 
-    def generate_button_clicked(self,url):
+    def generate_button_clicked(self, url):
         try:
             global selected_elements
             pomgen.file_gen(url, selected_elements)  #### burası fixlencek
         except NameError:
             QMessageBox.about(self, "Generated", "No elements were selected")
         else:
-            #print("generated for ", item)
+            # print("generated for ", item)
             QMessageBox.about(self, "Generated", "Generated for selected")
 
-    def gen_all_button_cliked(self,data):
+    def gen_all_button_cliked(self, data):
         # data takes url
-        pomgen.file_gen(data,pomgen.elemfinder(data))
+        pomgen.file_gen(data, pomgen.elemfinder(data))
         ####burası fixlencek
         QMessageBox.about(self, "Generated", "Generated for all")
 
@@ -415,10 +402,12 @@ class Ui_Main(QtWidgets.QWidget):
         for i in data:
             windget.addItem(i)
 
+
 class Main(QMainWindow, Ui_Main):
     def __init__(self, parent=None):
         super(Main, self).__init__(parent)
         self.setupUi(self)
+
 
 def gui_start():
     app = QApplication(sys.argv)

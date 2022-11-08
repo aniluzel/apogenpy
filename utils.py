@@ -40,6 +40,5 @@ def chromedriver_path_name():
         raise RuntimeError('Cannot determine platform')
     return path
 
-
-
+#path = r"C:\Users\ozgun\Desktop\apogen\PetClinic __ a Spring Framework demonstration.html"
 

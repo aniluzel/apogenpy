@@ -1,3 +1,5 @@
+from urllib.parse import urlparse
+
 import utils
 
 
@@ -26,9 +28,21 @@ def file_gen(url, elems):
 
 
 
+def valid_url(to_validate: str) -> bool:
+    o = urlparse(to_validate)
+    return True if o.scheme and o.netloc else False
+
+#print(valid_url("http://localhost:8080"))
+#print(valid_url(r"C:\Users\ozgun\Desktop\apogen\PetClinic __ a Spring Framework demonstration.html"))
+
 def htmlsoup(url):
-    page_html = utils.requests.get(url).text
-    soup = utils.BeautifulSoup(page_html, "html.parser")
+    isurl=valid_url(url)
+    if isurl == True:
+        page_html = utils.requests.get(url).text
+        soup = utils.BeautifulSoup(page_html, "html.parser")
+    else:
+        page_html = open(url,"r")
+        soup = utils.BeautifulSoup(page_html, "html.parser")
     return soup
 
 
@@ -114,5 +128,7 @@ def elemfinder(url):
 #print(classfinder(url))
 
 
-
+#print(elemfinder("C:\Users\ozgun\Desktop\apogen\PetClinic __ a Spring Framework demonstration.html"))
+#print("---------------------------------------------")
+#print(elemfinder("http://localhost:8080/owners/new"))
 

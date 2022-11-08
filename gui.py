@@ -2,7 +2,7 @@ from urllib.parse import urlparse
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import QUrl, QCoreApplication
 from PyQt5.QtWidgets import QApplication, QMainWindow, QLineEdit, QVBoxLayout, QProgressBar, QPushButton, QListWidget, \
-    QAbstractItemView, QWidget, QHBoxLayout, QCheckBox, QComboBox, QMessageBox
+    QAbstractItemView, QWidget, QHBoxLayout, QCheckBox, QComboBox, QMessageBox, QFileDialog
 from PyQt5.QtWidgets import QLabel
 from PyQt5.QtWebEngineWidgets import QWebEngineView as QWebView
 import sys
@@ -88,6 +88,14 @@ class Ui_Main(QtWidgets.QWidget):
         table.addItem(data)
         table.repaint()
 
+    def dialog(self, table):
+        file, check = QFileDialog.getOpenFileName(None, "QFileDialog.getOpenFileName()",
+                                                  "", "All Files (*);;Html files (*.html)")
+        if check:
+            table.addItem(file)
+            table.repaint()
+            print(file)
+
     def tableUI(self):
         global filtered_data
         self.stack2.resize(700, 400)
@@ -116,10 +124,12 @@ class Ui_Main(QtWidgets.QWidget):
         sel = QPushButton('Selected')
         all_sel = QPushButton('All')
         add = QPushButton('Add url')
+        add_path = QPushButton('Select file')
 
         sel.clicked.connect(lambda: self.selected_url_click())
         all_sel.clicked.connect(lambda: self.all_sel_click(data))
         add.clicked.connect(lambda: self.add_click(table, add_url_textbox.text()))
+        add_path.clicked.connect(lambda: self.dialog(table))
         # self.all_sel.clicked.connect()
         # self.add.clicked.connect()
 
@@ -128,6 +138,7 @@ class Ui_Main(QtWidgets.QWidget):
         table_layout.addWidget(sel)
         table_layout.addWidget(all_sel)
         table_layout.addWidget(add)
+        table_layout.addWidget(add_path)
 
         # if (not self.stack2.layout()):
         self.stack2.setLayout(table_layout)
@@ -290,7 +301,7 @@ class Ui_Main(QtWidgets.QWidget):
                         tmp = crawl.looping(crawl.crawl_one(textbox.text(), default_settings[5]), default_settings[5],
                                             limit=20000)
                     crawl.driver.quit()
-                print(len(tmp),"tmp")
+                #print(len(tmp),"tmp")
                 for i in tmp:
                     if i not in crawl.crawled_links:
                         if domain[0] in str(i):
@@ -323,7 +334,10 @@ class Ui_Main(QtWidgets.QWidget):
         counter = 0
         listWidget = QListWidget()
         web = QWebView()
-        web.load(QUrl(url[counter]))
+        if self.valid_url(url[counter]):
+            web.load(QUrl(url[counter]))
+        else:
+            web.load(QtCore.QUrl.fromLocalFile(str(url[counter])))
         data = pomgen.elemfinder(url[counter])
         next_button = QPushButton('Next page')
         generate_button = QPushButton('Generate for selected')

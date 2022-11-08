@@ -11,7 +11,7 @@ import jellyfish
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.common.exceptions import WebDriverException
-from selenium.webdriver.chrome.options import Options
+
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
@@ -20,14 +20,11 @@ import re
 
 crawled_links = []
 # Define Browser Options
-chrome_options = Options()
-chrome_options.add_argument("--headless")  # Hides the browser window
+  # Hides the browser window
 # Reference the local Chromedriver instance
 #chrome_path = r'C:\chromedriver.exe'
 #chrome_path = r'/Users/denis/Documents/CS401/apogenpyfolder/apogenpy/106/chromedriver'
-chrome_driver_path = utils.chromedriver_path_name()
-print(chrome_driver_path)
-driver = webdriver.Chrome(executable_path=chrome_driver_path, options=chrome_options)
+
 # Run the Webdriver, save page an quit browser
 #driver.get("http://localhost:8080/owners/find")
 
@@ -36,7 +33,7 @@ general = []
 checked = []
 
 
-def crawl_one(page_url, domain):
+def crawl_one(page_url, domain, driver):
     general = []
 
     # global general
@@ -145,7 +142,7 @@ def crawl_one(page_url, domain):
 
 
 counter = 0
-def looping(array,domain,limit=15):
+def looping(array,domain,driver,limit=15,):
     global counter
     for i in array:
         if i not in checked:
@@ -154,7 +151,7 @@ def looping(array,domain,limit=15):
                     break
                 checked.append(i)
                 counter += 1
-                looping(crawl_one(i, domain),domain,limit)
+                looping(crawl_one(i, domain,driver),domain,driver,limit)
     return checked
 
 

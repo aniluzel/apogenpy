@@ -62,6 +62,6 @@ class ObjectGen:
             print('Cannot find element')
 
 
-service = Service(chrome_driver_path)
+service = Service(utils.chromedriver_path_name())
 driver = webdriver.Chrome(service=service)
 driver.get("https://www.google.com")

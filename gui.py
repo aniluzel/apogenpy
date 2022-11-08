@@ -9,6 +9,10 @@ import sys
 import crawl
 import pomgen
 import advertools as adv
+from selenium.webdriver.chrome.options import Options
+from selenium import webdriver
+
+import utils
 
 default_settings = [False, False, 1, 0.92, 0.88, None, True, 2]
 filtered_data = []
@@ -67,6 +71,9 @@ class Ui_Main(QtWidgets.QWidget):
         exit_button.setText("Exit")
         exit_button.setGeometry(QtCore.QRect(150, 150, 100, 100))
         exit_button.clicked.connect(QCoreApplication.instance().quit)
+        #
+        if not utils.chromedriver_checker():
+            QMessageBox.about(self, "Generated", "Chrome driver not downloaded please download from settings")
 
         # layout
         layout.addWidget(label1)
@@ -130,8 +137,7 @@ class Ui_Main(QtWidgets.QWidget):
         all_sel.clicked.connect(lambda: self.all_sel_click(data))
         add.clicked.connect(lambda: self.add_click(table, add_url_textbox.text()))
         add_path.clicked.connect(lambda: self.dialog(table))
-        # self.all_sel.clicked.connect()
-        # self.add.clicked.connect()
+
 
         table_layout.addWidget(table)
         table_layout.addLayout(add_url_layout)
@@ -160,10 +166,19 @@ class Ui_Main(QtWidgets.QWidget):
     def selected_url_click(self):
         try:
             global selected
-            self.web_list(selected)
-            self.QtStack.setCurrentIndex(2)
+            if(len(selected) != 0):
+                self.web_list(selected)
+                self.QtStack.setCurrentIndex(2)
+            else:
+                QMessageBox.about(self, "Generated", "No links were selected")
         except NameError:
             QMessageBox.about(self, "Generated", "No links were selected")
+
+    def chorme_dr_down(self):
+        #fucntions
+        utils.chrome_driver_downloader()
+        chrome_version = utils.chromedriver_autoinstaller.get_chrome_version()
+        QMessageBox.about(self, "driver", "Version "+chrome_version+ " downloaded")
 
     def settings(self):
         self.stack3.resize(800, 480)
@@ -173,6 +188,9 @@ class Ui_Main(QtWidgets.QWidget):
         sim_check = QCheckBox("Structure Similarity Check")
         sim_check.setChecked(default_settings[0])
         checkbox_layout.addWidget(sim_check)
+        #chrome driver button
+        chrome_driver_down = QPushButton("Download latest chrome driver")
+        chrome_driver_down.clicked.connect(self.chorme_dr_down)
 
         # perfroming url similarity check
         url_sim = QCheckBox("URL Similarity Check")
@@ -221,6 +239,7 @@ class Ui_Main(QtWidgets.QWidget):
         settings_layout.addLayout(domain_layout)
         settings_layout.addWidget(combobox1)
         settings_layout.addWidget(save_button)
+        settings_layout.addWidget(chrome_driver_down)
         self.stack4.setLayout(settings_layout)
 
     def save_cliked(self, sim, url, index, per_sim, per_url, dom, add_crawl):
@@ -294,13 +313,20 @@ class Ui_Main(QtWidgets.QWidget):
                 # print(domain[0],"<- domain")
                 tmp = []
                 self.pbar.setValue(50)
+                chrome_options = Options()
+                chrome_options.add_argument("--headless")
+                chrome_driver_path = utils.chromedriver_path_name()
+                #print(chrome_driver_path)
+                driver = webdriver.Chrome(executable_path=chrome_driver_path, options=chrome_options)
                 if default_settings[6]:
                     if default_settings[5] == None:
-                        tmp = crawl.looping(crawl.crawl_one(textbox.text(), domain[0]), domain[0], limit=20000)
+                        tmp = crawl.looping(crawl.crawl_one(textbox.text(), domain[0],driver), domain[0],driver, limit=20000)
                     else:
-                        tmp = crawl.looping(crawl.crawl_one(textbox.text(), default_settings[5]), default_settings[5],
+                        tmp = crawl.looping(crawl.crawl_one(textbox.text(), default_settings[5],driver), default_settings[5],driver,
                                             limit=20000)
-                    crawl.driver.quit()
+
+                driver.quit()
+                #driver.close()
                 #print(len(tmp),"tmp")
                 for i in tmp:
                     if i not in crawl.crawled_links:
@@ -379,7 +405,10 @@ class Ui_Main(QtWidgets.QWidget):
         counter += 1
         if counter == len(url) - 1:
             button.hide()
-        web.load(QUrl(url[counter]))
+        if self.valid_url(url[counter]):
+            web.load(QUrl(url[counter]))
+        else:
+            web.load(QtCore.QUrl.fromLocalFile(str(url[counter])))
         data = pomgen.elemfinder(url[counter])
         listWidget.clear()
         for i in data:

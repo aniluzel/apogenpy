@@ -42,3 +42,8 @@ def chromedriver_path_name():
 
 #path = r"C:\Users\ozgun\Desktop\apogen\PetClinic __ a Spring Framework demonstration.html"
 
+def chromedriver_checker():
+    if chromedriver_autoinstaller.utils.get_chrome_version().split(".")[0] in os.listdir():
+        return True
+    else:
+        return False

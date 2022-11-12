@@ -23,7 +23,6 @@ class Ui_Main(QtWidgets.QWidget):
         Main.setObjectName("Main")
         Main.resize(800, 480)
         self.QtStack = QtWidgets.QStackedLayout()
-
         self.stack1 = QtWidgets.QWidget()
         self.stack2 = QtWidgets.QWidget()
         self.stack3 = QtWidgets.QWidget()
@@ -44,7 +43,6 @@ class Ui_Main(QtWidgets.QWidget):
         self.QtStack.addWidget(self.stack5)
 
     def first_page(self):
-
         layout = QVBoxLayout()
         # self.stack1.resize(800, 480)
         label1 = QLabel("Enter the URL of a domain that you want to crawl")
@@ -52,11 +50,11 @@ class Ui_Main(QtWidgets.QWidget):
         textbox.move(20, 20)
         textbox.resize(280, 40)
         # PushButton1#
-        PushButton1 = QtWidgets.QPushButton()
-        PushButton1.setText("Crawl")
-        PushButton1.setGeometry(QtCore.QRect(10, 10, 100, 100))
+        crawl_button = QtWidgets.QPushButton()
+        crawl_button.setText("Crawl")
+        crawl_button.setGeometry(QtCore.QRect(10, 10, 100, 100))
         self.loadingUI()
-        PushButton1.clicked.connect(lambda: self.crawl_button_action(textbox))
+        crawl_button.clicked.connect(lambda: self.crawl_button_action(textbox))
 
         # PushButton2#
         setting_button = QtWidgets.QPushButton()
@@ -66,6 +64,9 @@ class Ui_Main(QtWidgets.QWidget):
         setting_button.setGeometry(QtCore.QRect(150, 150, 100, 100))
         setting_button.clicked.connect(self.settings_clicked)
 
+        #continue iwthout crawling
+        con_craw = QtWidgets.QPushButton("Continue without crawling")
+        con_craw.clicked.connect(self.con_crawl_action)
         # PushButton3#
         exit_button = QtWidgets.QPushButton()
         exit_button.setText("Exit")
@@ -78,7 +79,8 @@ class Ui_Main(QtWidgets.QWidget):
         # layout
         layout.addWidget(label1)
         layout.addWidget(textbox)
-        layout.addWidget(PushButton1)
+        layout.addWidget(crawl_button)
+        layout.addWidget(con_craw)
         layout.addWidget(setting_button)
         layout.addWidget(exit_button)
         self.stack1.setLayout(layout)
@@ -94,6 +96,10 @@ class Ui_Main(QtWidgets.QWidget):
     def update_table(self, table, data):
         table.addItem(data)
         table.repaint()
+
+    def con_crawl_action(self):
+        self.tableUI()
+        self.QtStack.setCurrentIndex(1)
 
     def dialog(self, table):
         file, check = QFileDialog.getOpenFileName(None, "QFileDialog.getOpenFileName()",
@@ -154,7 +160,10 @@ class Ui_Main(QtWidgets.QWidget):
         self.QtStack.setCurrentIndex(2)
 
     def add_click(self, table, data):
-        self.update_table(table, data)
+        if len(data) == 0:
+            QMessageBox.about(self, "Generated", "Empty field provided")
+        else:
+            self.update_table(table, data)
 
     def add_selected(self, listWidget):
         items = listWidget.selectedItems()
@@ -454,5 +463,6 @@ class Main(QMainWindow, Ui_Main):
 
 def gui_start():
     app = QApplication(sys.argv)
+    app.setWindowIcon(QtGui.QIcon('logo.png'))
     showMain = Main()
     sys.exit(app.exec_())

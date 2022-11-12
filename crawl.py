@@ -11,7 +11,7 @@ import jellyfish
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.common.exceptions import WebDriverException
-
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
@@ -35,7 +35,6 @@ checked = []
 
 def crawl_one(page_url, domain, driver):
     general = []
-
     # global general
     driver.get(page_url)
     # Scroll page to load whole content
@@ -64,23 +63,26 @@ def crawl_one(page_url, domain, driver):
                 if link.get('class')[0] == "btn":
 
                     if driver.current_url + link.get('href') not in checked:
-                        if driver.current_url + "/" + link.get('href') not in checked:
-                            prev = driver.current_url
-                            bt = WebDriverWait(driver, 10).until(
-                                EC.element_to_be_clickable((By.XPATH, '//a[@href="' + link.get('href') + '"]')))
-                            bt.click()
-                            #print(driver.current_url + " == btn")
-                            #if(domain in str(driver.current_url) ):
-                            general.append(driver.current_url)
-                            driver.get(prev)
+                        if driver.current_url + link.get('href') not in general:
+                            if driver.current_url + "/" + link.get('href') not in checked:
+                                if driver.current_url + "/" + link.get('href') not in general:
+                                    prev = driver.current_url
+                                    bt = WebDriverWait(driver, 10).until(
+                                        EC.element_to_be_clickable((By.XPATH, '//a[@href="' + link.get('href') + '"]')))
+                                    bt.click()
+                                    #print(driver.current_url + " == btn")
+                                    #if(domain in str(driver.current_url) ):
+                                    general.append(driver.current_url)
+                                    driver.get(prev)
 
 
                 # navlink parsing
                 elif link.get('class')[0] == "nav-link":
                     if domain + link.get('href') not in checked:
-                        print(domain + link.get('href') + " == navlink")
-                        #if(domain in str(domain + link.get('href'))):
-                        general.append(domain + link.get('href'))
+                        if domain + link.get('href') not in general:
+                            #print(domain + link.get('href') + " == navlink")
+                            #if(domain in str(domain + link.get('href'))):
+                            general.append(domain + link.get('href'))
 
                 else:
                     tmp3 = link.get('href')
@@ -88,19 +90,22 @@ def crawl_one(page_url, domain, driver):
 
                     if link.get('class')[0] == "fa":
                         if domain + link.get('href') not in checked:
-                            print(domain + link.get('href') + " == forward")
-                            #if(domain in str(domain + link.get('href'))):
-                            general.append(domain + link.get('href'))
+                            if domain + link.get('href') not in general:
+                                #print(domain + link.get('href') + " == forward")
+                                #if(domain in str(domain + link.get('href'))):
+                                general.append(domain + link.get('href'))
 
                     elif driver.current_url + link.get('href') not in checked:
-                        if(len(tmp3) >= 2):
-                            if tmp3[1] != "":
-                                if driver.current_url + "/" + tmp3[1] not in checked:
-                                    print(driver.current_url + "/" + tmp3[1] + " == not btn")
-                                    print(str(driver.current_url + "/" + tmp3[1]),"sd;fasdfsdf")
-                                    print(domain,'dsfasdfs')
-                                    #if(domain in str(driver.current_url + "/" + tmp3[1])):
-                                    general.append(driver.current_url + "/" + tmp3[1])
+                        if driver.current_url + link.get('href') not in general:
+                            if(len(tmp3) >= 2):
+                                if tmp3[1] != "":
+                                    if driver.current_url + "/" + tmp3[1] not in checked:
+                                        if driver.current_url + "/" + tmp3[1] not in general:
+                                            #print(driver.current_url + "/" + tmp3[1] + " == not btn")
+                                            #print(str(driver.current_url + "/" + tmp3[1]),"sd;fasdfsdf")
+                                            #print(domain,'dsfasdfs')
+                                            #if(domain in str(driver.current_url + "/" + tmp3[1])):
+                                            general.append(driver.current_url + "/" + tmp3[1])
 
 
 
@@ -109,18 +114,20 @@ def crawl_one(page_url, domain, driver):
                 tmp2 = tmp2.split("/", 1)
 
                 if driver.current_url + link.get('href') not in checked:
-                  if len(tmp2) >=2:
-                    if driver.current_url + "/" + tmp2[1] not in checked:
-                        prev1 = driver.current_url
-                        # print(driver.current_url + " ==  current page")
-                        # press = driver.find_element(By.PARTIAL_LINK_TEXT, element[0].lstrip(" ") + " " + element[1].lstrip(" "))
-                        press = WebDriverWait(driver, 30).until(
-                                EC.element_to_be_clickable((By.XPATH, '//a[@href="' + link.get('href') + '"]')))
-                        press.click()
-                        print(driver.current_url + " == no class")
-                        #if(domain in str(driver.current_url)):
-                        general.append(driver.current_url)
-                        driver.get(prev1)
+                    if driver.current_url + link.get('href') not in general:
+                        if len(tmp2) >=2:
+                            if driver.current_url + "/" + tmp2[1] not in checked:
+                                if driver.current_url + "/" + tmp2[1] not in general:
+                                    prev1 = driver.current_url
+                                    # print(driver.current_url + " ==  current page")
+                                    # press = driver.find_element(By.PARTIAL_LINK_TEXT, element[0].lstrip(" ") + " " + element[1].lstrip(" "))
+                                    press = WebDriverWait(driver, 30).until(
+                                        EC.element_to_be_clickable((By.XPATH, '//a[@href="' + link.get('href') + '"]')))
+                                    press.click()
+                                    #print(driver.current_url + " == no class")
+                                    #if(domain in str(driver.current_url)):
+                                    general.append(driver.current_url)
+                                    driver.get(prev1)
 
 
 
@@ -131,9 +138,10 @@ def crawl_one(page_url, domain, driver):
                 item = driver.current_url
 
                 if item not in checked:
-                    print(item + " == submit button")
-                    #if(domain in str(item)):
-                    general.append(item)
+                    if item not in general:
+                        #print(item + " == submit button")
+                        #if(domain in str(item)):
+                        general.append(item)
 
     except (selenium.common.exceptions.TimeoutException, WebDriverException, NameError,
         selenium.common.exceptions.StaleElementReferenceException, UnboundLocalError) as r:
@@ -142,7 +150,7 @@ def crawl_one(page_url, domain, driver):
 
 
 counter = 0
-def looping(array,domain,driver,limit=15,):
+def looping(array,domain,driver,limit=20000):
     global counter
     for i in array:
         if i not in checked:
@@ -154,7 +162,13 @@ def looping(array,domain,driver,limit=15,):
                 looping(crawl_one(i, domain,driver),domain,driver,limit)
     return checked
 
-
+# chrome_options = Options()
+# chrome_options.add_argument("--headless")
+# chrome_driver_path = utils.chromedriver_path_name()
+# #print(chrome_driver_path)
+# driver = webdriver.Chrome(executable_path=chrome_driver_path, options=chrome_options)
+# print(len(looping(["http://localhost:8080"],"http://localhost:8080",driver,20000)))
+# driver.quit()
 class PageInfoItem(Item):
     URL = Field()
     pass

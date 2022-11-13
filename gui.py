@@ -1,24 +1,97 @@
 from urllib.parse import urlparse
-from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import QUrl, QCoreApplication
 from PyQt5.QtWidgets import QApplication, QMainWindow, QLineEdit, QVBoxLayout, QProgressBar, QPushButton, QListWidget, \
     QAbstractItemView, QWidget, QHBoxLayout, QCheckBox, QComboBox, QMessageBox, QFileDialog
 from PyQt5.QtWidgets import QLabel
-from PyQt5.QtWebEngineWidgets import QWebEngineView as QWebView
+
 import sys
 import crawl
 import pomgen
 import advertools as adv
 from selenium.webdriver.chrome.options import Options
 from selenium import webdriver
-
+from PyQt5 import QtCore, QtGui, QtWidgets, QtWebEngineWidgets
 import utils
 
 default_settings = [False, False, 1, 0.92, 0.88, None, True, 2]
 filtered_data = []
+class SearchPanel(QtWidgets.QWidget):
+    searched = QtCore.pyqtSignal(str, QtWebEngineWidgets.QWebEnginePage.FindFlag)
+    closed = QtCore.pyqtSignal()
+
+    def __init__(self, parent=None):
+        super(SearchPanel, self).__init__(parent)
+        lay = QtWidgets.QHBoxLayout(self)
+        done_button = QtWidgets.QPushButton('&Done')
+        self.case_button = QtWidgets.QPushButton('Match &Case', checkable=True)
+        next_button = QtWidgets.QPushButton('&Next')
+        prev_button = QtWidgets.QPushButton('&Previous')
+        self.search_le = QtWidgets.QLineEdit()
+        self.setFocusProxy(self.search_le)
+        done_button.clicked.connect(self.closed)
+        next_button.clicked.connect(self.update_searching)
+        prev_button.clicked.connect(self.on_preview_find)
+        self.case_button.clicked.connect(self.update_searching)
+        for btn in (self.case_button, self.search_le, next_button, prev_button, done_button, done_button):
+            lay.addWidget(btn)
+            if isinstance(btn, QtWidgets.QPushButton): btn.clicked.connect(self.setFocus)
+        self.search_le.textChanged.connect(self.update_searching)
+        self.search_le.returnPressed.connect(self.update_searching)
+        self.closed.connect(self.search_le.clear)
+
+        QtWidgets.QShortcut(QtGui.QKeySequence.FindNext, self, activated=next_button.animateClick)
+        QtWidgets.QShortcut(QtGui.QKeySequence.FindPrevious, self, activated=prev_button.animateClick)
+        QtWidgets.QShortcut(QtGui.QKeySequence(QtCore.Qt.Key_Escape), self.search_le, activated=self.closed)
+
+    @QtCore.pyqtSlot()
+    def on_preview_find(self):
+        self.update_searching(QtWebEngineWidgets.QWebEnginePage.FindBackward)
+
+    @QtCore.pyqtSlot()
+    def update_searching(self, direction=QtWebEngineWidgets.QWebEnginePage.FindFlag()):
+        flag = direction
+        if self.case_button.isChecked():
+            flag |= QtWebEngineWidgets.QWebEnginePage.FindCaseSensitively
+        self.searched.emit(self.search_le.text(), flag)
+
+    @QtCore.pyqtSlot()
+    def text_fi(self,text, direction=QtWebEngineWidgets.QWebEnginePage.FindFlag()):
+        flag = direction
+
+        flag |= QtWebEngineWidgets.QWebEnginePage.FindCaseSensitively
+        self.searched.emit(text, flag)
+    def showEvent(self, event):
+        super(SearchPanel, self).showEvent(event)
+        self.setFocus(True)
+
+    def update_counter(self, val):
+        global counter
+        counter = val
+        return counter
+
+
+    def table_cleaner(self, web, button, url, listWidget, counter, current_url_label):
+        counter += 1
+        if counter == len(url) - 1:
+            button.hide()
+        if self.valid_url(url[counter]):
+            web._view.load(QUrl(url[counter]))
+        else:
+            web._view.load(QtCore.QUrl.fromLocalFile(str(url[counter])))
+        data = pomgen.elemfinder(url[counter])
+        listWidget.clear()
+        for i in data:
+            listWidget.addItem(i)
+            listWidget.repaint()
+        # print("next button clicked")
+        current_url_label.setText("Elements of " + url[counter])
+        self.update_counter(counter)
+
 
 
 class Ui_Main(QtWidgets.QWidget):
+    searched = QtCore.pyqtSignal(str, QtWebEngineWidgets.QWebEnginePage.FindFlag)
+    closed = QtCore.pyqtSignal()
     def setupUi(self, Main):
         Main.setObjectName("Main")
         Main.resize(800, 480)
@@ -141,7 +214,7 @@ class Ui_Main(QtWidgets.QWidget):
 
         sel.clicked.connect(lambda: self.selected_url_click())
         all_sel.clicked.connect(lambda: self.all_sel_click(data))
-        add.clicked.connect(lambda: self.add_click(table, add_url_textbox.text()))
+        add.clicked.connect(lambda: self.add_click(table, add_url_textbox.text(),data))
         add_path.clicked.connect(lambda: self.dialog(table))
 
 
@@ -156,13 +229,16 @@ class Ui_Main(QtWidgets.QWidget):
         self.stack2.setLayout(table_layout)
 
     def all_sel_click(self, data):
-        self.web_list(data)
-        self.QtStack.setCurrentIndex(2)
-
-    def add_click(self, table, data):
+        if(len(data) != 0):
+            self.web_list(data)
+            self.QtStack.setCurrentIndex(2)
+        else:
+            QMessageBox.about(self, "Generated", "No link are in the list")
+    def add_click(self, table, data,arr):
         if len(data) == 0:
             QMessageBox.about(self, "Generated", "Empty field provided")
         else:
+            arr.append(data)
             self.update_table(table, data)
 
     def add_selected(self, listWidget):
@@ -364,23 +440,32 @@ class Ui_Main(QtWidgets.QWidget):
 
         self.crawl_filter_func(textbox)
 
+
+
     def web_list(self, url):
+        #self.searched = QtCore.pyqtSignal(str, QtWebEngineWidgets.QWebEnginePage.FindFlag)
         global counter
         counter = 0
         listWidget = QListWidget()
-        web = QWebView()
+        #self.web = QWebView()
+        self.web = Browser()
+        self.web.show()
+
+
         if self.valid_url(url[counter]):
-            web.load(QUrl(url[counter]))
+            self.web._view.load(QUrl(url[counter]))
         else:
-            web.load(QtCore.QUrl.fromLocalFile(str(url[counter])))
+            self.web._view.load(QtCore.QUrl.fromLocalFile(str(url[counter])))
+
         data = pomgen.elemfinder(url[counter])
         next_button = QPushButton('Next page')
         generate_button = QPushButton('Generate for selected')
         gen_all_button = QPushButton('Generate all for this page')
         current_url_label = QLabel("Elements of " + url[counter])
 
+
         next_button.clicked.connect(
-            lambda: self.table_cleaner(web, next_button, url, listWidget, counter, current_url_label))
+            lambda: self.table_cleaner(self.web, next_button, url, listWidget, counter, current_url_label))
         generate_button.clicked.connect(lambda: self.generate_button_clicked(url[counter]))
         gen_all_button.clicked.connect(lambda: self.gen_all_button_cliked(url[counter]))
         if (len(url) == 1):
@@ -394,7 +479,7 @@ class Ui_Main(QtWidgets.QWidget):
         but_list_layout.addWidget(generate_button)
         but_list_layout.addWidget(gen_all_button)
 
-        main_layout.addWidget(web)
+        main_layout.addWidget(self.web)
 
         listWidget.resize(300, 120)
         self.add_item_windget(listWidget, data)
@@ -405,19 +490,21 @@ class Ui_Main(QtWidgets.QWidget):
         main_layout.addLayout(but_list_layout)
         self.stack3.setLayout(main_layout)
 
+
     def update_counter(self, val):
         global counter
         counter = val
         return counter
+
 
     def table_cleaner(self, web, button, url, listWidget, counter, current_url_label):
         counter += 1
         if counter == len(url) - 1:
             button.hide()
         if self.valid_url(url[counter]):
-            web.load(QUrl(url[counter]))
+            web._view.load(QUrl(url[counter]))
         else:
-            web.load(QtCore.QUrl.fromLocalFile(str(url[counter])))
+            web._view.load(QtCore.QUrl.fromLocalFile(str(url[counter])))
         data = pomgen.elemfinder(url[counter])
         listWidget.clear()
         for i in data:
@@ -431,8 +518,14 @@ class Ui_Main(QtWidgets.QWidget):
         items = listWidget.selectedItems()
         global selected_elements
         selected_elements = []
-        for i in range(len(items)):
-            selected_elements.append(str(listWidget.selectedItems()[i].text()))
+        if(len(items) != 0):
+            for i in range(len(items)):
+                selected_elements.append(str(listWidget.selectedItems()[i].text()))
+                #input example nav-bar output HOME,ERROR
+                self.web._search_panel.text_fi("HOME")
+                self.web._search_panel.text_fi("ERROR")
+        else:
+            self.web._search_panel.text_fi("")
 
     def generate_button_clicked(self, url):
         try:
@@ -461,6 +554,37 @@ class Main(QMainWindow, Ui_Main):
         self.setupUi(self)
 
 
+class Browser(QtWidgets.QMainWindow,):
+    def __init__(self, parent=None):
+        super(Browser, self).__init__(parent)
+        self._view = QtWebEngineWidgets.QWebEngineView()
+        self.setCentralWidget(self._view)
+        self._view.load(QtCore.QUrl('http://localhost:8080/vets.html'))
+        self._search_panel = SearchPanel()
+
+        self.search_toolbar = QtWidgets.QToolBar()
+        self.search_toolbar.addWidget(self._search_panel)
+        self.addToolBar(QtCore.Qt.BottomToolBarArea, self.search_toolbar)
+        self.search_toolbar.hide()
+        self._search_panel.searched.connect(self.on_searched)
+        self._search_panel.closed.connect(self.search_toolbar.hide)
+        self.create_menus()
+
+    @QtCore.pyqtSlot(str, QtWebEngineWidgets.QWebEnginePage.FindFlag)
+    def on_searched(self, text, flag):
+        def callback(found):
+            if text and not found:
+                self.statusBar().show()
+                self.statusBar().showMessage('Not found')
+            else:
+                self.statusBar().hide()
+
+        self._view.findText(text, flag, callback)
+
+    def create_menus(self):
+        menubar = self.menuBar()
+        file_menu = menubar.addMenu('&File')
+        file_menu.addAction('&Find...', self.search_toolbar.show, shortcut=QtGui.QKeySequence.Find)
 def gui_start():
     app = QApplication(sys.argv)
     app.setWindowIcon(QtGui.QIcon('logo.png'))

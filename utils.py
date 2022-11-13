@@ -1,17 +1,13 @@
 import os
 import sys
 
-from selenium import webdriver
-from selenium.common.exceptions import NoSuchElementException
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import Select
-from selenium.webdriver.chrome.service import Service
 import time
 from bs4 import BeautifulSoup
 import requests
 import csv
 from urllib.parse import urlparse
 import chromedriver_autoinstaller
+from html.parser import HTMLParser
 
 def file_name_changer(subdomain):
     invalid = '<>:"/\|?* '
@@ -47,3 +43,16 @@ def chromedriver_checker():
         return True
     else:
         return False
+class MyHTMLParser(HTMLParser):
+    data_text =[]
+    def handle_starttag(self, tag, attrs):
+        print("Encountered a start tag:", tag)
+
+    def handle_endtag(self, tag):
+        print("Encountered an end tag :", tag)
+
+    def handle_data(self, data):
+        print("Encountered some data  :", data)
+        self.data_text.append(data)
+
+parser = MyHTMLParser()

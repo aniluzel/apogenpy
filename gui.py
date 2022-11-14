@@ -138,7 +138,7 @@ class Ui_Main(QtWidgets.QWidget):
         setting_button.clicked.connect(self.settings_clicked)
 
         #continue iwthout crawling
-        con_craw = QtWidgets.QPushButton("Continue without crawling")
+        con_craw = QtWidgets.QPushButton("Select Multiple Files")
         con_craw.clicked.connect(self.con_crawl_action)
         # PushButton3#
         exit_button = QtWidgets.QPushButton()
@@ -171,8 +171,17 @@ class Ui_Main(QtWidgets.QWidget):
         table.repaint()
 
     def con_crawl_action(self):
-        self.tableUI()
-        self.QtStack.setCurrentIndex(1)
+        file, check = QFileDialog.getOpenFileNames(None, "QFileDialog.getOpenFileName()",
+                                                  "", "All Files (*);;Html files (*.html)")
+        if check:
+            for i in file:
+                crawl.crawled_links.append(i)
+
+            self.tableUI()
+            self.QtStack.setCurrentIndex(1)
+            #print(file)
+        #self.tableUI()
+        #self.QtStack.setCurrentIndex(1)
 
     def dialog(self, table):
         file, check = QFileDialog.getOpenFileName(None, "QFileDialog.getOpenFileName()",
@@ -186,6 +195,9 @@ class Ui_Main(QtWidgets.QWidget):
         global filtered_data
         self.stack2.resize(700, 400)
         data = filtered_data
+        for i in crawl.crawled_links:
+            if i not in data:
+                data.append(i)
         table_layout = QVBoxLayout()
         table = QListWidget()
         table.resize(300, 120)
@@ -450,7 +462,7 @@ class Ui_Main(QtWidgets.QWidget):
         #self.web = QWebView()
         self.web = Browser()
         self.web.show()
-
+        self.stack3.resize(1000, 800)
 
         if self.valid_url(url[counter]):
             self.web._view.load(QUrl(url[counter]))
@@ -481,7 +493,7 @@ class Ui_Main(QtWidgets.QWidget):
 
         main_layout.addWidget(self.web)
 
-        listWidget.resize(300, 120)
+        listWidget.resize(300, 150)
         self.add_item_windget(listWidget, data)
         listWidget.setSelectionMode(QAbstractItemView.MultiSelection)
         listWidget.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)

@@ -77,20 +77,21 @@ def buttonfinder(url):
         if buttonSoup is not None and buttonSoup not in buttons:
             buttons.append(buttonSoup)
     returnarray = []
-    buttons[0] = buttons[0].removesuffix("]")
-    buttons[0] = buttons[0].removeprefix("[")
-    buttons[0] = " ".join(buttons[0].split())
-    # print(buttons[0])
-    subs = ">, <"
-    for i in buttons[0].split(subs):
-        str1 = ""
-        if i == buttons[0].split(subs)[0]:
-            str1 = i + ">"
-        elif i == buttons[0].split(subs)[len(buttons[0].split(subs)) - 1]:
-            str1 = "<" + i
-        else:
-            str1 = "<" + i + ">"
-        returnarray.append(str1)
+    if len(buttons) !=0:
+        buttons[0] = buttons[0].removesuffix("]")
+        buttons[0] = buttons[0].removeprefix("[")
+        buttons[0] = " ".join(buttons[0].split())
+        # print(buttons[0])
+        subs = ">, <"
+        for i in buttons[0].split(subs):
+            str1 = ""
+            if i == buttons[0].split(subs)[0]:
+                str1 = i + ">"
+            elif i == buttons[0].split(subs)[len(buttons[0].split(subs)) - 1]:
+                str1 = "<" + i
+            else:
+                str1 = "<" + i + ">"
+            returnarray.append(str1)
 
     return returnarray
 
@@ -158,4 +159,4 @@ def otherparser(url):
     utils.parser.feed(page_html)
     print(utils.parser.data_text)
 
-otherparser("http://localhost:8080/owners/new")
+#otherparser("http://localhost:8080/owners/new")

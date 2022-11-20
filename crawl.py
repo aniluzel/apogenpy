@@ -234,7 +234,7 @@ def sim_check(data=[], web_page_similarity_percentage=0.92, web_path_similarity_
 
                 if param ==1:
                     if req1 != req2:
-                        if structural_similarity(req1, req2) > float(web_page_similarity_percentage):
+                        if structural_similarity(req1, req2) >= float(web_page_similarity_percentage):
                             print("similarity ratio is = ", (structural_similarity(req1, req2)), " first link = ",
                                   down[0], " second link = ", up[0])
                             html_text.remove(up)

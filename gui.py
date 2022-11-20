@@ -55,43 +55,24 @@ class SearchPanel(QtWidgets.QWidget):
         self.searched.emit(self.search_le.text(), flag)
 
     @QtCore.pyqtSlot()
-    def text_fi(self,text, direction=QtWebEngineWidgets.QWebEnginePage.FindFlag()):
+    def text_fi(self,text, direction=QtWebEngineWidgets.QWebEnginePage.FindFlags()):
         flag = direction
+        #print(flag)
+        #flag |= QtWebEngineWidgets.QWebEnginePage.FindCaseSensitively
+        #for i in flag:
+        #print(self.searched.)
 
-        flag |= QtWebEngineWidgets.QWebEnginePage.FindCaseSensitively
+        #self.searched.emit("ERROR", flag)
         self.searched.emit(text, flag)
     def showEvent(self, event):
         super(SearchPanel, self).showEvent(event)
         self.setFocus(True)
 
-    def update_counter(self, val):
-        global counter
-        counter = val
-        return counter
 
-
-    def table_cleaner(self, web, button, url, listWidget, counter, current_url_label):
-        counter += 1
-        if counter == len(url) - 1:
-            button.hide()
-        if self.valid_url(url[counter]):
-            web._view.load(QUrl(url[counter]))
-        else:
-            web._view.load(QtCore.QUrl.fromLocalFile(str(url[counter])))
-        data = pomgen.elemfinder(url[counter])
-        listWidget.clear()
-        for i in data:
-            listWidget.addItem(i)
-            listWidget.repaint()
-        # print("next button clicked")
-        current_url_label.setText("Elements of " + url[counter])
-        self.update_counter(counter)
 
 
 
 class Ui_Main(QtWidgets.QWidget):
-    searched = QtCore.pyqtSignal(str, QtWebEngineWidgets.QWebEnginePage.FindFlag)
-    closed = QtCore.pyqtSignal()
     def setupUi(self, Main):
         Main.setObjectName("Main")
         Main.resize(800, 480)
@@ -115,7 +96,10 @@ class Ui_Main(QtWidgets.QWidget):
         self.QtStack.addWidget(self.stack4)
         self.QtStack.addWidget(self.stack5)
 
+
+    #frist page start
     def first_page(self):
+        self.htmls_arr = []
         layout = QVBoxLayout()
         # self.stack1.resize(800, 480)
         label1 = QLabel("Enter the URL of a domain that you want to crawl")
@@ -132,7 +116,7 @@ class Ui_Main(QtWidgets.QWidget):
         # PushButton2#
         setting_button = QtWidgets.QPushButton()
         setting_button.setText("Settings")
-        self.settings()
+        self.settings_page()
         #self.loadingUI()
         setting_button.setGeometry(QtCore.QRect(150, 150, 100, 100))
         setting_button.clicked.connect(self.settings_clicked)
@@ -147,7 +131,7 @@ class Ui_Main(QtWidgets.QWidget):
         exit_button.clicked.connect(QCoreApplication.instance().quit)
         #
         if not utils.chromedriver_checker():
-            QMessageBox.about(self, "Generated", "Chrome driver not downloaded please download from settings")
+            QMessageBox.about(self, "Generated", "Chrome driver not downloaded please download from settings_page")
 
         # layout
         layout.addWidget(label1)
@@ -158,44 +142,37 @@ class Ui_Main(QtWidgets.QWidget):
         layout.addWidget(exit_button)
         self.stack1.setLayout(layout)
 
+    def crawl_button_action(self, textbox):
+        self.loadingUI()
+        self.QtStack.setCurrentIndex(4)
+
+        self.crawl_filter_func(textbox)
     def settings_clicked(self):
         self.QtStack.setCurrentIndex(3)
-
-    def update_table_with_arr(self, table, data):
-        for i in data:
-            table.addItem(i)
-        table.repaint()
-
-    def update_table(self, table, data):
-        table.addItem(data)
-        table.repaint()
 
     def con_crawl_action(self):
         file, check = QFileDialog.getOpenFileNames(None, "QFileDialog.getOpenFileName()",
                                                   "", "All Files (*);;Html files (*.html)")
         if check:
             for i in file:
-                crawl.crawled_links.append(i)
+                self.htmls_arr.append(i)
+                #crawl.crawled_links.append(i)
 
-            self.tableUI()
+            self.second_page()
             self.QtStack.setCurrentIndex(1)
             #print(file)
-        #self.tableUI()
+        #self.second_page()()
         #self.QtStack.setCurrentIndex(1)
+    #First pages end
 
-    def dialog(self, table):
-        file, check = QFileDialog.getOpenFileName(None, "QFileDialog.getOpenFileName()",
-                                                  "", "All Files (*);;Html files (*.html)")
-        if check:
-            table.addItem(file)
-            table.repaint()
-            print(file)
 
-    def tableUI(self):
+
+    #Second page start
+    def second_page(self):
         global filtered_data
         self.stack2.resize(700, 400)
         data = filtered_data
-        for i in crawl.crawled_links:
+        for i in self.htmls_arr:
             if i not in data:
                 data.append(i)
         table_layout = QVBoxLayout()
@@ -240,19 +217,6 @@ class Ui_Main(QtWidgets.QWidget):
         # if (not self.stack2.layout()):
         self.stack2.setLayout(table_layout)
 
-    def all_sel_click(self, data):
-        if(len(data) != 0):
-            self.web_list(data)
-            self.QtStack.setCurrentIndex(2)
-        else:
-            QMessageBox.about(self, "Generated", "No link are in the list")
-    def add_click(self, table, data,arr):
-        if len(data) == 0:
-            QMessageBox.about(self, "Generated", "Empty field provided")
-        else:
-            arr.append(data)
-            self.update_table(table, data)
-
     def add_selected(self, listWidget):
         items = listWidget.selectedItems()
         global selected
@@ -264,20 +228,42 @@ class Ui_Main(QtWidgets.QWidget):
         try:
             global selected
             if(len(selected) != 0):
-                self.web_list(selected)
+                self.third_page(selected)
                 self.QtStack.setCurrentIndex(2)
             else:
                 QMessageBox.about(self, "Generated", "No links were selected")
         except NameError:
             QMessageBox.about(self, "Generated", "No links were selected")
 
-    def chorme_dr_down(self):
-        #fucntions
-        utils.chrome_driver_downloader()
-        chrome_version = utils.chromedriver_autoinstaller.get_chrome_version()
-        QMessageBox.about(self, "driver", "Version "+chrome_version+ " downloaded")
+    def all_sel_click(self, data):
+        if(len(data) != 0):
+            self.third_page(data)
+            self.QtStack.setCurrentIndex(2)
+        else:
+            QMessageBox.about(self, "Generated", "No link are in the list")
 
-    def settings(self):
+    def update_table(self, table, data):
+        table.addItem(data)
+        table.repaint()
+    def add_click(self, table, data,arr):
+        if len(data) == 0:
+            QMessageBox.about(self, "Generated", "Empty field provided")
+        else:
+            arr.append(data)
+            self.update_table(table, data)
+    def dialog(self, table):
+        file, check = QFileDialog.getOpenFileName(None, "QFileDialog.getOpenFileName()",
+                                                  "", "All Files (*);;Html files (*.html)")
+        if check:
+            table.addItem(file)
+            table.repaint()
+            print(file)
+    #second page end
+
+
+
+    #settings page start
+    def settings_page(self):
         self.stack3.resize(800, 480)
         settings_layout = QVBoxLayout()
         # performing sim similarity check
@@ -339,6 +325,11 @@ class Ui_Main(QtWidgets.QWidget):
         settings_layout.addWidget(chrome_driver_down)
         self.stack4.setLayout(settings_layout)
 
+    def chorme_dr_down(self):
+        #fucntions
+        utils.chrome_driver_downloader()
+        chrome_version = utils.chromedriver_autoinstaller.get_chrome_version()
+        QMessageBox.about(self, "driver", "Version "+chrome_version+ " downloaded")
     def save_cliked(self, sim, url, index, per_sim, per_url, dom, add_crawl):
         # print("saved")
         default_settings[0] = sim
@@ -373,7 +364,9 @@ class Ui_Main(QtWidgets.QWidget):
     def valid_url(self, to_validate: str) -> bool:
         o = urlparse(to_validate)
         return True if o.scheme and o.netloc else False
+    #settings end
 
+    #loading page start
     def loadingUI(self):
         # creating progress bar
         loading_layout = QVBoxLayout()
@@ -438,7 +431,7 @@ class Ui_Main(QtWidgets.QWidget):
                                                 web_path_similarity_percentage=default_settings[4])
 
                 self.pbar.setValue(100)
-                self.tableUI()
+                self.second_page()
                 self.QtStack.setCurrentIndex(1)
             else:
                 self.QtStack.setCurrentIndex(0)
@@ -446,40 +439,36 @@ class Ui_Main(QtWidgets.QWidget):
         except TypeError as e:
             QMessageBox.about(self, "Error has acquired", str(e))
 
-    def crawl_button_action(self, textbox):
-        self.loadingUI()
-        self.QtStack.setCurrentIndex(4)
-
-        self.crawl_filter_func(textbox)
+    #loading end
 
 
-
-    def web_list(self, url):
+    #third page start
+    def third_page(self, url):
         #self.searched = QtCore.pyqtSignal(str, QtWebEngineWidgets.QWebEnginePage.FindFlag)
-        global counter
-        counter = 0
+        #self.counter
+        self.counter = 0
         listWidget = QListWidget()
         #self.web = QWebView()
         self.web = Browser()
         self.web.show()
         self.stack3.resize(1000, 800)
 
-        if self.valid_url(url[counter]):
-            self.web._view.load(QUrl(url[counter]))
+        if self.valid_url(url[self.counter]):
+            self.web._view.load(QUrl(url[self.counter]))
         else:
-            self.web._view.load(QtCore.QUrl.fromLocalFile(str(url[counter])))
+            self.web._view.load(QtCore.QUrl.fromLocalFile(str(url[self.counter])))
 
-        data = pomgen.elemfinder(url[counter])
+        data = pomgen.elemfinder(url[self.counter])
         next_button = QPushButton('Next page')
         generate_button = QPushButton('Generate for selected')
         gen_all_button = QPushButton('Generate all for this page')
-        current_url_label = QLabel("Elements of " + url[counter])
+        current_url_label = QLabel("Elements of " + url[self.counter])
 
 
         next_button.clicked.connect(
-            lambda: self.table_cleaner(self.web, next_button, url, listWidget, counter, current_url_label))
-        generate_button.clicked.connect(lambda: self.generate_button_clicked(url[counter]))
-        gen_all_button.clicked.connect(lambda: self.gen_all_button_cliked(url[counter]))
+            lambda: self.table_cleaner(self.web, next_button, url, listWidget, current_url_label))
+        generate_button.clicked.connect(lambda: self.generate_button_clicked(url[self.counter]))
+        gen_all_button.clicked.connect(lambda: self.gen_all_button_cliked(url[self.counter]))
         if (len(url) == 1):
             next_button.hide()
 
@@ -494,50 +483,37 @@ class Ui_Main(QtWidgets.QWidget):
         main_layout.addWidget(self.web)
 
         listWidget.resize(300, 150)
-        self.add_item_windget(listWidget, data)
+        self.add_to_list(listWidget, data)
         listWidget.setSelectionMode(QAbstractItemView.MultiSelection)
         listWidget.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
-        listWidget.itemClicked.connect(lambda: self.printItemText(listWidget))
+        listWidget.itemClicked.connect(lambda: self.web_elements_selected_list(listWidget))
 
         main_layout.addLayout(but_list_layout)
         self.stack3.setLayout(main_layout)
 
-
+    def add_to_list(self, windget, data):
+        for i in data:
+            windget.addItem(i)
     def update_counter(self, val):
-        global counter
-        counter = val
-        return counter
-
-
-    def table_cleaner(self, web, button, url, listWidget, counter, current_url_label):
-        counter += 1
-        if counter == len(url) - 1:
+        #global self.counter
+        self.counter = val
+        return self.counter
+    def table_cleaner(self, web, button, url, listWidget, current_url_label):
+        self.counter += 1
+        if self.counter == len(url) - 1:
             button.hide()
-        if self.valid_url(url[counter]):
-            web._view.load(QUrl(url[counter]))
+        if self.valid_url(url[self.counter]):
+            web._view.load(QUrl(url[self.counter]))
         else:
-            web._view.load(QtCore.QUrl.fromLocalFile(str(url[counter])))
-        data = pomgen.elemfinder(url[counter])
+            web._view.load(QtCore.QUrl.fromLocalFile(str(url[self.counter])))
+        data = pomgen.elemfinder(url[self.counter])
         listWidget.clear()
         for i in data:
             listWidget.addItem(i)
             listWidget.repaint()
         # print("next button clicked")
-        current_url_label.setText("Elements of " + url[counter])
-        self.update_counter(counter)
-
-    def printItemText(self, listWidget):
-        items = listWidget.selectedItems()
-        global selected_elements
-        selected_elements = []
-        if(len(items) != 0):
-            for i in range(len(items)):
-                selected_elements.append(str(listWidget.selectedItems()[i].text()))
-                #input example nav-bar output HOME,ERROR
-                self.web._search_panel.text_fi("HOME")
-                self.web._search_panel.text_fi("ERROR")
-        else:
-            self.web._search_panel.text_fi("")
+        current_url_label.setText("Elements of " + url[self.counter])
+        self.update_counter(self.counter)
 
     def generate_button_clicked(self, url):
         try:
@@ -555,15 +531,18 @@ class Ui_Main(QtWidgets.QWidget):
         ####burası fixlencek
         QMessageBox.about(self, "Generated", "Generated for all")
 
-    def add_item_windget(self, windget, data):
-        for i in data:
-            windget.addItem(i)
-
-
-class Main(QMainWindow, Ui_Main):
-    def __init__(self, parent=None):
-        super(Main, self).__init__(parent)
-        self.setupUi(self)
+    def web_elements_selected_list(self, listWidget):
+        items = listWidget.selectedItems()
+        global selected_elements
+        selected_elements = []
+        if(len(items) != 0):
+            for i in range(len(items)):
+                selected_elements.append(str(listWidget.selectedItems()[i].text()))
+                #input example nav-bar output HOME,ERROR
+                #self.web._search_panel.text_fi("HOME")
+                #self.web._search_panel.text_fi("ERROR HOME")
+        else:
+            self.web._search_panel.text_fi("")
 
 
 class Browser(QtWidgets.QMainWindow,):
@@ -573,7 +552,6 @@ class Browser(QtWidgets.QMainWindow,):
         self.setCentralWidget(self._view)
         self._view.load(QtCore.QUrl('http://localhost:8080/vets.html'))
         self._search_panel = SearchPanel()
-
         self.search_toolbar = QtWidgets.QToolBar()
         self.search_toolbar.addWidget(self._search_panel)
         self.addToolBar(QtCore.Qt.BottomToolBarArea, self.search_toolbar)
@@ -586,17 +564,24 @@ class Browser(QtWidgets.QMainWindow,):
     def on_searched(self, text, flag):
         def callback(found):
             if text and not found:
+                print(text)
                 self.statusBar().show()
                 self.statusBar().showMessage('Not found')
             else:
                 self.statusBar().hide()
 
         self._view.findText(text, flag, callback)
+       #self._view.findText("ERROR", flag, callback)
 
     def create_menus(self):
         menubar = self.menuBar()
         file_menu = menubar.addMenu('&File')
         file_menu.addAction('&Find...', self.search_toolbar.show, shortcut=QtGui.QKeySequence.Find)
+
+class Main(QMainWindow, Ui_Main):
+    def __init__(self, parent=None):
+        super(Main, self).__init__(parent)
+        self.setupUi(self)
 def gui_start():
     app = QApplication(sys.argv)
     app.setWindowIcon(QtGui.QIcon('logo.png'))

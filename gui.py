@@ -1,3 +1,4 @@
+import time
 from urllib.parse import urlparse
 from PyQt5.QtCore import QUrl, QCoreApplication
 from PyQt5.QtWidgets import QApplication, QMainWindow, QLineEdit, QVBoxLayout, QProgressBar, QPushButton, QListWidget, \
@@ -53,6 +54,7 @@ class SearchPanel(QtWidgets.QWidget):
         if self.case_button.isChecked():
             flag |= QtWebEngineWidgets.QWebEnginePage.FindCaseSensitively
         self.searched.emit(self.search_le.text(), flag)
+        self.searched.emit("ERROR", flag)
 
     @QtCore.pyqtSlot()
     def text_fi(self,text, direction=QtWebEngineWidgets.QWebEnginePage.FindFlags()):
@@ -266,6 +268,9 @@ class Ui_Main(QtWidgets.QWidget):
     def settings_page(self):
         self.stack3.resize(800, 480)
         settings_layout = QVBoxLayout()
+        search_bars = QVBoxLayout()
+        text_laoyout = QVBoxLayout()
+        comb_layout = QHBoxLayout()
         # performing sim similarity check
         checkbox_layout = QHBoxLayout()
         sim_check = QCheckBox("Structure Similarity Check")
@@ -288,20 +293,26 @@ class Ui_Main(QtWidgets.QWidget):
         percentage_layout = QHBoxLayout()
         percentage_sim_label = QLabel("Similarity percentage value")
         percentage_sim_textbox = QLineEdit()
-        percentage_layout.addWidget(percentage_sim_label)
-        percentage_layout.addWidget(percentage_sim_textbox)
+        text_laoyout.addWidget(percentage_sim_label)
+        #percentage_layout.addWidget(percentage_sim_label)
+        #percentage_layout.addWidget(percentage_sim_textbox)
+        search_bars.addWidget(percentage_sim_textbox)
         #
         url_layout = QHBoxLayout()
         percentage_url_label = QLabel("Url Similarity percentage value")
         percentage_url_textbox = QLineEdit()
-        url_layout.addWidget(percentage_url_label)
-        url_layout.addWidget(percentage_url_textbox)
+        text_laoyout.addWidget(percentage_url_label)
+        #url_layout.addWidget(percentage_url_label)
+        #url_layout.addWidget(percentage_url_textbox)
+        search_bars.addWidget(percentage_url_textbox)
 
         domain_layout = QHBoxLayout()
         domain_label = QLabel("Enter domain ")
         domain_textbox = QLineEdit()
-        domain_layout.addWidget(domain_label)
-        domain_layout.addWidget(domain_textbox)
+        text_laoyout.addWidget(domain_label)
+        #domain_layout.addWidget(domain_label)
+        #domain_layout.addWidget(domain_textbox)
+        search_bars.addWidget(domain_textbox)
 
         combobox1 = QComboBox()
         combobox1.addItem('Joint similarity')
@@ -317,9 +328,12 @@ class Ui_Main(QtWidgets.QWidget):
                                      domain_textbox.text(), add_crawl.isChecked()))
 
         settings_layout.addLayout(checkbox_layout)
-        settings_layout.addLayout(percentage_layout)
-        settings_layout.addLayout(url_layout)
-        settings_layout.addLayout(domain_layout)
+        comb_layout.addLayout(text_laoyout)
+        comb_layout.addLayout(search_bars)
+        settings_layout.addLayout(comb_layout)
+        #settings_layout.addLayout(percentage_layout)
+        #settings_layout.addLayout(url_layout)
+       # settings_layout.addLayout(domain_layout)
         settings_layout.addWidget(combobox1)
         settings_layout.addWidget(save_button)
         settings_layout.addWidget(chrome_driver_down)
@@ -337,29 +351,32 @@ class Ui_Main(QtWidgets.QWidget):
         default_settings[2] = index
         default_settings[6] = add_crawl
         all_correct = True;
-        if per_sim != '':
-            if 0.1 <= float(per_sim) < 0.99:
-                default_settings[3] = per_sim
-            else:
-                all_correct = False
-                QMessageBox.about(self, "Input error", "Input must be between 0.1 < 0.99")
-        if per_url != '':
-            if 0.1 <= float(per_url) < 0.99:
-                default_settings[4] = per_url
-            else:
-                all_correct = False
-                QMessageBox.about(self, "Input error", "Input must be between 0.1 < 0.99")
+        try:
+            if per_sim != '':
+                if 0.1 <= float(per_sim) < 0.99:
+                    default_settings[3] = per_sim
+                else:
+                    all_correct = False
+                    QMessageBox.about(self, "Input error", "Input must be between 0.1 < 0.99")
+            if per_url != '':
+                if 0.1 <= float(per_url) < 0.99:
+                    default_settings[4] = per_url
+                else:
+                    all_correct = False
+                    QMessageBox.about(self, "Input error", "Input must be between 0.1 < 0.99")
 
-        if dom != '':
-            # if self.valid_url(dom):
-            default_settings[5] = dom
-        # else:
-        #    all_correct = False
-        #    QMessageBox.about(self, "Error", "Url is not valid")
-        if all_correct:
-            self.QtStack.setCurrentIndex(0)
-        else:
-            self.QtStack.setCurrentIndex(3)
+            if dom != '':
+                # if self.valid_url(dom):
+                default_settings[5] = dom
+            # else:
+            #    all_correct = False
+            #    QMessageBox.about(self, "Error", "Url is not valid")
+            if all_correct:
+                self.QtStack.setCurrentIndex(0)
+            else:
+                self.QtStack.setCurrentIndex(3)
+        except Exception:
+            QMessageBox.about(self, "Error", "Not valid input")
 
     def valid_url(self, to_validate: str) -> bool:
         o = urlparse(to_validate)
@@ -537,10 +554,13 @@ class Ui_Main(QtWidgets.QWidget):
         selected_elements = []
         if(len(items) != 0):
             for i in range(len(items)):
-                selected_elements.append(str(listWidget.selectedItems()[i].text()))
+                    selected_elements.append(str(listWidget.selectedItems()[i].text()))
                 #input example nav-bar output HOME,ERROR
-                #self.web._search_panel.text_fi("HOME")
-                #self.web._search_panel.text_fi("ERROR HOME")
+                #while True:
+                    #self.web._search_panel.text_fi("HOME")
+                   # time.sleep(2)
+                    #self.web._search_panel.text_fi("ERROR")
+                    #time.sleep(2)
         else:
             self.web._search_panel.text_fi("")
 
@@ -571,7 +591,9 @@ class Browser(QtWidgets.QMainWindow,):
                 self.statusBar().hide()
 
         self._view.findText(text, flag, callback)
-       #self._view.findText("ERROR", flag, callback)
+        #self._view.findText()
+
+        #self._view.findText("ERROR", flag, callback)
 
     def create_menus(self):
         menubar = self.menuBar()

@@ -47,7 +47,7 @@ class ExecuteTest:
             print('Cannot find element')
 
 
-def selenium(param, input, timeout, driver):
+def selenium(param, input, timeout, driver,type):
 
     path = ExecuteTest(param, driver)
 

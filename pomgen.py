@@ -2,6 +2,15 @@ from urllib.parse import urlparse
 
 import utils
 
+class Element:
+    def __init__(self,data,name,type):
+        self.data=data
+        self.name=name
+        self.type=type
+
+
+
+
 
 def file_gen(url, elems):
     parsed_url = utils.urlparse(url)
@@ -16,27 +25,26 @@ def file_gen(url, elems):
         f.write(
             "import testdriver\n\nurl = \"" + url + "\"\ndriver = testdriver.Driver.driver\n\n\ndef GoTo():\n\tdriver.get(url)\n\n")
         for elem in elems:
-            if '>' and '<' in elem:
-                elem = (elem.split(">"))[1].split("<")[0]
+            if '>' and '<' in elem.data:
+                elem = (elem.data.split(">"))[1].split("<")[0]    #####BURASINI ALDIM
                 if (len(elem) > 1):
-                    elem_name = elem.replace(' ', '_')
+
                     elem = "//button[text()=\\\'" + elem + "\\\']"
-                    f.write("\ndef " + elem_name + "(input=\"\", timeout=0.5):\n\ttestdriver.selenium(\'" + elem + "\', input, timeout, driver)\n\n")
+                    f.write("\ndef " + elem.name + "(input=\"\", timeout=0.5):\n\ttestdriver.selenium(\'" + elem + "\', input, timeout, driver, \"" + elem.type + "\")\n\n")
             else:
-                elem_name = elem.replace('-', '_')
-                elem_name = elem_name.replace(" ", "_")
-                f.write( "\ndef " + elem_name + "(input=\"\", timeout=0.5):\n\ttestdriver.selenium(\"" + elem_name + "\", input, timeout, driver)\n\n")
+
+                f.write( "\ndef " + elem.name + "(input=\"\", timeout=0.5):\n\ttestdriver.selenium(\"" + elem.data + "\", input, timeout, driver, \"" + elem.type + "\")\n\n")
 
 
     with open("TEST_FILE_" + folder_path.removesuffix("_POM") + ".py", "a") as f:
         f.write("import " + folder_path + "." + file_name + " as " + file_name + "\n# GoTo")
         for elem in elems:
             if '>' and '<' in elem:
-                elem = (elem.split(">"))[1].split("<")[0]
+                elem = (elem.data.split(">"))[1].split("<")[0]
                 if (len(elem) > 1):
                     elem_name = elem.replace(' ', '_')
             else:
-                elem_name = elem.replace('-', '_')
+                elem_name = elem.data.replace('-', '_')
                 elem_name = elem_name.replace(" ", "_")
             f.write(", " + elem_name)
         f.write("\n")
@@ -60,15 +68,24 @@ def htmlsoup(url):
         soup = utils.BeautifulSoup(page_html, "html.parser")
     return soup
 
+def elemprinter(elemarray):
+    for x in elemarray:
+        print("data: "+x.data+" name: "+ x.name + " type: "+x.type)
+
+
 
 def idfinder(url):
+    type="id"
     soup = htmlsoup(url)
     idSoup = [tag['id'] for tag in soup.find_all(id=True)]
-    return idSoup
+    elemarray=[]
+    for x in idSoup:
+        elemarray.append(Element(x,utils.namechanger(x,type),type))
+    return elemarray
 
 
 def buttonfinder(url):
-
+    type="button"
     buttons = []
     soup = htmlsoup(url)
     divSoup = soup.find_all('div')
@@ -91,9 +108,12 @@ def buttonfinder(url):
                 str1 = "<" + i
             else:
                 str1 = "<" + i + ">"
-            returnarray.append(str1)
 
-    return returnarray
+            returnarray.append(str1)
+    elemarray=[]
+    for elem in returnarray:
+        elemarray.append(Element(elem,utils.namechanger(elem,type),type))
+    return elemarray
 
 
 # alt commente bak öyle çıkıyor 2 dimension array
@@ -113,6 +133,7 @@ def hreffinder(url):
 
 
 def classfinder(url):
+    type = "class"
     classes = []
     soup = htmlsoup(url)
     testSoup = soup.find_all('a')
@@ -128,16 +149,21 @@ def classfinder(url):
 
             for j in i:
                 str1 = str1 + str(j) + " "
+
             str1 = str1.removesuffix(" ")
             returnarray.append(str1)
         else:
             returnarray.append(i[0])
-    return returnarray
+    elemarray=[]
+    for x in returnarray:
+        elemarray.append(Element(x,utils.namechanger(x,type),type))
+
+    return elemarray
 
 
 def elemfinder(url):
     elems = idfinder(url) + buttonfinder(url) + classfinder(url)
-
+    #print(elems)
     return elems
 
 
@@ -158,5 +184,7 @@ def otherparser(url):
     page_html = utils.requests.get(url).text
     utils.parser.feed(page_html)
     print(utils.parser.data_text)
-
+#elemprinter(idfinder("http://localhost:8080/owners/new"))
+#elemprinter(buttonfinder("http://localhost:8080/owners/new"))
 #otherparser("http://localhost:8080/owners/new")
+elemprinter(elemfinder("http://localhost:8080/owners/find"))

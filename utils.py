@@ -8,6 +8,7 @@ import csv
 from urllib.parse import urlparse
 import chromedriver_autoinstaller
 from html.parser import HTMLParser
+nonhtmltdata=["id","class","href"]
 
 def file_name_changer(subdomain):
     invalid = '<>:"/\|?* '
@@ -21,6 +22,19 @@ def folder_name_changer(domain):
     for char in invalid:
         domain = domain.replace(char, '')
     return domain
+
+def namechanger(name,type):
+
+    if(type in nonhtmltdata):
+        invalid = '<>:"/\|?* -'
+        for char in invalid:
+            name = name.replace(char,'_')
+    else:
+         if '>' and '<' in name:
+            name = (name.split(">"))[1].split("<")[0]
+            if(len(name) > 1):
+                name = name.replace(' ', '_')
+    return name
 
 def chrome_driver_downloader():
     chromedriver_autoinstaller.install(True)

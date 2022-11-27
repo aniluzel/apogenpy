@@ -474,8 +474,10 @@ class Ui_Main(QtWidgets.QWidget):
             self.web._view.load(QUrl(url[self.counter]))
         else:
             self.web._view.load(QtCore.QUrl.fromLocalFile(str(url[self.counter])))
-
-        data = pomgen.elemfinder(url[self.counter])
+        data = []
+        for x in pomgen.elemfinder(url[self.counter]):
+            data.append(x.name)
+        #data = pomgen.elemfinder(url[self.counter])
         next_button = QPushButton('Next page')
         generate_button = QPushButton('Generate for selected')
         gen_all_button = QPushButton('Generate all for this page')

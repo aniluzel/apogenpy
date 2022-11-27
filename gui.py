@@ -54,7 +54,7 @@ class SearchPanel(QtWidgets.QWidget):
         if self.case_button.isChecked():
             flag |= QtWebEngineWidgets.QWebEnginePage.FindCaseSensitively
         self.searched.emit(self.search_le.text(), flag)
-        self.searched.emit("ERROR", flag)
+       # self.searched.emit("ERROR", flag)
 
     @QtCore.pyqtSlot()
     def text_fi(self,text, direction=QtWebEngineWidgets.QWebEnginePage.FindFlags()):
@@ -474,9 +474,16 @@ class Ui_Main(QtWidgets.QWidget):
             self.web._view.load(QUrl(url[self.counter]))
         else:
             self.web._view.load(QtCore.QUrl.fromLocalFile(str(url[self.counter])))
-        data = []
+        data = [[]]
+        self.headers = []
         for x in pomgen.elemfinder(url[self.counter]):
-            data.append(x.name)
+            data.append([x.name,x.type])
+            self.headers.append(x.type)
+
+        print(data)
+
+
+
         #data = pomgen.elemfinder(url[self.counter])
         next_button = QPushButton('Next page')
         generate_button = QPushButton('Generate for selected')
@@ -511,8 +518,19 @@ class Ui_Main(QtWidgets.QWidget):
         self.stack3.setLayout(main_layout)
 
     def add_to_list(self, windget, data):
+        header = ""
         for i in data:
-            windget.addItem(i)
+            if len(i) < 2:
+                print("empty arr")
+            elif header == "":
+                header = i[1]
+                windget.addItem(i[1])
+            elif header == i[1]:
+                windget.addItem(i[0])
+            else :
+                header = i[1]
+                windget.addItem(i[1])
+
     def update_counter(self, val):
         #global self.counter
         self.counter = val
@@ -525,13 +543,20 @@ class Ui_Main(QtWidgets.QWidget):
             web._view.load(QUrl(url[self.counter]))
         else:
             web._view.load(QtCore.QUrl.fromLocalFile(str(url[self.counter])))
-        data = []
+
+        #self.headers = []
+        data = [[]]
+
         for x in pomgen.elemfinder(url[self.counter]):
-            data.append(x.name)
+            data.append([x.name, x.type])
+            if x.type not in self.headers:
+                self.headers.append(x.type)
+
+        #data = pomgen.elemfinder(url[self.counter])
         listWidget.clear()
-        for i in data:
-            listWidget.addItem(i)
-            listWidget.repaint()
+        self.add_to_list(listWidget,data)
+
+        listWidget.repaint()
         # print("next button clicked")
         current_url_label.setText("Elements of " + url[self.counter])
         self.update_counter(self.counter)
@@ -539,7 +564,13 @@ class Ui_Main(QtWidgets.QWidget):
     def generate_button_clicked(self, url):
         try:
             global selected_elements
-            pomgen.file_gen(url, selected_elements)  #### burası fixlencek
+            for i in self.headers:
+                if i in selected_elements:
+                    selected_elements.remove(i)
+            print(self.headers)
+            print(selected_elements)
+            if len(selected_elements) != 0:
+                pomgen.file_gen(url, selected_elements)  #### burası fixlencek
         except NameError:
             QMessageBox.about(self, "Generated", "No elements were selected")
         else:
@@ -558,7 +589,13 @@ class Ui_Main(QtWidgets.QWidget):
         selected_elements = []
         if(len(items) != 0):
             for i in range(len(items)):
-                    selected_elements.append(str(listWidget.selectedItems()[i].text()))
+                selected_elements.append(str(listWidget.selectedItems()[i].text()))
+                # for x in self.headers:
+                #     if str(listWidget.selectedItems()[i].text()) == x:
+                #         selected_elements.append(listWidget.get)
+
+
+
                 #input example nav-bar output HOME,ERROR
                 #while True:
                     #self.web._search_panel.text_fi("HOME")

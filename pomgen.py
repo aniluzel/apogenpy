@@ -26,11 +26,11 @@ def file_gen(url, elems):
             "import testdriver\n\nurl = \"" + url + "\"\ndriver = testdriver.Driver.driver\n\n\ndef GoTo():\n\tdriver.get(url)\n\n")
         for elem in elems:
             if '>' and '<' in elem.data:
-                elem = (elem.data.split(">"))[1].split("<")[0]    #####BURASINI ALDIM
-                if (len(elem) > 1):
+                elem_tmp = (elem.data.split(">"))[1].split("<")[0]    #####BURASINI ALDIM
+                if (len(elem_tmp) > 1):
 
-                    elem = "//button[text()=\\\'" + elem + "\\\']"
-                    f.write("\ndef " + elem.name + "(input=\"\", timeout=0.5):\n\ttestdriver.selenium(\'" + elem + "\', input, timeout, driver, \"" + elem.type + "\")\n\n")
+                    elem_tmp = "//button[text()=\\\'" + elem_tmp + "\\\']"
+                    f.write("\ndef " + elem.name + "(input=\"\", timeout=0.5):\n\ttestdriver.selenium(\'" + elem_tmp + "\', input, timeout, driver, \"" + elem.type + "\")\n\n")
             else:
 
                 f.write( "\ndef " + elem.name + "(input=\"\", timeout=0.5):\n\ttestdriver.selenium(\"" + elem.data + "\", input, timeout, driver, \"" + elem.type + "\")\n\n")
@@ -39,13 +39,15 @@ def file_gen(url, elems):
     with open("TEST_FILE_" + folder_path.removesuffix("_POM") + ".py", "a") as f:
         f.write("import " + folder_path + "." + file_name + " as " + file_name + "\n# GoTo")
         for elem in elems:
-            if '>' and '<' in elem:
-                elem = (elem.data.split(">"))[1].split("<")[0]
-                if (len(elem) > 1):
-                    elem_name = elem.replace(' ', '_')
+            elem_tmp2=elem.data
+
+            if '>' and '<' in elem_tmp2:
+                elem_tmp2 = (elem_tmp2.split(">"))[1].split("<")[0]
+                if (len(elem_tmp2) > 1):
+                    elem_name = elem_tmp2.replace(' ', '_')
             else:
-                elem_name = elem.data.replace('-', '_')
-                elem_name = elem_name.replace(" ", "_")
+                elem_name = elem_tmp2.replace('-', '_')
+                elem_name = elem_tmp2.replace(" ", "_")
             f.write(", " + elem_name)
         f.write("\n")
 
@@ -85,7 +87,7 @@ def idfinder(url):
 
 
 def buttonfinder(url):
-    type="button"
+    type="xpath"
     buttons = []
     soup = htmlsoup(url)
     divSoup = soup.find_all('div')

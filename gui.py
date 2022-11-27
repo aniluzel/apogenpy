@@ -525,7 +525,9 @@ class Ui_Main(QtWidgets.QWidget):
             web._view.load(QUrl(url[self.counter]))
         else:
             web._view.load(QtCore.QUrl.fromLocalFile(str(url[self.counter])))
-        data = pomgen.elemfinder(url[self.counter])
+        data = []
+        for x in pomgen.elemfinder(url[self.counter]):
+            data.append(x.name)
         listWidget.clear()
         for i in data:
             listWidget.addItem(i)

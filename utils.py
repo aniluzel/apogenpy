@@ -8,7 +8,9 @@ import csv
 from urllib.parse import urlparse
 import chromedriver_autoinstaller
 from html.parser import HTMLParser
+
 nonhtmltdata=["id","class","href"]
+htmldata=["xpath"]
 
 def file_name_changer(subdomain):
     invalid = '<>:"/\|?* '

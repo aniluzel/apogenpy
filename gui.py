@@ -545,16 +545,16 @@ class Ui_Main(QtWidgets.QWidget):
             web._view.load(QtCore.QUrl.fromLocalFile(str(url[self.counter])))
 
         #self.headers = []
-        data = [[]]
+        self.data = [[]]
 
         for x in pomgen.elemfinder(url[self.counter]):
-            data.append([x.name, x.type])
+            self.data.append([x.name, x.type])
             if x.type not in self.headers:
                 self.headers.append(x.type)
 
         #data = pomgen.elemfinder(url[self.counter])
         listWidget.clear()
-        self.add_to_list(listWidget,data)
+        self.add_to_list(listWidget,self.data)
 
         listWidget.repaint()
         # print("next button clicked")
@@ -567,10 +567,17 @@ class Ui_Main(QtWidgets.QWidget):
             for i in self.headers:
                 if i in selected_elements:
                     selected_elements.remove(i)
-            print(self.headers)
-            print(selected_elements)
+            #print(self.headers)
+            #print(selected_elements)
+            tmp = []
+            for g in pomgen.elemfinder(url):
+                for k in selected_elements:
+                    if k == g.name:
+                        tmp.append(g)
+            print(tmp)
+
             if len(selected_elements) != 0:
-                pomgen.file_gen(url, selected_elements)  #### burası fixlencek
+                pomgen.file_gen(url, tmp)  #### burası fixlencek
         except NameError:
             QMessageBox.about(self, "Generated", "No elements were selected")
         else:

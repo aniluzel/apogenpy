@@ -189,4 +189,4 @@ def otherparser(url):
 #elemprinter(idfinder("http://localhost:8080/owners/new"))
 #elemprinter(buttonfinder("http://localhost:8080/owners/new"))
 #otherparser("http://localhost:8080/owners/new")
-elemprinter(elemfinder("http://localhost:8080/owners/find"))
+#elemprinter(elemfinder("http://localhost:8080/owners/find"))

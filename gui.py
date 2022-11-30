@@ -45,7 +45,7 @@ class MyList(QListWidget):
             listWidget = QListWidgetItem('Group {}'.format(t))
             listWidget.setData(33, 'header')
             listWidget.setData(34, t)
-            listWidget.setFlags(QtCore.Qt.ItemIsEnabled)
+            #listWidget.setFlags(QtCore.Qt.ItemIsEnabled)
             self.addItem(listWidget)
             for row in rows:
                 if row['group'] == t:
@@ -62,7 +62,7 @@ class MyList(QListWidget):
         self.itemClicked.connect(self.selManager)
 
     def selManager(self, item):
-        if item.data(33) not in selected_elements:
+        if item.data(33) not in selected_elements and item.data(3) != 'header':
             selected_elements.append(item.data(33))
             print(selected_elements)
         else:
@@ -99,7 +99,6 @@ def crawl_filter_func(textbox):
     else:
         c.crawl(crawl.CrawlingSpider, start_urls=[textbox.text()], allowed_domains=[default_settings[5]])
     c.start()
-
     # self.pbar.setValue(30)
     url_data = adv.url_to_df(textbox.text())
     domain = url_data["scheme"] + "://" + url_data["netloc"]

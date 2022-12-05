@@ -45,11 +45,11 @@ class MyList(QListWidget):
             listWidget = QListWidgetItem('Group {}'.format(t))
             listWidget.setData(33, 'header')
             listWidget.setData(34, t)
-            #listWidget.setFlags(QtCore.Qt.ItemIsEnabled)
+            listWidget.setFlags(QtCore.Qt.ItemIsEnabled)
             self.addItem(listWidget)
             for row in rows:
                 if row['group'] == t:
-                    listWidget = QListWidgetItem(row['text'])
+                    listWidget = QListWidgetItem("    "+row['text'])
                     listWidget.setData(33, row['value'])
                     listWidget.setData(34, row['group'])
                     listWidget.setFlags(QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable)
@@ -62,14 +62,13 @@ class MyList(QListWidget):
         self.itemClicked.connect(self.selManager)
 
     def selManager(self, item):
-        if item.data(33) not in selected_elements and item.data(3) != 'header':
+        if item.data(33) not in selected_elements and item.data(33) != 'header':
             selected_elements.append(item.data(33))
-            print(selected_elements)
-        else:
+            #print(selected_elements)
+        elif item.data(33) !='header':
             selected_elements.remove(item.data(33))
     def update_table_list(self, new_data):
         self.clear()
-        print(new_data)
         selected_elements.clear()
         for t in grouptitles:
             listWidget = QListWidgetItem('Group {}'.format(t))
@@ -80,7 +79,7 @@ class MyList(QListWidget):
 
             for row in new_data:
                 if row['group'] == t:
-                    listWidget = QListWidgetItem(row['text'])
+                    listWidget = QListWidgetItem("    "+row['text'])
                     listWidget.setData(33, row['value'])
                     listWidget.setData(34, row['group'])
                     listWidget.setFlags(

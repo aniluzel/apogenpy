@@ -48,7 +48,7 @@ class MyList(QListWidget):
             listWidget = QListWidgetItem('Group {}'.format(t))
             listWidget.setData(33, 'header')
             listWidget.setData(34, t)
-            #listWidget.setFlags(QtCore.Qt.ItemIsEnabled)
+            listWidget.setFlags(QtCore.Qt.ItemIsSelectable)
             self.addItem(listWidget)
             for row in self.rows:
                 if row['group'] == t:
@@ -66,13 +66,12 @@ class MyList(QListWidget):
 
     def selManager(self, item):
         tmp = self.findItems("*", Qt.MatchWildcard)
-
+        print(selected_elements)
         if item.data(33) == 'header':
-            #print(tmp)
-            for i in self.rows:
-                if i['group'] == item.data(34):
                     for k in tmp:
-                        if k.data(34) == i['group']:
+                        #and k.data(33) != 'header'
+                        if k.data(34) == item.data(34) and k.data(33) != 'header':
+                            print(k.data(33),k.data(34))
                             if k.isSelected() == False:
                                 k.setSelected(True)
                                 selected_elements.append(k.data(33))
@@ -661,8 +660,8 @@ class Ui_Main(QtWidgets.QWidget):
         ####burası fixlencek
         QMessageBox.about(self, "Generated", "Generated for all")
 
-    def web_elements_selected_list(self, listWidget):
-        listWidget.selManager(listWidget)
+    # def web_elements_selected_list(self, listWidget):
+    #     listWidget.selManager(listWidget)
 
 
                 # input example nav-bar output HOME,ERROR

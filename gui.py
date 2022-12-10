@@ -1,6 +1,6 @@
 import time
 from urllib.parse import urlparse
-from PyQt5.QtCore import QUrl, QCoreApplication
+from PyQt5.QtCore import QUrl, QCoreApplication, Qt
 from PyQt5.QtWidgets import QApplication, QMainWindow, QLineEdit, QVBoxLayout, QProgressBar, QPushButton, QListWidget, \
     QAbstractItemView, QWidget, QHBoxLayout, QCheckBox, QComboBox, QMessageBox, QFileDialog, QListWidgetItem
 from PyQt5.QtWidgets import QLabel
@@ -29,25 +29,28 @@ selected_elements = []
 #     {'text': 'Row9', 'value': 9, 'group': 2},
 #     {'text': 'Row10', 'value': 10, 'group': 'testing'}
 # ]
-rows = []
+#rows = []
 #grouptitles = [1, 2, 3,'testing']                       # list of grouptitles
-grouptitles = []
+#grouptitles = []
 def gruppe(d):                                  # function for sorting the itemlist
     return str(d['group'])
 
 #rows.sort(key=gruppe,reverse=False)                     # sort rows by groups
 
 class MyList(QListWidget):
+
     def __init__(self):
+        self.rows = []
+        self.grouptitles = []
         QListWidget.__init__(self)
         self.setMinimumHeight(270)
-        for t in grouptitles:
+        for t in self.grouptitles:
             listWidget = QListWidgetItem('Group {}'.format(t))
             listWidget.setData(33, 'header')
             listWidget.setData(34, t)
-            listWidget.setFlags(QtCore.Qt.ItemIsEnabled)
+            #listWidget.setFlags(QtCore.Qt.ItemIsEnabled)
             self.addItem(listWidget)
-            for row in rows:
+            for row in self.rows:
                 if row['group'] == t:
                     listWidget = QListWidgetItem("    "+row['text'])
                     listWidget.setData(33, row['value'])
@@ -62,6 +65,22 @@ class MyList(QListWidget):
         self.itemClicked.connect(self.selManager)
 
     def selManager(self, item):
+        tmp = self.findItems("*", Qt.MatchWildcard)
+
+        if item.data(33) == 'header':
+            #print(tmp)
+            for i in self.rows:
+                if i['group'] == item.data(34):
+                    for k in tmp:
+                        if k.data(34) == i['group']:
+                            if k.isSelected() == False:
+                                k.setSelected(True)
+                                selected_elements.append(k.data(33))
+                            elif k.isSelected() == True:
+                                k.setSelected(False)
+                                selected_elements.remove(k.data(33))
+
+
         if item.data(33) not in selected_elements and item.data(33) != 'header':
             selected_elements.append(item.data(33))
             #print(selected_elements)
@@ -70,14 +89,16 @@ class MyList(QListWidget):
     def update_table_list(self, new_data):
         self.clear()
         selected_elements.clear()
-        for t in grouptitles:
+        self.rows = []
+        self.rows = new_data
+        for t in self.grouptitles:
             listWidget = QListWidgetItem('Group {}'.format(t))
             listWidget.setData(33, 'header')
             listWidget.setData(34, t)
             listWidget.setFlags(QtCore.Qt.ItemIsEnabled)
             self.addItem(listWidget)
 
-            for row in new_data:
+            for row in self.rows:
                 if row['group'] == t:
                     listWidget = QListWidgetItem("    "+row['text'])
                     listWidget.setData(33, row['value'])
@@ -543,15 +564,17 @@ class Ui_Main(QtWidgets.QWidget):
             self.web._view.load(QtCore.QUrl.fromLocalFile(str(url[self.counter])))
         self.data = [[]]
         self.grouptitles = []
+        rows =[]
+        listWidget = MyList()
         for x in pomgen.elemfinder(url[self.counter]):
             self.data.append([x.name, x.type, x.data])
-            if x.type not in grouptitles:
-                grouptitles.append(x.type)
+            if x.type not in listWidget.grouptitles:
+                listWidget.grouptitles.append(x.type)
 
         for x in pomgen.elemfinder(url[self.counter]):
             rows.append({'text': x.name, 'value': x.data, 'group': x.type})
-        listWidget = MyList()
-        #listWidget.update_table_list()
+
+        listWidget.update_table_list(rows)
         next_button = QPushButton('Next page')
         generate_for_selected_button = QPushButton('Generate for selected')
         generate_all_button = QPushButton('Generate all for this page')
@@ -598,8 +621,8 @@ class Ui_Main(QtWidgets.QWidget):
         rows = []
         for x in pomgen.elemfinder(url[self.counter]):
             self.data.append([x.name, x.type, x.data])
-            if x.type not in grouptitles:
-                grouptitles.append(x.type)
+            if x.type not in listWidget.grouptitles:
+                listWidget.grouptitles.append(x.type)
                 #print(grouptitles)
 
         for x in pomgen.elemfinder(url[self.counter]):

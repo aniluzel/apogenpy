@@ -1,10 +1,9 @@
 import time
 from urllib.parse import urlparse
-from PyQt5.QtCore import QUrl, QCoreApplication, Qt
-from PyQt5.QtWidgets import QApplication, QMainWindow, QLineEdit, QVBoxLayout, QProgressBar, QPushButton, QListWidget, \
-    QAbstractItemView, QWidget, QHBoxLayout, QCheckBox, QComboBox, QMessageBox, QFileDialog, QListWidgetItem
+from PyQt5.QtCore import QUrl, QCoreApplication, Qt, QThread, pyqtSignal
+from PyQt5.QtWidgets import QApplication, QMainWindow, QLineEdit, QVBoxLayout, QPushButton, QListWidget, \
+    QAbstractItemView, QHBoxLayout, QCheckBox, QComboBox, QMessageBox, QFileDialog, QListWidgetItem
 from PyQt5.QtWidgets import QLabel
-
 import sys
 import crawl
 import pomgen
@@ -13,32 +12,14 @@ from selenium.webdriver.chrome.options import Options
 from selenium import webdriver
 from PyQt5 import QtCore, QtGui, QtWidgets, QtWebEngineWidgets
 import utils
+import threading
 
 default_settings = [False, False, 1, 0.92, 0.88, None, True, 2]
 filtered_data = []
 selected_elements = []
-# rows = [
-#     {'text': 'Row1', 'value': 1, 'group': 1},
-#     {'text': 'Row2', 'value': 2, 'group': 1},
-#     {'text': 'Row3', 'value': 3, 'group': 1},
-#     {'text': 'Row4', 'value': 4, 'group': 2},
-#     {'text': 'Row5', 'value': 5, 'group': 2},
-#     {'text': 'Row6', 'value': 6, 'group': 3},
-#     {'text': 'Row7', 'value': 7, 'group': 3},
-#     {'text': 'Row8', 'value': 8, 'group': 3},
-#     {'text': 'Row9', 'value': 9, 'group': 2},
-#     {'text': 'Row10', 'value': 10, 'group': 'testing'}
-# ]
-#rows = []
-#grouptitles = [1, 2, 3,'testing']                       # list of grouptitles
-#grouptitles = []
-def gruppe(d):                                  # function for sorting the itemlist
-    return str(d['group'])
 
-#rows.sort(key=gruppe,reverse=False)                     # sort rows by groups
 
 class MyList(QListWidget):
-
     def __init__(self):
         self.rows = []
         self.grouptitles = []
@@ -52,39 +33,37 @@ class MyList(QListWidget):
             self.addItem(listWidget)
             for row in self.rows:
                 if row['group'] == t:
-                    listWidget = QListWidgetItem("    "+row['text'])
+                    listWidget = QListWidgetItem("    " + row['text'])
                     listWidget.setData(33, row['value'])
                     listWidget.setData(34, row['group'])
-                    listWidget.setFlags(QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable)
-                    #listWidget.setCheckState(QtCore.Qt.Unchecked)
+                    listWidget.setFlags(
+                        QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable)
+                    # listWidget.setCheckState(QtCore.Qt.Unchecked)
                     self.addItem(listWidget)
                 else:
                     pass
 
-        self.setSelectionMode(QAbstractItemView.MultiSelection)   #
+        self.setSelectionMode(QAbstractItemView.MultiSelection)  #
         self.itemClicked.connect(self.selManager)
 
     def selManager(self, item):
         tmp = self.findItems("*", Qt.MatchWildcard)
-        print(selected_elements)
         if item.data(33) == 'header':
-                    for k in tmp:
-                        #and k.data(33) != 'header'
-                        if k.data(34) == item.data(34) and k.data(33) != 'header':
-                            print(k.data(33),k.data(34))
-                            if k.isSelected() == False:
-                                k.setSelected(True)
-                                selected_elements.append(k.data(33))
-                            elif k.isSelected() == True:
-                                k.setSelected(False)
-                                selected_elements.remove(k.data(33))
+            for k in tmp:
+                if k.data(34) == item.data(34) and k.data(33) != 'header':
+                    print(k.data(33), k.data(34))
+                    if k.isSelected() == False:
+                        k.setSelected(True)
+                        selected_elements.append(k.data(33))
+                    elif k.isSelected() == True:
+                        k.setSelected(False)
+                        selected_elements.remove(k.data(33))
 
-
-        if item.data(33) not in selected_elements and item.data(33) != 'header':
+        elif item.data(33) not in selected_elements:
             selected_elements.append(item.data(33))
-            #print(selected_elements)
-        elif item.data(33) !='header':
+        elif item.data(33) != 'header':
             selected_elements.remove(item.data(33))
+
     def update_table_list(self, new_data):
         self.clear()
         selected_elements.clear()
@@ -99,21 +78,21 @@ class MyList(QListWidget):
 
             for row in self.rows:
                 if row['group'] == t:
-                    listWidget = QListWidgetItem("    "+row['text'])
+                    listWidget = QListWidgetItem("    " + row['text'])
                     listWidget.setData(33, row['value'])
                     listWidget.setData(34, row['group'])
                     listWidget.setFlags(
                         QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable)
-
                     self.addItem(listWidget)
-
                 else:
                     pass
+
+
 def crawl_filter_func(textbox):
     global filtered_data
 
     c = crawl.CrawlerProcess({})
-    if (default_settings[5] == None):
+    if default_settings[5] is None:
         c.crawl(crawl.CrawlingSpider, start_urls=[textbox.text()], allowed_domains=default_settings[5])
     else:
         c.crawl(crawl.CrawlingSpider, start_urls=[textbox.text()], allowed_domains=[default_settings[5]])
@@ -130,7 +109,7 @@ def crawl_filter_func(textbox):
     # print(chrome_driver_path)
     driver = webdriver.Chrome(executable_path=chrome_driver_path, options=chrome_options)
     if default_settings[6]:
-        if default_settings[5] == None:
+        if default_settings[5] is None:
             tmp = crawl.looping(crawl.crawl_one(textbox.text(), domain[0], driver), domain[0], driver,
                                 limit=20000)
         else:
@@ -139,28 +118,17 @@ def crawl_filter_func(textbox):
                                 limit=20000)
 
     driver.quit()
-    # driver.close()
-    # print(len(tmp),"tmp")
+
     for i in tmp:
         if i not in crawl.crawled_links:
             if domain[0] in str(i):
                 crawl.crawled_links.append(i)
 
-        # self.loading_label.setText("Filtering")
-        # self.pbar.setValue(70)
     filtered_data = crawl.sim_check(data=crawl.crawled_links, check_sim=default_settings[0],
                                     check_url_sim=default_settings[1], param=default_settings[2],
                                     web_page_similarity_percentage=default_settings[3],
                                     web_path_similarity_percentage=default_settings[4])
 
-    # self.pbar.setValue(100)
-    # self.second_page()
-    # self.QtStack.setCurrentIndex(1)
-    #     else:
-    #         self.QtStack.setCurrentIndex(0)
-    #         QMessageBox.about(self, "Error", "Url is not valid")
-    # except TypeError as e:
-    #     QMessageBox.about(self, "Error has acquired", str(e))
 
 class SearchPanel(QtWidgets.QWidget):
     searched = QtCore.pyqtSignal(str, QtWebEngineWidgets.QWebEnginePage.FindFlag)
@@ -236,11 +204,11 @@ class Ui_Main(QtWidgets.QWidget):
         self.loading_stack.setWindowTitle("ApogenPy")
         self.first_page()
 
-        self.QtStack.addWidget(self.first_page_stack) #0
-        self.QtStack.addWidget(self.second_page_stack) #1
-        self.QtStack.addWidget(self.third_page_stack) #2
-        self.QtStack.addWidget(self.settings_stack) #3
-        self.QtStack.addWidget(self.loading_stack) #4
+        self.QtStack.addWidget(self.first_page_stack)  # 0
+        self.QtStack.addWidget(self.second_page_stack)  # 1
+        self.QtStack.addWidget(self.third_page_stack)  # 2
+        self.QtStack.addWidget(self.settings_stack)  # 3
+        self.QtStack.addWidget(self.loading_stack)  # 4
 
     # frist page start
     def first_page(self):
@@ -253,9 +221,9 @@ class Ui_Main(QtWidgets.QWidget):
         textbox.resize(280, 40)
         # PushButton1#
         crawl_button = QtWidgets.QPushButton()
-        crawl_button.setText("Crawl")
+        crawl_button.setText("Start crawling")
         crawl_button.setGeometry(QtCore.QRect(10, 10, 100, 100))
-#        self.loadingUI()
+        #        self.loadingUI()
         crawl_button.clicked.connect(lambda: self.crawl_button_action(textbox))
 
         # PushButton2#
@@ -265,8 +233,8 @@ class Ui_Main(QtWidgets.QWidget):
         # self.loadingUI()
         setting_button.setGeometry(QtCore.QRect(150, 150, 100, 100))
         setting_button.clicked.connect(self.settings_clicked)
-
-        # continue iwthout crawling
+        self.loadingUI()
+        # continue without crawling
         con_craw = QtWidgets.QPushButton("Select Multiple Files")
         con_craw.clicked.connect(self.con_crawl_action)
         # PushButton3#
@@ -289,8 +257,8 @@ class Ui_Main(QtWidgets.QWidget):
 
     def crawl_button_action(self, textbox):
         try:
-            self.loadingUI()
             self.QtStack.setCurrentIndex(4)
+            QApplication.processEvents()
             if self.valid_url(textbox.text()):
                 crawl_filter_func(textbox)
                 self.second_page()
@@ -301,7 +269,6 @@ class Ui_Main(QtWidgets.QWidget):
 
         except TypeError as e:
             QMessageBox.about(self, "Error has acquired", str(e))
-
 
     def settings_clicked(self):
         self.QtStack.setCurrentIndex(3)
@@ -325,6 +292,12 @@ class Ui_Main(QtWidgets.QWidget):
     # Second page start
     def second_page(self):
         global filtered_data
+        # Button creation
+        sel = QPushButton('Selected')
+        all_sel = QPushButton('All')
+        add = QPushButton('Add url')
+        add_path = QPushButton('Select file')
+
         self.second_page_stack.resize(700, 400)
         data = filtered_data
         for i in self.htmls_arr:
@@ -346,16 +319,9 @@ class Ui_Main(QtWidgets.QWidget):
         add_url_textbox = QLineEdit()
         add_url_layout.addWidget(add_url_label)
         add_url_layout.addWidget(add_url_textbox)
+        add_url_layout.addWidget(add)
 
-        # print(filtered_data )
-        # self.table_layout.addWidget()
-        # self.second_page_stack.setLayout(self.load_layout)
-
-        sel = QPushButton('Selected')
-        all_sel = QPushButton('All')
-        add = QPushButton('Add url')
-        add_path = QPushButton('Select file')
-
+        # buttons action
         sel.clicked.connect(lambda: self.selected_url_click())
         all_sel.clicked.connect(lambda: self.all_sel_click(data))
         add.clicked.connect(lambda: self.add_click(table, add_url_textbox.text(), data))
@@ -365,7 +331,6 @@ class Ui_Main(QtWidgets.QWidget):
         table_layout.addLayout(add_url_layout)
         table_layout.addWidget(sel)
         table_layout.addWidget(all_sel)
-        table_layout.addWidget(add)
         table_layout.addWidget(add_path)
 
         # if (not self.second_page_stack.layout()):
@@ -413,7 +378,6 @@ class Ui_Main(QtWidgets.QWidget):
         if check:
             table.addItem(file)
             table.repaint()
-            print(file)
 
     # second page end
 
@@ -421,7 +385,7 @@ class Ui_Main(QtWidgets.QWidget):
     def settings_page(self):
         settings_layout = QVBoxLayout()
         search_bars = QVBoxLayout()
-        text_laoyout = QVBoxLayout()
+        text_layout = QVBoxLayout()
         comb_layout = QHBoxLayout()
         # performing sim similarity check
         checkbox_layout = QHBoxLayout()
@@ -442,28 +406,19 @@ class Ui_Main(QtWidgets.QWidget):
         checkbox_layout.addWidget(add_crawl)
 
         #
-        percentage_layout = QHBoxLayout()
         percentage_sim_label = QLabel("Similarity percentage value")
         percentage_sim_textbox = QLineEdit()
-        text_laoyout.addWidget(percentage_sim_label)
-        # percentage_layout.addWidget(percentage_sim_label)
-        # percentage_layout.addWidget(percentage_sim_textbox)
+        text_layout.addWidget(percentage_sim_label)
         search_bars.addWidget(percentage_sim_textbox)
         #
-        url_layout = QHBoxLayout()
         percentage_url_label = QLabel("Url Similarity percentage value")
         percentage_url_textbox = QLineEdit()
-        text_laoyout.addWidget(percentage_url_label)
-        # url_layout.addWidget(percentage_url_label)
-        # url_layout.addWidget(percentage_url_textbox)
+        text_layout.addWidget(percentage_url_label)
         search_bars.addWidget(percentage_url_textbox)
 
-        domain_layout = QHBoxLayout()
         domain_label = QLabel("Enter domain ")
         domain_textbox = QLineEdit()
-        text_laoyout.addWidget(domain_label)
-        # domain_layout.addWidget(domain_label)
-        # domain_layout.addWidget(domain_textbox)
+        text_layout.addWidget(domain_label)
         search_bars.addWidget(domain_textbox)
 
         combobox1 = QComboBox()
@@ -480,12 +435,9 @@ class Ui_Main(QtWidgets.QWidget):
                                      domain_textbox.text(), add_crawl.isChecked()))
 
         settings_layout.addLayout(checkbox_layout)
-        comb_layout.addLayout(text_laoyout)
+        comb_layout.addLayout(text_layout)
         comb_layout.addLayout(search_bars)
         settings_layout.addLayout(comb_layout)
-        # settings_layout.addLayout(percentage_layout)
-        # settings_layout.addLayout(url_layout)
-        # settings_layout.addLayout(domain_layout)
         settings_layout.addWidget(combobox1)
         settings_layout.addWidget(save_button)
         settings_layout.addWidget(chrome_driver_down)
@@ -498,7 +450,6 @@ class Ui_Main(QtWidgets.QWidget):
         QMessageBox.about(self, "driver", "Version " + chrome_version + " downloaded")
 
     def save_cliked(self, sim, url, index, per_sim, per_url, dom, add_crawl):
-        # print("saved")
         default_settings[0] = sim
         default_settings[1] = url
         default_settings[2] = index
@@ -539,20 +490,16 @@ class Ui_Main(QtWidgets.QWidget):
 
     # loading page start
     def loadingUI(self):
-        # creating progress bar
         loading_label = QLabel("Loading...");
         loading_layout = QVBoxLayout()
         loading_layout.addWidget(loading_label)
         self.loading_stack.setLayout(loading_layout)
-        #self.QtStack.setCurrentIndex(4)
-
 
     # loading end
 
     # third page start
     def third_page(self, url):
         self.counter = 0
-
         self.web = Browser()
         self.web.show()
         self.third_page_stack.resize(1000, 800)
@@ -563,7 +510,7 @@ class Ui_Main(QtWidgets.QWidget):
             self.web._view.load(QtCore.QUrl.fromLocalFile(str(url[self.counter])))
         self.data = [[]]
         self.grouptitles = []
-        rows =[]
+        rows = []
         listWidget = MyList()
         for x in pomgen.elemfinder(url[self.counter]):
             self.data.append([x.name, x.type, x.data])
@@ -581,7 +528,8 @@ class Ui_Main(QtWidgets.QWidget):
 
         next_button.clicked.connect(
             lambda: self.table_cleaner(self.web, next_button, url, listWidget, current_url_label))
-        generate_for_selected_button.clicked.connect(lambda: self.generate_for_selected_button_action(url[self.counter]))
+        generate_for_selected_button.clicked.connect(
+            lambda: self.generate_for_selected_button_action(url[self.counter]))
         generate_all_button.clicked.connect(lambda: self.generate_all_button_click(url[self.counter]))
         if (len(url) == 1):
             next_button.hide()
@@ -598,8 +546,6 @@ class Ui_Main(QtWidgets.QWidget):
 
         main_layout.addLayout(but_list_layout)
         self.third_page_stack.setLayout(main_layout)
-
-
 
     def update_counter(self, val):
         # global self.counter
@@ -622,17 +568,16 @@ class Ui_Main(QtWidgets.QWidget):
             self.data.append([x.name, x.type, x.data])
             if x.type not in listWidget.grouptitles:
                 listWidget.grouptitles.append(x.type)
-                #print(grouptitles)
+                # print(grouptitles)
 
         for x in pomgen.elemfinder(url[self.counter]):
             rows.append({'text': x.name, 'value': x.data, 'group': x.type})
-        #print(rows)
-
+        # print(rows)
 
         # data = pomgen.elemfinder(url[self.counter])
         listWidget.update_table_list(rows)
 
-        #listWidget.repaint()
+        # listWidget.repaint()
         # print("next button clicked")
         current_url_label.setText("Elements of " + url[self.counter])
         self.update_counter(self.counter)
@@ -644,7 +589,7 @@ class Ui_Main(QtWidgets.QWidget):
                 for k in selected_elements:
                     if k == g.data:
                         tmp.append(g)
-            #print(tmp)
+            # print(tmp)
 
             if len(selected_elements) != 0:
                 pomgen.file_gen(url, tmp)  #### burası fixlencek
@@ -663,15 +608,14 @@ class Ui_Main(QtWidgets.QWidget):
     # def web_elements_selected_list(self, listWidget):
     #     listWidget.selManager(listWidget)
 
-
-                # input example nav-bar output HOME,ERROR
-                # while True:
-                # self.web._search_panel.text_fi("HOME")
-                # time.sleep(2)
-                # self.web._search_panel.text_fi("ERROR")
-                # time.sleep(2)
-        # else:
-        #     self.web._search_panel.text_fi("")
+    # input example nav-bar output HOME,ERROR
+    # while True:
+    # self.web._search_panel.text_fi("HOME")
+    # time.sleep(2)
+    # self.web._search_panel.text_fi("ERROR")
+    # time.sleep(2)
+    # else:
+    #     self.web._search_panel.text_fi("")
 
 
 class Browser(QtWidgets.QMainWindow, ):

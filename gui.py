@@ -279,13 +279,9 @@ class Ui_Main(QtWidgets.QWidget):
         if check:
             for i in file:
                 self.htmls_arr.append(i)
-                # crawl.crawled_links.append(i)
 
             self.second_page()
             self.QtStack.setCurrentIndex(1)
-            # print(file)
-        # self.second_page()()
-        # self.QtStack.setCurrentIndex(1)
 
     # First pages end
 
@@ -490,6 +486,8 @@ class Ui_Main(QtWidgets.QWidget):
 
     # loading page start
     def loadingUI(self):
+        self.loading_stack.resize(160, 70)
+        self.loading_stack.setWindowFlag(Qt.FramelessWindowHint)
         loading_label = QLabel("Loading...");
         loading_layout = QVBoxLayout()
         loading_layout.addWidget(loading_label)
@@ -623,14 +621,14 @@ class Browser(QtWidgets.QMainWindow, ):
         super(Browser, self).__init__(parent)
         self._view = QtWebEngineWidgets.QWebEngineView()
         self.setCentralWidget(self._view)
-        self._view.load(QtCore.QUrl('http://localhost:8080/vets.html'))
+        #self._view.load(QtCore.QUrl())
         self._search_panel = SearchPanel()
         self.search_toolbar = QtWidgets.QToolBar()
         self.search_toolbar.addWidget(self._search_panel)
         self.addToolBar(QtCore.Qt.BottomToolBarArea, self.search_toolbar)
-        self.search_toolbar.hide()
         self._search_panel.searched.connect(self.on_searched)
         self._search_panel.closed.connect(self.search_toolbar.hide)
+        self.search_toolbar.hide()
         self.create_menus()
 
     @QtCore.pyqtSlot(str, QtWebEngineWidgets.QWebEnginePage.FindFlag)
@@ -650,6 +648,7 @@ class Browser(QtWidgets.QMainWindow, ):
 
     def create_menus(self):
         menubar = self.menuBar()
+        menubar.hide()
         file_menu = menubar.addMenu('&File')
         file_menu.addAction('&Find...', self.search_toolbar.show, shortcut=QtGui.QKeySequence.Find)
 

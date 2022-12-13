@@ -24,7 +24,8 @@ class MyList(QListWidget):
         self.rows = []
         self.grouptitles = []
         QListWidget.__init__(self)
-        self.setMinimumHeight(270)
+       #self.setMinimumHeight(270)
+        #self.setGeometry(100,100,250,250)
         for t in self.grouptitles:
             listWidget = QListWidgetItem('Group {}'.format(t))
             listWidget.setData(33, 'header')
@@ -191,6 +192,10 @@ class Ui_Main(QtWidgets.QWidget):
     def setupUi(self, Main):
         Main.setObjectName("Main")
         Main.resize(800, 480)
+        #fonts
+        self.bold_font = QtGui.QFont()
+        self.bold_font.setBold(True)
+
         self.QtStack = QtWidgets.QStackedLayout()
         self.first_page_stack = QtWidgets.QWidget()
         self.second_page_stack = QtWidgets.QWidget()
@@ -385,7 +390,7 @@ class Ui_Main(QtWidgets.QWidget):
         comb_layout = QHBoxLayout()
         # performing sim similarity check
         checkbox_layout = QHBoxLayout()
-        sim_check = QCheckBox("Structure Similarity Check")
+        sim_check = QCheckBox("Html Structure Similarity Check")
         sim_check.setChecked(default_settings[0])
         checkbox_layout.addWidget(sim_check)
         # chrome driver button
@@ -397,12 +402,12 @@ class Ui_Main(QtWidgets.QWidget):
         url_sim.setChecked(default_settings[1])
         checkbox_layout.addWidget(url_sim)
         # advanced crawl
-        add_crawl = QCheckBox("Advanced crawling")
+        add_crawl = QCheckBox("Deep crawling")
         add_crawl.setChecked(default_settings[6])
         checkbox_layout.addWidget(add_crawl)
 
         #
-        percentage_sim_label = QLabel("Similarity percentage value")
+        percentage_sim_label = QLabel("Html Similarity percentage value")
         percentage_sim_textbox = QLineEdit()
         text_layout.addWidget(percentage_sim_label)
         search_bars.addWidget(percentage_sim_textbox)
@@ -488,7 +493,19 @@ class Ui_Main(QtWidgets.QWidget):
     def loadingUI(self):
         self.loading_stack.resize(160, 70)
         self.loading_stack.setWindowFlag(Qt.FramelessWindowHint)
-        loading_label = QLabel("Loading...");
+        self.loading_stack.setAttribute(Qt.WA_TranslucentBackground)
+        self.loading_stack.setWindowOpacity(0.9)
+        self.loading_stack.setStyleSheet("""
+            background:rgb(255, 255, 255);
+            border-top-left-radius:{0}px;
+            border-bottom-left-radius:{0}px;
+            border-top-right-radius:{0}px;
+            border-bottom-right-radius:{0}px;
+            """.format(15))
+
+        loading_label = QLabel("  Crawling...");
+        loading_label.setAlignment(QtCore.Qt.AlignCenter)
+        loading_label.setFont(self.bold_font)
         loading_layout = QVBoxLayout()
         loading_layout.addWidget(loading_label)
         self.loading_stack.setLayout(loading_layout)
@@ -500,7 +517,9 @@ class Ui_Main(QtWidgets.QWidget):
         self.counter = 0
         self.web = Browser()
         self.web.show()
-        self.third_page_stack.resize(1000, 800)
+        self.web.resize(800,800)
+        self.web.setMaximumWidth(800)
+        #self.third_page_stack.resize(1000, 800)
 
         if self.valid_url(url[self.counter]):
             self.web._view.load(QUrl(url[self.counter]))
@@ -510,6 +529,8 @@ class Ui_Main(QtWidgets.QWidget):
         self.grouptitles = []
         rows = []
         listWidget = MyList()
+        listWidget.resize(200,800)
+        #listWidget.setMaximumWidth(200)
         for x in pomgen.elemfinder(url[self.counter]):
             self.data.append([x.name, x.type, x.data])
             if x.type not in listWidget.grouptitles:
@@ -523,7 +544,7 @@ class Ui_Main(QtWidgets.QWidget):
         generate_for_selected_button = QPushButton('Generate for selected')
         generate_all_button = QPushButton('Generate all for this page')
         current_url_label = QLabel("Elements of " + url[self.counter])
-
+        current_url_label.setFont(self.bold_font)
         next_button.clicked.connect(
             lambda: self.table_cleaner(self.web, next_button, url, listWidget, current_url_label))
         generate_for_selected_button.clicked.connect(
@@ -578,6 +599,7 @@ class Ui_Main(QtWidgets.QWidget):
         # listWidget.repaint()
         # print("next button clicked")
         current_url_label.setText("Elements of " + url[self.counter])
+
         self.update_counter(self.counter)
 
     def generate_for_selected_button_action(self, url):

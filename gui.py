@@ -14,7 +14,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets, QtWebEngineWidgets
 import utils
 import threading
 
-default_settings = [False, False, 1, 0.92, 0.88, None, True, 2]
+default_settings = [False, False, 1, 0.92, 0.88, None, True, 2, False, "", "", ""]
 filtered_data = []
 selected_elements = []
 
@@ -24,8 +24,8 @@ class MyList(QListWidget):
         self.rows = []
         self.grouptitles = []
         QListWidget.__init__(self)
-       #self.setMinimumHeight(270)
-        #self.setGeometry(100,100,250,250)
+        # self.setMinimumHeight(270)
+        # self.setGeometry(100,100,250,250)
         for t in self.grouptitles:
             listWidget = QListWidgetItem('Group {}'.format(t))
             listWidget.setData(33, 'header')
@@ -91,44 +91,48 @@ class MyList(QListWidget):
 
 def crawl_filter_func(textbox):
     global filtered_data
-
     c = crawl.CrawlerProcess({})
-    if default_settings[5] is None:
-        c.crawl(crawl.CrawlingSpider, start_urls=[textbox.text()], allowed_domains=default_settings[5])
+    if default_settings[8] == True:
+        print("here")
+        c.crawl(crawl.ScrapySpider)
+        c.start()
     else:
-        c.crawl(crawl.CrawlingSpider, start_urls=[textbox.text()], allowed_domains=[default_settings[5]])
-    c.start()
-    # self.pbar.setValue(30)
-    url_data = adv.url_to_df(textbox.text())
-    domain = url_data["scheme"] + "://" + url_data["netloc"]
-    # print(domain[0],"<- domain")
-    tmp = []
-    # self.pbar.setValue(50)
-    chrome_options = Options()
-    chrome_options.add_argument("--headless")
-    chrome_driver_path = utils.chromedriver_path_name()
-    # print(chrome_driver_path)
-    driver = webdriver.Chrome(executable_path=chrome_driver_path, options=chrome_options)
-    if default_settings[6]:
         if default_settings[5] is None:
-            tmp = crawl.looping(crawl.crawl_one(textbox.text(), domain[0], driver), domain[0], driver,
-                                limit=20000)
+            c.crawl(crawl.CrawlingSpider, start_urls=[textbox.text()], allowed_domains=default_settings[5])
         else:
-            tmp = crawl.looping(crawl.crawl_one(textbox.text(), default_settings[5], driver),
-                                default_settings[5], driver,
-                                limit=20000)
+            c.crawl(crawl.CrawlingSpider, start_urls=[textbox.text()], allowed_domains=[default_settings[5]])
+        c.start()
+        # self.pbar.setValue(30)
+        url_data = adv.url_to_df(textbox.text())
+        domain = url_data["scheme"] + "://" + url_data["netloc"]
+        # print(domain[0],"<- domain")
+        tmp = []
+        # self.pbar.setValue(50)
+        chrome_options = Options()
+        chrome_options.add_argument("--headless")
+        chrome_driver_path = utils.chromedriver_path_name()
+        # print(chrome_driver_path)
+        driver = webdriver.Chrome(executable_path=chrome_driver_path, options=chrome_options)
+        if default_settings[6]:
+            if default_settings[5] is None:
+                tmp = crawl.looping(crawl.crawl_one(textbox.text(), domain[0], driver), domain[0], driver,
+                                    limit=20000)
+            else:
+                tmp = crawl.looping(crawl.crawl_one(textbox.text(), default_settings[5], driver),
+                                    default_settings[5], driver,
+                                    limit=20000)
 
-    driver.quit()
+        driver.quit()
 
-    for i in tmp:
-        if i not in crawl.crawled_links:
-            if domain[0] in str(i):
-                crawl.crawled_links.append(i)
+        for i in tmp:
+            if i not in crawl.crawled_links:
+                if domain[0] in str(i):
+                    crawl.crawled_links.append(i)
 
-    filtered_data = crawl.sim_check(data=crawl.crawled_links, check_sim=default_settings[0],
-                                    check_url_sim=default_settings[1], param=default_settings[2],
-                                    web_page_similarity_percentage=default_settings[3],
-                                    web_path_similarity_percentage=default_settings[4])
+        filtered_data = crawl.sim_check(data=crawl.crawled_links, check_sim=default_settings[0],
+                                        check_url_sim=default_settings[1], param=default_settings[2],
+                                        web_page_similarity_percentage=default_settings[3],
+                                        web_path_similarity_percentage=default_settings[4])
 
 
 class SearchPanel(QtWidgets.QWidget):
@@ -192,7 +196,7 @@ class Ui_Main(QtWidgets.QWidget):
     def setupUi(self, Main):
         Main.setObjectName("Main")
         Main.resize(800, 480)
-        #fonts
+        # fonts
         self.bold_font = QtGui.QFont()
         self.bold_font.setBold(True)
 
@@ -384,6 +388,7 @@ class Ui_Main(QtWidgets.QWidget):
 
     # settings page start
     def settings_page(self):
+        test_mode = False
         settings_layout = QVBoxLayout()
         search_bars = QVBoxLayout()
         text_layout = QVBoxLayout()
@@ -405,6 +410,9 @@ class Ui_Main(QtWidgets.QWidget):
         add_crawl = QCheckBox("Deep crawling")
         add_crawl.setChecked(default_settings[6])
         checkbox_layout.addWidget(add_crawl)
+        # use login crawl
+        log_crawl = QCheckBox("Login when crawl")
+        log_crawl.setChecked(default_settings[8])
 
         #
         percentage_sim_label = QLabel("Html Similarity percentage value")
@@ -421,6 +429,28 @@ class Ui_Main(QtWidgets.QWidget):
         domain_textbox = QLineEdit()
         text_layout.addWidget(domain_label)
         search_bars.addWidget(domain_textbox)
+        #
+        lpage_label = QLabel("Enter login page url")
+        lpage_textbox = QLineEdit()
+
+
+        login_label = QLabel("Enter login")
+        login_textbox = QLineEdit()
+
+
+        pass_label = QLabel("Enter password")
+        pass_textbox = QLineEdit()
+
+
+        if test_mode:
+            checkbox_layout.addWidget(log_crawl)
+            search_bars.addWidget(lpage_textbox)
+            text_layout.addWidget(lpage_label)
+            search_bars.addWidget(login_textbox)
+            text_layout.addWidget(login_label)
+            search_bars.addWidget(pass_textbox)
+            text_layout.addWidget(pass_label)
+
 
         combobox1 = QComboBox()
         combobox1.addItem('Joint similarity')
@@ -433,7 +463,8 @@ class Ui_Main(QtWidgets.QWidget):
         save_button.clicked.connect(
             lambda: self.save_cliked(sim_check.isChecked(), url_sim.isChecked(), combobox1.currentIndex(),
                                      percentage_sim_textbox.text(), percentage_url_textbox.text(),
-                                     domain_textbox.text(), add_crawl.isChecked()))
+                                     domain_textbox.text(), add_crawl.isChecked(), log_crawl.isChecked(),
+                                     login_textbox.text(), pass_textbox.text(), lpage_textbox.text()))
 
         settings_layout.addLayout(checkbox_layout)
         comb_layout.addLayout(text_layout)
@@ -450,13 +481,22 @@ class Ui_Main(QtWidgets.QWidget):
         chrome_version = utils.chromedriver_autoinstaller.get_chrome_version()
         QMessageBox.about(self, "driver", "Version " + chrome_version + " downloaded")
 
-    def save_cliked(self, sim, url, index, per_sim, per_url, dom, add_crawl):
+    def save_cliked(self, sim, url, index, per_sim, per_url, dom, add_crawl, log_crawl, login, password, lpage):
         default_settings[0] = sim
         default_settings[1] = url
         default_settings[2] = index
         default_settings[6] = add_crawl
+        default_settings[8] = log_crawl
+        default_settings[11] = lpage
         all_correct = True;
         try:
+            if (log_crawl == True):
+                if login == "" or password == "":
+                    all_correct == False
+                else:
+                    default_settings[9] = login
+                    default_settings[10] = password
+
             if per_sim != '':
                 if 0.1 <= float(per_sim) < 0.99:
                     default_settings[3] = per_sim
@@ -517,9 +557,9 @@ class Ui_Main(QtWidgets.QWidget):
         self.counter = 0
         self.web = Browser()
         self.web.show()
-        self.web.resize(800,800)
+        self.web.resize(800, 800)
         self.web.setMaximumWidth(800)
-        #self.third_page_stack.resize(1000, 800)
+        # self.third_page_stack.resize(1000, 800)
 
         if self.valid_url(url[self.counter]):
             self.web._view.load(QUrl(url[self.counter]))
@@ -529,8 +569,8 @@ class Ui_Main(QtWidgets.QWidget):
         self.grouptitles = []
         rows = []
         listWidget = MyList()
-        listWidget.resize(200,800)
-        #listWidget.setMaximumWidth(200)
+        listWidget.resize(200, 800)
+        # listWidget.setMaximumWidth(200)
         for x in pomgen.elemfinder(url[self.counter]):
             self.data.append([x.name, x.type, x.data])
             if x.type not in listWidget.grouptitles:
@@ -643,7 +683,7 @@ class Browser(QtWidgets.QMainWindow, ):
         super(Browser, self).__init__(parent)
         self._view = QtWebEngineWidgets.QWebEngineView()
         self.setCentralWidget(self._view)
-        #self._view.load(QtCore.QUrl())
+        # self._view.load(QtCore.QUrl())
         self._search_panel = SearchPanel()
         self.search_toolbar = QtWidgets.QToolBar()
         self.search_toolbar.addWidget(self._search_panel)

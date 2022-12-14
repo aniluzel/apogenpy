@@ -1,6 +1,7 @@
+import scrapy
 import selenium
 from scrapy.crawler import CrawlerProcess
-from scrapy import Item, Field
+from scrapy import Item, Field, FormRequest
 from scrapy.spidermiddlewares import offsite
 from scrapy.spiders import CrawlSpider, Rule
 from scrapy.linkextractors import LinkExtractor
@@ -14,6 +15,10 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
 import re
+import scrapy
+from scrapy import Spider
+from scrapy.http import FormRequest
+import gui
 
 crawled_links = []
 # Define Browser Options
@@ -176,6 +181,79 @@ class OffsiteMiddleware(offsite.OffsiteMiddleware):
         # Remove optional .* (any subdomains) from regex
         regex = regex.pattern.replace("(.*\.)?", "(www\.)?", 1)
         return re.compile(regex)
+
+
+
+
+# class LoginSpider(Spider):
+#     name = 'login'
+#     allowed_domains = ['quotes.toscrape.com']
+#     start_urls = [gui.default_settings[11]]
+# def parse(self,response):
+#     fetch("url")
+#     response.xpath('//*[@name='csrf_token']/@value').extract_first()
+#         csrf_token = response.xpath('//*[@name='csrf_token']/@value').extract_first()
+#
+#         yield FormRequest.from_response(response, formdata={'csrf_token': csrf_token, 'user':gui.default_settings[9], 'pass':gui.default_settings[10]}, callback=self.parse_after_login)
+# def parse_after_login(self,response):
+#     pass
+
+class ScrapySpider(CrawlSpider):
+    name = 'login'
+    allowed_domains = ['quotes.toscrape.com']
+    start_urls = ['http://quotes.toscrape.com/login']
+
+    def parse(self, response):
+        inputs = response.css('form input')
+        print(inputs)
+
+        formdata = {}
+        for input in inputs:
+            name = input.css('::attr(type)').get()
+            value = input.css('::attr(value)').get()
+            formdata[name] = value
+        print("asdfalsdmfgklasmdf")
+        print(gui.default_settings[9])
+        print(gui.default_settings[10])
+        formdata['username'] = 'YOUR_USERNAME'
+        formdata['password'] = 'YOUR_PASSWORD'
+
+        return scrapy.FormRequest.from_response(
+            response,
+            formdata=formdata,
+            callback=self.parse_after_login
+        )
+
+    def parse_after_login(self, response):
+        crawled_links.append(response.url)
+        print(response.xpath('.//div[@class = "col-md-4"]/p/a/text()').get())
+
+
+class HiddenDataLoginSpider(Spider):
+    name = 'hidden_data_login'
+
+    def start_requests(self):
+        #print(gui.default_settings[11])
+        login_url = gui.default_settings[11]
+        return scrapy.Request(login_url, callback=self.login)
+
+    def login(self, response):
+        print(response)
+        print(gui.default_settings[10])
+        print(gui.default_settings[9])
+        token = response.css("form input[name=csrf_token]::attr(value)").extract_first()
+        return FormRequest.from_response(response,
+                                         formdata={'csrf_token': token,
+                                                   'password': gui.default_settings[10],
+                                                   'username': gui.default_settings[9]},
+                                         callback=self.start_scraping)
+
+    def start_scraping(self, response):
+        ## Insert code to start scraping pages once logged in
+        #print(response)
+        crawled_links.append(response.url)
+
+        pass
 
 
 class CrawlingSpider(CrawlSpider):

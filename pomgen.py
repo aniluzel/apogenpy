@@ -190,3 +190,80 @@ def otherparser(url):
 #elemprinter(buttonfinder("http://localhost:8080/owners/new"))
 #otherparser("http://localhost:8080/owners/new")
 #elemprinter(elemfinder("http://localhost:8080/owners/find"))
+url = 'http://localhost:8080/owners/new'
+
+
+
+
+
+class RawElementData:
+    def __init__(self,RawData,OrderedData):
+        self.rawdata = RawData
+        self.ordereddata = OrderedData
+
+
+    def print(self):
+        print(self.rawdata)
+        print(self.ordereddata)
+
+def ArrayPrinter(data_array):
+    for elem in data_array:
+        elem.print()
+        print("--------------")
+
+class HTMLElement:
+    def __init__(self, rawdata):
+        self.rawdata = rawdata
+        self.id = ""
+        self.classname = ""
+        self.href = ""
+        self.displaytext = ""
+        self.tag = ""
+        self.type = ""
+
+    def set_id(self,id):
+        self.id=id
+
+    def set_class(self,Class):
+        self.classname=Class
+
+    def set_href(self,href):
+        self.href=href
+
+    def set_displaytext(self,dt):
+        self.displaytext=dt
+
+    def set_tag(self,tag):
+        self.tag=tag
+
+    def set_type(self, type):
+        self.type = type
+
+
+tags=["a", "button", "input"]
+
+
+def elemfinder2(url,tags):
+
+    data_array = []
+    for tag in tags:
+        soup = htmlsoup(url).find_all(tag)
+        for i in soup:
+            parser1 = utils.MyHTMLParser()
+            rawdata = (str(i))
+            parser1.feed(rawdata)
+            ordered_data = parser1.return_data()
+            data_array.append(RawElementData(rawdata, ordered_data))
+    print("array print")
+    #ArrayPrinter(data_array)
+    for data in data_array:
+        element = HTMLElement(data.rawdata)
+        print(data.ordereddata)
+        print("----------")
+
+
+
+
+
+
+elemfinder2(url,tags)

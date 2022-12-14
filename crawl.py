@@ -109,8 +109,6 @@ def crawl_one(page_url, domain, driver):
                                             #if(domain in str(driver.current_url + "/" + tmp3[1])):
                                             general.append(driver.current_url + "/" + tmp3[1])
 
-
-
             else:
                 tmp2 = link.get('href')
                 tmp2 = tmp2.split("/", 1)

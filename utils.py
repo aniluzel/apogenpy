@@ -2,6 +2,8 @@ import os
 import sys
 
 import time
+from html.entities import name2codepoint
+
 from bs4 import BeautifulSoup
 import requests
 import csv
@@ -13,14 +15,14 @@ nonhtmltdata=["id","class","href"]
 htmldata=["xpath"]
 
 def file_name_changer(subdomain):
-    invalid = '<>:"/\|?* '
+    invalid = '<>:"/\|?*. '
     for char in invalid:
         subdomain = subdomain.replace(char, '_')
     return subdomain[1:]
 
 
 def folder_name_changer(domain):
-    invalid = '<>:"/\|?* '
+    invalid = '<>:"/\|?*. '
     for char in invalid:
         domain = domain.replace(char, '')
     return domain
@@ -28,7 +30,7 @@ def folder_name_changer(domain):
 def namechanger(name,type):
 
     if(type in nonhtmltdata):
-        invalid = '<>:"/\|?* -'
+        invalid = '<>:"/\|?* -.'
         for char in invalid:
             name = name.replace(char,'_')
     else:
@@ -59,16 +61,53 @@ def chromedriver_checker():
         return True
     else:
         return False
+
 class MyHTMLParser(HTMLParser):
-    data_text =[]
+
+    def __init__(self):
+        HTMLParser.__init__(self)
+
+        self.ordered_data = ""
+
+        
     def handle_starttag(self, tag, attrs):
-        print("Encountered a start tag:", tag)
+        print("Start tag:", tag)
+        self.ordered_data = self.ordered_data+"Start tag:"+tag
+        for attr in attrs:
+            print("\n     attr:", attr)
+            self.ordered_data = self.ordered_data+"\nattr:"+",".join(attr)
+
+
+
 
     def handle_endtag(self, tag):
-        print("Encountered an end tag :", tag)
+        print("End tag  :", tag)
+        self.ordered_data = self.ordered_data+"\nEnd tag:"+tag
 
     def handle_data(self, data):
-        print("Encountered some data  :", data)
-        self.data_text.append(data)
+        print("Data     :", data)
+        self.ordered_data = self.ordered_data+"\nData:"+data
 
-parser = MyHTMLParser()
+    def handle_comment(self, data):
+        print("Comment  :", data)
+        self.ordered_data = self.ordered_data + "\nComment:" + data
+
+    def handle_entityref(self, name):
+        c = chr(name2codepoint[name])
+        print("Named ent:", c)
+        self.ordered_data = self.ordered_data + "\nNamed ent:" + c
+
+    def handle_charref(self, name):
+        if name.startswith('x'):
+            c = chr(int(name[1:], 16))
+        else:
+            c = chr(int(name))
+        print("Num ent  :", c)
+        self.ordered_data = self.ordered_data + "\nNum ent:" + c
+
+    def handle_decl(self, data):
+        print( "Decl    :", data)
+        self.ordered_data = self.ordered_data + "\nDecl:" + data
+
+    def return_data(self):
+        return self.ordered_data

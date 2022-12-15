@@ -1,8 +1,9 @@
 import time
 from urllib.parse import urlparse
-from PyQt5.QtCore import QUrl, QCoreApplication, Qt, QThread, pyqtSignal
+from PyQt5.QtCore import QUrl, QCoreApplication, Qt, QThread, pyqtSignal, QObject, QEvent, QRect
+from PyQt5.QtGui import QPainter, QColor
 from PyQt5.QtWidgets import QApplication, QMainWindow, QLineEdit, QVBoxLayout, QPushButton, QListWidget, \
-    QAbstractItemView, QHBoxLayout, QCheckBox, QComboBox, QMessageBox, QFileDialog, QListWidgetItem
+    QAbstractItemView, QHBoxLayout, QCheckBox, QComboBox, QMessageBox, QFileDialog, QListWidgetItem, QWidget
 from PyQt5.QtWidgets import QLabel
 import sys
 import crawl
@@ -16,77 +17,36 @@ import threading
 
 default_settings = [False, False, 1, 0.92, 0.88, None, True, 2, False, "", "", ""]
 filtered_data = []
-selected_elements = []
 
 
-class MyList(QListWidget):
-    def __init__(self):
-        self.rows = []
-        self.grouptitles = []
-        QListWidget.__init__(self)
-        # self.setMinimumHeight(270)
-        # self.setGeometry(100,100,250,250)
-        for t in self.grouptitles:
-            listWidget = QListWidgetItem('Group {}'.format(t))
-            listWidget.setData(33, 'header')
-            listWidget.setData(34, t)
-            listWidget.setFlags(QtCore.Qt.ItemIsSelectable)
-            self.addItem(listWidget)
-            for row in self.rows:
-                if row['group'] == t:
-                    listWidget = QListWidgetItem("    " + row['text'])
-                    listWidget.setData(33, row['value'])
-                    listWidget.setData(34, row['group'])
-                    listWidget.setFlags(
-                        QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable)
-                    # listWidget.setCheckState(QtCore.Qt.Unchecked)
-                    self.addItem(listWidget)
-                else:
-                    pass
+class Overlay(QWidget):
+    def __init__(self, parent=None):
+        QWidget.__init__(self, parent)
+        self.setAttribute(Qt.WA_NoSystemBackground)
+        self.setAttribute(Qt.WA_TransparentForMouseEvents)
 
-        self.setSelectionMode(QAbstractItemView.MultiSelection)  #
-        self.itemClicked.connect(self.selManager)
+    def paintEvent(self, event):
+        QPainter(self).fillRect(self.rect(), QColor(80, 80, 255, 128))
 
-    def selManager(self, item):
-        tmp = self.findItems("*", Qt.MatchWildcard)
-        if item.data(33) == 'header':
-            for k in tmp:
-                if k.data(34) == item.data(34) and k.data(33) != 'header':
-                    print(k.data(33), k.data(34))
-                    if k.isSelected() == False:
-                        k.setSelected(True)
-                        selected_elements.append(k.data(33))
-                    elif k.isSelected() == True:
-                        k.setSelected(False)
-                        selected_elements.remove(k.data(33))
 
-        elif item.data(33) not in selected_elements:
-            selected_elements.append(item.data(33))
-        elif item.data(33) != 'header':
-            selected_elements.remove(item.data(33))
+class Filter(QObject):
+    def __init__(self, parent=None):
+        QObject.__init__(self, parent)
+        self.m_overlay = None
+        self.m_overlayOn = None
 
-    def update_table_list(self, new_data):
-        self.clear()
-        selected_elements.clear()
-        self.rows = []
-        self.rows = new_data
-        for t in self.grouptitles:
-            listWidget = QListWidgetItem('Group {}'.format(t))
-            listWidget.setData(33, 'header')
-            listWidget.setData(34, t)
-            listWidget.setFlags(QtCore.Qt.ItemIsEnabled)
-            self.addItem(listWidget)
-
-            for row in self.rows:
-                if row['group'] == t:
-                    listWidget = QListWidgetItem("    " + row['text'])
-                    listWidget.setData(33, row['value'])
-                    listWidget.setData(34, row['group'])
-                    listWidget.setFlags(
-                        QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable)
-                    self.addItem(listWidget)
-                else:
-                    pass
+    def eventFilter(self, w, event):
+        if w.isWidgetType():
+            if event.type() == QEvent.MouseButtonPress:
+                if not self.m_overlay:
+                    self.m_overlay = Overlay(w.parentWidget());
+                    self.m_overlay.setGeometry(w.geometry());
+                    self.m_overlayOn = w;
+                    self.m_overlay.show();
+            elif event.type() == QEvent.Resize:
+                if self.m_overlay and self.m_overlayOn is w:
+                    self.m_overlay.setGeometry(w.geometry());
+        return False
 
 
 def crawl_filter_func(textbox):
@@ -433,14 +393,11 @@ class Ui_Main(QtWidgets.QWidget):
         lpage_label = QLabel("Enter login page url")
         lpage_textbox = QLineEdit()
 
-
         login_label = QLabel("Enter login")
         login_textbox = QLineEdit()
 
-
         pass_label = QLabel("Enter password")
         pass_textbox = QLineEdit()
-
 
         if test_mode:
             checkbox_layout.addWidget(log_crawl)
@@ -450,7 +407,6 @@ class Ui_Main(QtWidgets.QWidget):
             text_layout.addWidget(login_label)
             search_bars.addWidget(pass_textbox)
             text_layout.addWidget(pass_label)
-
 
         combobox1 = QComboBox()
         combobox1.addItem('Joint similarity')
@@ -492,7 +448,7 @@ class Ui_Main(QtWidgets.QWidget):
         try:
             if (log_crawl == True):
                 if login == "" or password == "":
-                    all_correct == False
+                    all_correct = False
                 else:
                     default_settings[9] = login
                     default_settings[10] = password
@@ -557,32 +513,39 @@ class Ui_Main(QtWidgets.QWidget):
         self.counter = 0
         self.web = Browser()
         self.web.show()
-        self.web.resize(800, 800)
-        self.web.setMaximumWidth(800)
-        # self.third_page_stack.resize(1000, 800)
+        filter = Filter()
+        self.web.installEventFilter(filter)
 
+        self.all_objects = []
+        self.selected_objects = []
+        self.selected_elements = []
+        self.web.resize(1200, 900)
+        self.web.setMaximumWidth(1200)
+        # self.third_page_stack.resize(1000, 800)
         if self.valid_url(url[self.counter]):
             self.web._view.load(QUrl(url[self.counter]))
         else:
             self.web._view.load(QtCore.QUrl.fromLocalFile(str(url[self.counter])))
-        self.data = [[]]
-        self.grouptitles = []
-        rows = []
-        listWidget = MyList()
+
+        listWidget = QListWidget()
+        # listWidget.setFlags(QtCore.Qt.ItemIsUserCheckable)
         listWidget.resize(200, 800)
         # listWidget.setMaximumWidth(200)
-        for x in pomgen.elemfinder(url[self.counter]):
-            self.data.append([x.name, x.type, x.data])
-            if x.type not in listWidget.grouptitles:
-                listWidget.grouptitles.append(x.type)
 
-        for x in pomgen.elemfinder(url[self.counter]):
-            rows.append({'text': x.name, 'value': x.data, 'group': x.type})
+        object_array = pomgen.HTMLFilterer(url[self.counter], pomgen.html_tags)
 
-        listWidget.update_table_list(rows)
+        for x in object_array:
+            # listWidget.addItem(x.GUI_window_adder())
+            self.table_add_obejct(listWidget, x)
+
+        # listWidget.setSelectionMode(QAbstractItemView.MultiSelection)
+        listWidget.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
+        listWidget.itemClicked.connect(lambda: self.printItemText(listWidget))
+        draw_rect = QPushButton('Quick Crash Button')
         next_button = QPushButton('Next page')
-        generate_for_selected_button = QPushButton('Generate for selected')
-        generate_all_button = QPushButton('Generate all for this page')
+        generate_for_selected_button = QPushButton('Generate for selected elements')
+        generate_all_button = QPushButton('Generate for all elements in current page')
+        item_info = QPushButton('More info about item')
         current_url_label = QLabel("Elements of " + url[self.counter])
         current_url_label.setFont(self.bold_font)
         next_button.clicked.connect(
@@ -590,6 +553,8 @@ class Ui_Main(QtWidgets.QWidget):
         generate_for_selected_button.clicked.connect(
             lambda: self.generate_for_selected_button_action(url[self.counter]))
         generate_all_button.clicked.connect(lambda: self.generate_all_button_click(url[self.counter]))
+
+        item_info.clicked.connect(lambda: self.item_info_action(listWidget))
         if (len(url) == 1):
             next_button.hide()
 
@@ -600,11 +565,46 @@ class Ui_Main(QtWidgets.QWidget):
         but_list_layout.addWidget(next_button)
         but_list_layout.addWidget(generate_for_selected_button)
         but_list_layout.addWidget(generate_all_button)
+        but_list_layout.addWidget(item_info)
+        but_list_layout.addWidget(draw_rect)
 
         main_layout.addWidget(self.web)
 
         main_layout.addLayout(but_list_layout)
         self.third_page_stack.setLayout(main_layout)
+
+    def printItemText(self, listWidget):
+        items = listWidget.findItems("*", Qt.MatchWildcard)
+        s_item = listWidget.selectedItems()
+        # selected_elements = []
+        for i in range(len(items)):
+            for t in self.all_objects:
+                # print(t.GUI_window_adder()," ",str(listWidget.selectedItems()[i].text()))
+                # higliht
+                if len(s_item) != 0:
+                    if t.GUI_window_adder() == s_item[0].text():
+                        # print(t.GUI_highlight_info())
+                        self.web._search_panel.text_fi(t.GUI_highlight_info())
+                # if not not checked
+                #print(items[i].checkState())
+                if items[i].checkState() != Qt.Checked and items[i].text() in self.selected_elements and items[i].text() == t.GUI_window_adder():
+                    print("deleted")
+                    self.selected_elements.remove(items[i].text())
+                    self.selected_objects.remove(t)
+                elif items[i].text() not in self.selected_elements and t.GUI_window_adder() == items[i].text():
+                    self.selected_elements.append(items[i].text())
+                    #print(items[i].text()+" added to selected")
+                   # print(len(self.selected_elements))
+                    self.selected_objects.append(t)
+        #print(self.selected_elements)
+        #print(self.selected_objects)
+
+    def table_add_obejct(self, widget, x):
+        self.all_objects.append(x)
+        item = QListWidgetItem(x.GUI_window_adder())
+        item.setCheckState(Qt.Unchecked)
+        widget.addItem(item)
+        widget.repaint()
 
     def update_counter(self, val):
         # global self.counter
@@ -612,6 +612,7 @@ class Ui_Main(QtWidgets.QWidget):
         return self.counter
 
     def table_cleaner(self, web, button, url, listWidget, current_url_label):
+        self.all_objects.clear()
         self.counter += 1
         if self.counter == len(url) - 1:
             button.hide()
@@ -620,38 +621,38 @@ class Ui_Main(QtWidgets.QWidget):
         else:
             web._view.load(QtCore.QUrl.fromLocalFile(str(url[self.counter])))
 
-        # self.grouptitles = []
-        self.data = [[]]
-        rows = []
-        for x in pomgen.elemfinder(url[self.counter]):
-            self.data.append([x.name, x.type, x.data])
-            if x.type not in listWidget.grouptitles:
-                listWidget.grouptitles.append(x.type)
-                # print(grouptitles)
+        listWidget.clear()
+        object_array = pomgen.HTMLFilterer(url[self.counter], pomgen.html_tags)
+        for x in object_array:
+            self.table_add_obejct(listWidget, x)
 
-        for x in pomgen.elemfinder(url[self.counter]):
-            rows.append({'text': x.name, 'value': x.data, 'group': x.type})
-        # print(rows)
-
-        # data = pomgen.elemfinder(url[self.counter])
-        listWidget.update_table_list(rows)
-
-        # listWidget.repaint()
-        # print("next button clicked")
         current_url_label.setText("Elements of " + url[self.counter])
+        self.selected_elements.clear()
+        # self.update_counter(self.counter)
 
-        self.update_counter(self.counter)
+    def item_info_action(self, listWidget):
+        s_item = listWidget.selectedItems()
+        print(len(s_item))
+        print("here")
+        print(len(self.all_objects))
+        if len(s_item) != 0:
+            for i in self.all_objects:
+                if (s_item[0].text() == i.GUI_window_adder()):
+                    msg = QMessageBox()
+                    msg.setText(i.GUI_window_more_info())
+                    msg.setWindowTitle("Element Info " + i.GUI_window_adder())
+                    returnValue = msg.exec()
 
     def generate_for_selected_button_action(self, url):
         try:
             tmp = []
             for g in pomgen.elemfinder(url):
-                for k in selected_elements:
+                for k in self.selected_elements:
                     if k == g.data:
                         tmp.append(g)
             # print(tmp)
 
-            if len(selected_elements) != 0:
+            if len(self.selected_elements) != 0:
                 pomgen.file_gen(url, tmp)  #### burası fixlencek
         except NameError:
             QMessageBox.about(self, "Generated", "No elements were selected")

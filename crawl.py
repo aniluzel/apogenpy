@@ -59,7 +59,9 @@ def crawl_one(page_url, domain, driver):
         soup = BeautifulSoup(htmltext, "html.parser")
 
         for link in soup.find_all("a", href=True):
-
+            print("start")
+            print(link.get('href'))
+            print("continue")
             if link.get('class') is not None:
 
                 if link.get('class')[0] == "btn":
@@ -132,7 +134,7 @@ def crawl_one(page_url, domain, driver):
 
 
         for button_case in soup.find_all("button", type='submit'):
-            if button_case.get('class')[1] == "btn-primary":
+            #if button_case.get('class')[1] == "btn-primary":
                 button = driver.find_element(By.CLASS_NAME, button_case.get("class")[1])
                 button.click()
                 item = driver.current_url
@@ -161,6 +163,8 @@ def looping(array,domain,driver,limit=20000):
                 counter += 1
                 looping(crawl_one(i, domain,driver),domain,driver,limit)
     return checked
+
+
 
 # chrome_options = Options()
 # chrome_options.add_argument("--headless")

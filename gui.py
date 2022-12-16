@@ -518,7 +518,6 @@ class Ui_Main(QtWidgets.QWidget):
 
         self.all_objects = []
         self.selected_objects = []
-        self.selected_elements = []
         self.web.resize(1200, 900)
         self.web.setMaximumWidth(1200)
         # self.third_page_stack.resize(1000, 800)
@@ -531,6 +530,13 @@ class Ui_Main(QtWidgets.QWidget):
         # listWidget.setFlags(QtCore.Qt.ItemIsUserCheckable)
         listWidget.resize(200, 800)
         # listWidget.setMaximumWidth(200)
+        url_combo = QComboBox()
+        for i in url:
+            url_combo.addItem(i)
+
+        url_combo.setCurrentIndex(self.counter)
+        url_combo.activated.connect(lambda: self.update_web_combo(url_combo,self.web,next_button,url,listWidget,current_url_label))
+
 
         object_array = pomgen.HTMLFilterer(url[self.counter], pomgen.html_tags)
 
@@ -549,7 +555,7 @@ class Ui_Main(QtWidgets.QWidget):
         current_url_label = QLabel("Elements of " + url[self.counter])
         current_url_label.setFont(self.bold_font)
         next_button.clicked.connect(
-            lambda: self.table_cleaner(self.web, next_button, url, listWidget, current_url_label))
+            lambda: self.table_cleaner(self.web, next_button, url, listWidget, current_url_label,url_combo))
         generate_for_selected_button.clicked.connect(
             lambda: self.generate_for_selected_button_action(url[self.counter]))
         generate_all_button.clicked.connect(lambda: self.generate_all_button_click(url[self.counter]))
@@ -561,6 +567,7 @@ class Ui_Main(QtWidgets.QWidget):
         main_layout = QHBoxLayout()
         but_list_layout = QVBoxLayout()
         but_list_layout.addWidget(current_url_label)
+        but_list_layout.addWidget(url_combo)
         but_list_layout.addWidget(listWidget)
         but_list_layout.addWidget(next_button)
         but_list_layout.addWidget(generate_for_selected_button)
@@ -576,28 +583,19 @@ class Ui_Main(QtWidgets.QWidget):
     def printItemText(self, listWidget):
         items = listWidget.findItems("*", Qt.MatchWildcard)
         s_item = listWidget.selectedItems()
-        # selected_elements = []
         for i in range(len(items)):
             for t in self.all_objects:
-                # print(t.GUI_window_adder()," ",str(listWidget.selectedItems()[i].text()))
                 # higliht
                 if len(s_item) != 0:
                     if t.GUI_window_adder() == s_item[0].text():
-                        # print(t.GUI_highlight_info())
                         self.web._search_panel.text_fi(t.GUI_highlight_info())
-                # if not not checked
-                #print(items[i].checkState())
-                if items[i].checkState() != Qt.Checked and items[i].text() in self.selected_elements and items[i].text() == t.GUI_window_adder():
-                    print("deleted")
-                    self.selected_elements.remove(items[i].text())
-                    self.selected_objects.remove(t)
-                elif items[i].text() not in self.selected_elements and t.GUI_window_adder() == items[i].text():
-                    self.selected_elements.append(items[i].text())
-                    #print(items[i].text()+" added to selected")
-                   # print(len(self.selected_elements))
+                # if checked
+                if items[i].checkState() == 2 and items[i].text() == t.GUI_window_adder() and t not in self.selected_objects:
                     self.selected_objects.append(t)
-        #print(self.selected_elements)
-        #print(self.selected_objects)
+                    print(self.selected_objects)
+                elif items[i].checkState() == 0 and t in self.selected_objects and items[i].text() == t.GUI_window_adder():
+                    self.selected_objects.remove(t)
+
 
     def table_add_obejct(self, widget, x):
         self.all_objects.append(x)
@@ -606,14 +604,35 @@ class Ui_Main(QtWidgets.QWidget):
         widget.addItem(item)
         widget.repaint()
 
+    def update_web_combo(self,combobox,web,button,url,listWidget, current_url_label,):
+        print(combobox.currentIndex())
+        self.counter = combobox.currentIndex()
+        if self.counter == len(url) - 1:
+            button.hide()
+        elif button.isHidden() == True and self.counter < len(url):
+            button.show()
+        if self.valid_url(url[self.counter]):
+            web._view.load(QUrl(url[self.counter]))
+        else:
+            web._view.load(QtCore.QUrl.fromLocalFile(str(url[self.counter])))
+
+        listWidget.clear()
+        object_array = pomgen.HTMLFilterer(url[self.counter], pomgen.html_tags)
+        for x in object_array:
+            self.table_add_obejct(listWidget, x)
+
+        current_url_label.setText("Elements of " + url[self.counter])
+        self.selected_objects.clear()
+
     def update_counter(self, val):
         # global self.counter
         self.counter = val
         return self.counter
 
-    def table_cleaner(self, web, button, url, listWidget, current_url_label):
+    def table_cleaner(self, web, button, url, listWidget, current_url_label,combo_box):
         self.all_objects.clear()
         self.counter += 1
+        combo_box.setCurrentIndex(self.counter)
         if self.counter == len(url) - 1:
             button.hide()
         if self.valid_url(url[self.counter]):
@@ -627,14 +646,10 @@ class Ui_Main(QtWidgets.QWidget):
             self.table_add_obejct(listWidget, x)
 
         current_url_label.setText("Elements of " + url[self.counter])
-        self.selected_elements.clear()
-        # self.update_counter(self.counter)
+        self.selected_objects.clear()
 
     def item_info_action(self, listWidget):
         s_item = listWidget.selectedItems()
-        print(len(s_item))
-        print("here")
-        print(len(self.all_objects))
         if len(s_item) != 0:
             for i in self.all_objects:
                 if (s_item[0].text() == i.GUI_window_adder()):
@@ -645,15 +660,12 @@ class Ui_Main(QtWidgets.QWidget):
 
     def generate_for_selected_button_action(self, url):
         try:
-            tmp = []
-            for g in pomgen.elemfinder(url):
-                for k in self.selected_elements:
-                    if k == g.data:
-                        tmp.append(g)
-            # print(tmp)
+            for x in self.selected_objects:
+                print(x.GUI_window_adder)
 
-            if len(self.selected_elements) != 0:
-                pomgen.file_gen(url, tmp)  #### burası fixlencek
+            if len(self.selected_objects) != 0:
+                #pomgen.file_gen(url, tmp)  #### burası fixlencek
+                print("claed generate for selected")
         except NameError:
             QMessageBox.about(self, "Generated", "No elements were selected")
         else:
@@ -666,23 +678,13 @@ class Ui_Main(QtWidgets.QWidget):
         ####burası fixlencek
         QMessageBox.about(self, "Generated", "Generated for all")
 
-    # def web_elements_selected_list(self, listWidget):
-    #     listWidget.selManager(listWidget)
-
-    # input example nav-bar output HOME,ERROR
-    # while True:
-    # self.web._search_panel.text_fi("HOME")
-    # time.sleep(2)
-    # self.web._search_panel.text_fi("ERROR")
-    # time.sleep(2)
-    # else:
-    #     self.web._search_panel.text_fi("")
-
 
 class Browser(QtWidgets.QMainWindow, ):
     def __init__(self, parent=None):
         super(Browser, self).__init__(parent)
         self._view = QtWebEngineWidgets.QWebEngineView()
+        #filter = Filter()
+        #self._view.installEventFilter(filter)
         self.setCentralWidget(self._view)
         # self._view.load(QtCore.QUrl())
         self._search_panel = SearchPanel()
@@ -705,9 +707,7 @@ class Browser(QtWidgets.QMainWindow, ):
                 self.statusBar().hide()
 
         self._view.findText(text, flag, callback)
-        # self._view.findText()
 
-        # self._view.findText("ERROR", flag, callback)
 
     def create_menus(self):
         menubar = self.menuBar()

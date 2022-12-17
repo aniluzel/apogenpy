@@ -8,6 +8,7 @@ import csv
 from urllib.parse import urlparse
 import chromedriver_autoinstaller
 from html.parser import HTMLParser as Parser
+from selenium import webdriver
 
 nonhtmltdata=["id","class","href"]
 htmldata=["xpath"]

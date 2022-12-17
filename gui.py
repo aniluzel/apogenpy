@@ -13,7 +13,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium import webdriver
 from PyQt5 import QtCore, QtGui, QtWidgets, QtWebEngineWidgets
 import utils
-import threading
+
 
 default_settings = [False, False, 1, 0.92, 0.88, None, True, 2, False, "", "", ""]
 filtered_data = []
@@ -547,33 +547,34 @@ class Ui_Main(QtWidgets.QWidget):
         # listWidget.setSelectionMode(QAbstractItemView.MultiSelection)
         listWidget.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
         listWidget.itemClicked.connect(lambda: self.printItemText(listWidget))
-        draw_rect = QPushButton('Quick Crash Button')
         next_button = QPushButton('Next page')
         generate_for_selected_button = QPushButton('Generate for selected elements')
         generate_all_button = QPushButton('Generate for all elements in current page')
         item_info = QPushButton('More info about item')
-        current_url_label = QLabel("Elements of " + url[self.counter])
+        current_url_label = QLabel("Elements of ")
         current_url_label.setFont(self.bold_font)
+        url_and_combobox_layout = QHBoxLayout()
+        url_and_combobox_layout.addWidget(current_url_label)
+        url_and_combobox_layout.addWidget(url_combo)
         next_button.clicked.connect(
-            lambda: self.table_cleaner(self.web, next_button, url, listWidget, current_url_label,url_combo))
+            lambda: self.table_cleaner(self.web, next_button, url, listWidget, url_combo))
         generate_for_selected_button.clicked.connect(
             lambda: self.generate_for_selected_button_action(url[self.counter]))
-        generate_all_button.clicked.connect(lambda: self.generate_all_button_click(url[self.counter]))
+        generate_all_button.clicked.connect(
+            lambda: self.generate_all_button_click(url[self.counter]))
 
-        item_info.clicked.connect(lambda: self.item_info_action(listWidget))
-        if (len(url) == 1):
+        item_info.clicked.connect(lambda: self.item_info_action(listWidget, url[self.counter]))
+        if len(url) == 1:
             next_button.hide()
 
         main_layout = QHBoxLayout()
         but_list_layout = QVBoxLayout()
-        but_list_layout.addWidget(current_url_label)
-        but_list_layout.addWidget(url_combo)
+        but_list_layout.layout(url_and_combobox_layout)
         but_list_layout.addWidget(listWidget)
         but_list_layout.addWidget(next_button)
         but_list_layout.addWidget(generate_for_selected_button)
         but_list_layout.addWidget(generate_all_button)
         but_list_layout.addWidget(item_info)
-        but_list_layout.addWidget(draw_rect)
 
         main_layout.addWidget(self.web)
 
@@ -604,7 +605,7 @@ class Ui_Main(QtWidgets.QWidget):
         widget.addItem(item)
         widget.repaint()
 
-    def update_web_combo(self,combobox,web,button,url,listWidget, current_url_label,):
+    def update_web_combo(self,combobox,web,button,url,listWidget):
         print(combobox.currentIndex())
         self.counter = combobox.currentIndex()
         if self.counter == len(url) - 1:
@@ -620,8 +621,6 @@ class Ui_Main(QtWidgets.QWidget):
         object_array = pomgen.HTMLFilterer(url[self.counter], pomgen.html_tags)
         for x in object_array:
             self.table_add_obejct(listWidget, x)
-
-        current_url_label.setText("Elements of " + url[self.counter])
         self.selected_objects.clear()
 
     def update_counter(self, val):
@@ -629,7 +628,7 @@ class Ui_Main(QtWidgets.QWidget):
         self.counter = val
         return self.counter
 
-    def table_cleaner(self, web, button, url, listWidget, current_url_label,combo_box):
+    def table_cleaner(self, web, button, url, listWidget, combo_box):
         self.all_objects.clear()
         self.counter += 1
         combo_box.setCurrentIndex(self.counter)
@@ -644,11 +643,9 @@ class Ui_Main(QtWidgets.QWidget):
         object_array = pomgen.HTMLFilterer(url[self.counter], pomgen.html_tags)
         for x in object_array:
             self.table_add_obejct(listWidget, x)
-
-        current_url_label.setText("Elements of " + url[self.counter])
         self.selected_objects.clear()
 
-    def item_info_action(self, listWidget):
+    def item_info_action(self, listWidget, url):
         s_item = listWidget.selectedItems()
         if len(s_item) != 0:
             for i in self.all_objects:
@@ -656,6 +653,8 @@ class Ui_Main(QtWidgets.QWidget):
                     msg = QMessageBox()
                     msg.setText(i.GUI_window_more_info())
                     msg.setWindowTitle("Element Info " + i.GUI_window_adder())
+                    screenshot_loc = i.get_element_screenshot(url)
+                    print(screenshot_loc)
                     returnValue = msg.exec()
 
     def generate_for_selected_button_action(self, url):
@@ -664,18 +663,20 @@ class Ui_Main(QtWidgets.QWidget):
                 print(x.GUI_window_adder)
 
             if len(self.selected_objects) != 0:
-                #pomgen.file_gen(url, tmp)  #### burası fixlencek
-                print("claed generate for selected")
+                pomgen.file_gen(url, self.selected_objects)
+                print("called generate for selected")
+            else:
+                QMessageBox.about(self, "Generated", "No elements were selected")
+
         except NameError:
-            QMessageBox.about(self, "Generated", "No elements were selected")
+            QMessageBox.about(self, "Generated", "Error")
+
         else:
-            # print("generated for ", item)
             QMessageBox.about(self, "Generated", "Generated for selected")
 
-    def generate_all_button_click(self, data):
-        # data takes url
-        pomgen.file_gen(data, pomgen.elemfinder(data))
-        ####burası fixlencek
+    def generate_all_button_click(self, url):
+        print(self.all_objects)
+        pomgen.file_gen(url, self.all_objects)
         QMessageBox.about(self, "Generated", "Generated for all")
 
 

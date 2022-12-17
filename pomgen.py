@@ -1,15 +1,12 @@
 from urllib.parse import urlparse
+
+from selenium.webdriver.common.by import By
+
 import utils
+import selenium
 
 
-# class Element:
-#     def __init__(self, data, name, type):
-#         self.data = data
-#         self.name = name
-#         self.type = type
-
-
-def file_gen(url, elems):
+def file_gen(url, html_object_array):
     parsed_url = utils.urlparse(url)
     folder_path = utils.folder_name_changer(parsed_url[1]) + "_POM"
     invalid = '<>:"/\|?* -.'
@@ -21,12 +18,21 @@ def file_gen(url, elems):
         print("Directory already exists, moving on")
 
     file_name = utils.file_name_changer(parsed_url[2])
+
     with open(folder_path + "\\" + file_name + ".py", "a") as f:
         f.write(
             "import testdriver\n\nurl = \"" + url + "\"\ndriver = testdriver.Driver.driver\n\n\ndef GoTo():\n\tdriver.get(url)\n\n")
-        for elem in elems:
+        for html_object in html_object_array:
+
+            # OBJECT DECODE
+            html_object = HTMLElement()  # delete later
+
+            object_name_array = html_object.object_name_picker()
+
+
+
             if '>' and '<' in elem.data:
-                elem_tmp = (elem.data.split(">"))[1].split("<")[0]  #####BURASINI ALDIM
+                elem_tmp = (elem.data.split(">"))[1].split("<")[0]
                 if (len(elem_tmp) > 1):
                     elem_tmp = "//button[text()=\\\'" + elem_tmp + "\\\']"
                     f.write(
@@ -58,122 +64,16 @@ def valid_url(to_validate: str) -> bool:
 
 
 def htmlsoup(url):
-    isurl = valid_url(url)
-    if isurl == True:
+    is_url = valid_url(url)
+
+    if is_url:
         page_html = utils.requests.get(url).text
         soup = utils.BeautifulSoup(page_html, "html.parser")
     else:
         page_html = open(url, "r")
         soup = utils.BeautifulSoup(page_html, "html.parser")
+
     return soup
-
-
-# def elemprinter(elemarray):
-#     for x in elemarray:
-#         print("data: " + x.data + " name: " + x.name + " type: " + x.type)
-#
-#
-# def idfinder(url):
-#     type = "id"
-#     soup = htmlsoup(url)
-#     idSoup = [tag['id'] for tag in soup.find_all(id=True)]
-#     elemarray = []
-#     for x in idSoup:
-#         elemarray.append(Element(x, utils.namechanger(x, type), type))
-#     return elemarray
-#
-#
-# def buttonfinder(url):
-#     type = "xpath"
-#     buttons = []
-#     soup = htmlsoup(url)
-#     divSoup = soup.find_all('div')
-#     for i in divSoup:
-#         buttonSoup = str(soup.find_all('button'))
-#         if buttonSoup is not None and buttonSoup not in buttons:
-#             buttons.append(buttonSoup)
-#     returnarray = []
-#     if len(buttons) != 0:
-#         buttons[0] = buttons[0].removesuffix("]")
-#         buttons[0] = buttons[0].removeprefix("[")
-#         buttons[0] = " ".join(buttons[0].split())
-#         # print(buttons[0])
-#         subs = ">, <"
-#         for i in buttons[0].split(subs):
-#             str1 = ""
-#             if i == buttons[0].split(subs)[0]:
-#                 str1 = i + ">"
-#             elif i == buttons[0].split(subs)[len(buttons[0].split(subs)) - 1]:
-#                 str1 = "<" + i
-#             else:
-#                 str1 = "<" + i + ">"
-#
-#             returnarray.append(str1)
-#     elemarray = []
-#     for elem in returnarray:
-#         elemarray.append(Element(elem, utils.namechanger(elem, type), type))
-#     return elemarray
-#
-#
-# # alt commente bak öyle çıkıyor 2 dimension array
-# # ['[<button class="navbar-toggler" data-bs-target="#main-navbar" data-bs-toggle="collapse"
-# # type="button">\n<span class="navbar-toggler-icon"></span>\n</button>,
-# # <button class="btn btn-primary" type="submit">Find\r\n          Owner</button>]']
-#
-# def hreffinder(url):
-#     href = []
-#     soup = htmlsoup(url)
-#     testSoup = soup.find_all('a')
-#     for i in testSoup:
-#         test = i.get('href')
-#         if test is not None and test not in href:
-#             href.append(test)
-#     return href
-#
-#
-# def classfinder(url):
-#     type = "class"
-#     classes = []
-#     soup = htmlsoup(url)
-#     testSoup = soup.find_all('a')
-#     for i in testSoup:
-#         test = i.get('class')
-#         if test is not None and test not in classes:
-#             classes.append(test)
-#     returnarray = []
-#     for i in classes:
-#
-#         if len(i) > 1:
-#             str1 = ""
-#
-#             for j in i:
-#                 str1 = str1 + str(j) + " "
-#
-#             str1 = str1.removesuffix(" ")
-#             returnarray.append(str1)
-#         else:
-#             returnarray.append(i[0])
-#     elemarray = []
-#     for x in returnarray:
-#         elemarray.append(Element(x, utils.namechanger(x, type), type))
-#
-#     return elemarray
-#
-#
-# def elemfinder(url):
-#     elems = idfinder(url) + buttonfinder(url) + classfinder(url)
-#     return elems
-#
-#
-# def buttonfinder2(url):
-#     buttons = []
-#     soup = htmlsoup(url)
-#
-#
-# def otherparser(url):
-#     page_html = utils.requests.get(url).text
-#     utils.parser.feed(page_html)
-#     print(utils.parser.data_text)
 
 
 url = 'http://localhost:8080/owners/2/pets/new'
@@ -230,8 +130,8 @@ class HTMLElement:
 
     def print(self):
         print("HTML_ID: " + str(self.html_id))
-        print("id: "+self.id)
-        print("classname: "+self.classname)
+        print("id: " + self.id)
+        print("classname: " + self.classname)
         print("name: " + self.name)
         print("href: " + self.href)
         print("text: " + self.text)
@@ -248,80 +148,163 @@ class HTMLElement:
         else:
             return ""
 
+    def get_html_id(self):
+        return self.html_id
+
+    def get_element_screenshot(self, url):
+        driver = utils.webdriver.Chrome()
+        driver.get(url)
+        screenshot_loc='screenshots' + "\\" + self.GUI_window_adder()
+        if self.id is not None:
+            elem = driver.find_element(By.ID, self.id)
+
+            elem.screenshot(screenshot_loc)
+        elif self.text is not None:
+            print("text")
+        elif self.href is not None:
+           print("href")
+
+        elif self.classname is not None:
+            print("classname")
+
+
+
+
     def GUI_window_adder(self):
-        GUI_string = "!undefined_element"
+        gui_string = "!undefined_element"
 
         if self.text is not None and len(self.multiple_text) == 0:
-            GUI_string= "Display Text -> " + self.text
+            gui_string = "Text -> " + self.text
         elif self.id is not None:
-            GUI_string = "ID -> " + self.id
+            gui_string = "ID -> " + self.id
         elif self.name is not None:
-            GUI_string = "Name -> " + self.name
+            gui_string = "Name -> " + self.name
         elif self.title is not None:
-            GUI_string = "Title -> " + self.title
+            gui_string = "Title -> " + self.title
         elif self.classname is not None:
-            GUI_string = "Classname -> " + self.classname
+            gui_string = "Classname -> " + self.classname
         elif self.type is not None:
-            GUI_string = "Type -> " + self.type
+            gui_string = "Type -> " + self.type
         elif self.multiple_text is not None and len(self.multiple_text) > 0:
-            GUI_string = "First Value of List -> " + self.multiple_text[0]
+            gui_string = "First Value of List -> " + self.multiple_text[0]
         elif self.href is not None:
-            GUI_string = "Href -> " + self.href
+            gui_string = "Href -> " + self.href
         elif self.tag is not None:
-            GUI_string = "HTML Tag -> " + self.tag
+            gui_string = "HTML Tag -> " + self.tag
 
-        return GUI_string
+        return str(self.html_id) + ". " + gui_string
 
     def GUI_window_more_info(self):
-        GUI_string=""
-        GUI_string_array = []
+        gui_string_array = []
+
         if self.tag is not None:
-            GUI_string_array.append("HTML Tag: " + self.tag)
+            gui_string_array.append("HTML Tag: " + self.tag)
         if self.id is not None:
-            GUI_string_array.append("ID: " + self.id)
+            gui_string_array.append("ID: " + self.id)
         if self.classname is not None:
-            GUI_string_array.append("Classname: " + self.classname)
+            gui_string_array.append("Classname: " + self.classname)
         if self.text is not None:
-            GUI_string_array.append("Display Text: " + self.text)
+            gui_string_array.append("Display Text: " + self.text)
         if self.name is not None:
-            GUI_string_array.append("Name: " + self.name)
+            gui_string_array.append("Name: " + self.name)
         if self.title is not None:
-            GUI_string_array.append("Title: " + self.title)
+            gui_string_array.append("Title: " + self.title)
         if self.type is not None:
-            GUI_string_array.append("Type: " + self.type)
+            gui_string_array.append("Type: " + self.type)
         if self.href is not None:
-            GUI_string_array.append("Href: " + self.href)
+            gui_string_array.append("Href: " + self.href)
         if self.multiple_text is not None and len(self.multiple_text) > 0:
-            GUI_string_array.append("List Values: " + self.multiple_text[0])
-        GUI_string_return=""
-        for i in range(len(GUI_string_array)):
-            if not i == len(GUI_string_array)-1:
-                GUI_string_return += GUI_string_array[i] + "\n"
+            gui_string_array.append("List Values: " + self.multiple_text[0])
+
+        gui_string_info = ""
+
+        for i in range(len(gui_string_array)):
+            if not i == len(gui_string_array) - 1:
+                gui_string_info += gui_string_array[i] + "\n"
             else:
-                GUI_string_return += GUI_string_array[i]
-        return GUI_string_return
+                gui_string_info += gui_string_array[i]
 
+        return gui_string_info
 
-def HTMLReader(data):
-    type = "main"
-    for line in data.splitlines():
-        if "SUB_BEGIN" in line:
-            type = "sub"
-        elif "SUB_END" in line:
-            type = "main"
+    def object_name_picker(self):
+        object_name_array = []
+        object_name = "UNDEFINED_ELEMENT"
+
+        if self.text is not None and len(self.multiple_text) == 0:
+            object_name_array.append("text::")
+            object_name_array.append(self.text)
+        if self.id is not None:
+            object_name_array.append("id::")
+            object_name_array.append(self.id)
+        if self.name is not None:
+            object_name_array.append("name::")
+            object_name_array.append(self.name)
+        if self.title is not None:
+            object_name_array.append("title::")
+            object_name_array.append(self.title)
+        if self.classname is not None:
+            object_name_array.append("classname::")
+            object_name_array.append(self.classname)
+        if self.type is not None:
+            object_name_array.append("type::")
+            object_name_array.append(self.type)
+        if self.multiple_text is not None and len(self.multiple_text) > 0:
+            object_name_array.append("multiple_text::")
+            object_name_array.append(str(self.multiple_text))
+        if self.href is not None:
+            object_name_array.append("href::")
+            object_name_array.append(self.href)
+        if self.tag is not None:
+            object_name_array.append("tag::")
+            object_name_array.append(self.tag)
+
+        if "text::" in object_name_array and "id::" in object_name_array:
+            object_name = object_name_array[1] + "_" + object_name_array[3]
+        elif "text::" in object_name_array:
+            object_name = object_name_array[1]
+        elif "id::" in object_name_array:
+            index = object_name_array.index("id::") + 1
+            object_name = object_name_array[index]
+        elif "name::" in object_name_array:
+            index = object_name_array.index("name::") + 1
+            object_name = object_name_array[index]
+        elif "title::" in object_name_array:
+            index = object_name_array.index("title::") + 1
+            object_name = object_name_array[index]
+        elif "classname::" in object_name_array:
+            index = object_name_array.index("classname::") + 1
+            object_name = "class_" + object_name_array[index]
+            if " " in object_name:
+                object_name = object_name.replace(" ", "_")
+                object_name = "multi_" + object_name
+        elif "type::" in object_name_array:
+            index = object_name_array.index("type::") + 1
+            object_name = "type_" + object_name_array[index]
+        elif "href::" in object_name_array:
+            index = object_name_array.index("href::") + 1
+            object_name = "link_to_" + object_name_array[index]
+        elif "multiple_text::" in object_name_array:
+            index = object_name_array.index("multiple_text::") + 1
+            object_name = "list_first_elem_" + self.multiple_text[0]
+        elif "tag::" in object_name_array:
+            index = object_name_array.index("tag::") + 1
+            object_name = "ambiguous_html_tag" + object_name_array[index] + "_" + self.html_id
+
+        return object_name
 
 
 def HTMLFilterer(url, html_tags):
     data_array = []
     html_id = 0
+
     for tag in html_tags:
         soup = htmlsoup(url).find_all(tag)
+
         for i in soup:
             html_element_array = []
             parser = utils.HTMLParser()
             parser.feed(str(i))
-            html_data = parser.return_data()
-            # print("HTML_PARSE_ID: " + str(html_id) + "\n" + html_data)
+            # print("HTML_PARSE_ID: " + str(html_id) + "\n" + parser.return_data())
             html_element_array.append(html_id)
             html_element_array.append(parser.main_tag)
             html_element_array.append(parser.attrs)
@@ -334,12 +317,12 @@ def HTMLFilterer(url, html_tags):
     element_array = []  # OBJECT ARRAY
 
     for i in data_array:
-        # print(i)
         elem = HTMLElement()
         elem.set_html_id(i[0])
 
         elem.set_tag(i[1])
         attribute_array = i[2]
+
         for attr in attribute_array:
             if attr[0] == 'class':
                 elem.set_class(attr[1])
@@ -356,16 +339,15 @@ def HTMLFilterer(url, html_tags):
 
         if len(i[3]) > 0:
             if len(i[3]) == 1:
-               elem.set_text(i[3][0])
+                elem.set_text(i[3][0])
             else:
-                elem.set_text(max(i[3], key=len))
+                elem.set_text(i[3][0])
                 elem.set_multiple_text(i[3])
 
         element_array.append(elem)
 
-    # for elem in element_array:
-    #     elem.print()
     return element_array
 
 
-arrr = HTMLFilterer(url, html_tags)
+
+#arrr = HTMLFilterer(url, html_tags)

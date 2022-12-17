@@ -1,7 +1,7 @@
 import time
 from urllib.parse import urlparse
 from PyQt5.QtCore import QUrl, QCoreApplication, Qt, QThread, pyqtSignal, QObject, QEvent, QRect
-from PyQt5.QtGui import QPainter, QColor
+from PyQt5.QtGui import QPainter, QColor, QPixmap
 from PyQt5.QtWidgets import QApplication, QMainWindow, QLineEdit, QVBoxLayout, QPushButton, QListWidget, \
     QAbstractItemView, QHBoxLayout, QCheckBox, QComboBox, QMessageBox, QFileDialog, QListWidgetItem, QWidget
 from PyQt5.QtWidgets import QLabel
@@ -15,7 +15,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets, QtWebEngineWidgets
 import utils
 
 
-default_settings = [False, False, 1, 0.92, 0.88, None, True, 2, False, "", "", ""]
+default_settings = [False, False, 1, 0.92, 0.88, None, False, 2, False, "", "", ""]
 filtered_data = []
 
 
@@ -76,11 +76,11 @@ def crawl_filter_func(textbox):
         if default_settings[6]:
             if default_settings[5] is None:
                 tmp = crawl.looping(crawl.crawl_one(textbox.text(), domain[0], driver), domain[0], driver,
-                                    limit=20000)
+                                    limit=50)
             else:
                 tmp = crawl.looping(crawl.crawl_one(textbox.text(), default_settings[5], driver),
                                     default_settings[5], driver,
-                                    limit=20000)
+                                    limit=50)
 
         driver.quit()
 
@@ -510,6 +510,7 @@ class Ui_Main(QtWidgets.QWidget):
 
     # third page start
     def third_page(self, url):
+        self.abspath = []
         self.counter = 0
         self.web = Browser()
         self.web.show()
@@ -563,13 +564,15 @@ class Ui_Main(QtWidgets.QWidget):
         generate_all_button.clicked.connect(
             lambda: self.generate_all_button_click(url[self.counter]))
 
-        item_info.clicked.connect(lambda: self.item_info_action(listWidget, url[self.counter]))
+        self.abspath = pomgen.get_page_screenshot(url[self.counter])
+        item_info.clicked.connect(lambda: self.item_info_action(listWidget, url[self.counter],self.abspath))
+
         if len(url) == 1:
             next_button.hide()
 
         main_layout = QHBoxLayout()
         but_list_layout = QVBoxLayout()
-        but_list_layout.layout(url_and_combobox_layout)
+        but_list_layout.addLayout(url_and_combobox_layout)
         but_list_layout.addWidget(listWidget)
         but_list_layout.addWidget(next_button)
         but_list_layout.addWidget(generate_for_selected_button)
@@ -580,6 +583,7 @@ class Ui_Main(QtWidgets.QWidget):
 
         main_layout.addLayout(but_list_layout)
         self.third_page_stack.setLayout(main_layout)
+
 
     def printItemText(self, listWidget):
         items = listWidget.findItems("*", Qt.MatchWildcard)
@@ -622,6 +626,9 @@ class Ui_Main(QtWidgets.QWidget):
         for x in object_array:
             self.table_add_obejct(listWidget, x)
         self.selected_objects.clear()
+        self.abspath.clear()
+        self.abspath = pomgen.get_page_screenshot(url[self.counter])
+
 
     def update_counter(self, val):
         # global self.counter
@@ -644,17 +651,36 @@ class Ui_Main(QtWidgets.QWidget):
         for x in object_array:
             self.table_add_obejct(listWidget, x)
         self.selected_objects.clear()
+        self.abspath.clear()
+        self.abspath = pomgen.get_page_screenshot(url[self.counter])
 
-    def item_info_action(self, listWidget, url):
+    def item_info_action(self, listWidget, url,abspath):
         s_item = listWidget.selectedItems()
+        info_layout = QVBoxLayout()
         if len(s_item) != 0:
             for i in self.all_objects:
                 if (s_item[0].text() == i.GUI_window_adder()):
                     msg = QMessageBox()
                     msg.setText(i.GUI_window_more_info())
+                    screenshot_loc = i.get_element_screenshot(url, abspath)
                     msg.setWindowTitle("Element Info " + i.GUI_window_adder())
-                    screenshot_loc = i.get_element_screenshot(url)
-                    print(screenshot_loc)
+
+                    label = QLabel()
+
+                    # loading image
+                    pixmap = QPixmap(screenshot_loc)
+
+                    # adding image to label
+                    label.setPixmap(pixmap)
+
+                    # Optional, resize label to image size
+                    label.resize(pixmap.width(),
+                                      pixmap.height())
+                    info_layout.addWidget(label)
+                    msg.setLayout(info_layout)
+                    msg.setIconPixmap(pixmap)
+                    msg.resize(pixmap.width()+100,pixmap.height()+10)
+                    print(screenshot_loc) ## CANNOT FIND FILE EXCEPTION HANDLING
                     returnValue = msg.exec()
 
     def generate_for_selected_button_action(self, url):

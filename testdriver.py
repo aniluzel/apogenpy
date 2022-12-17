@@ -75,6 +75,8 @@ def selenium(param, input, timeout, driver,type):
         path.send_keys(input)
 
 Driver = ChromeDriver()
-#url= "http://localhost:8080/owners/new"
+
+url= "http://localhost:8080/owners/2/pets/new"
+Driver.driver.get(url)
 #Driver.driver.get("http://localhost:8080/owners/new")
-#Driver.driver.find_element(By.XPATH, "//button[text()='Add Owner']").click()
+Driver.driver.find_element(By.XPATH, "//button[normalize-space(text()) = 'Add Pet']").click()

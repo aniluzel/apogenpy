@@ -64,6 +64,7 @@ def crawl_filter_func(textbox):
             c = crawl.CrawlerProcess({})
             c.crawl(crawl.CrawlingSpider, start_urls=[textbox.text()], allowed_domains=[urlparse(default_settings[5]).netloc])
         c.start()
+
         url_data = adv.url_to_df(textbox.text())
         domain = url_data["scheme"] + "://" + url_data["netloc"]
 
@@ -190,7 +191,7 @@ class Ui_Main(QtWidgets.QWidget):
         #        self.loadingUI()
         crawl_button.clicked.connect(lambda: self.crawl_button_action(textbox))
 
-        # PushButton2#
+        # settings button#
         setting_button = QtWidgets.QPushButton()
         setting_button.setText("Settings")
         self.settings_page()
@@ -201,12 +202,13 @@ class Ui_Main(QtWidgets.QWidget):
         # continue without crawling
         con_craw = QtWidgets.QPushButton("Select Multiple Files")
         con_craw.clicked.connect(self.con_crawl_action)
-        # PushButton3#
+        # exit button#
         exit_button = QtWidgets.QPushButton()
         exit_button.setText("Exit")
         exit_button.setGeometry(QtCore.QRect(150, 150, 100, 100))
         exit_button.clicked.connect(QCoreApplication.instance().quit)
-        #
+
+
         if not utils.chromedriver_checker():
             QMessageBox.about(self, "Generated", "Chrome driver not downloaded please download from settings_page")
 
@@ -233,6 +235,7 @@ class Ui_Main(QtWidgets.QWidget):
 
         except TypeError as e:
             QMessageBox.about(self, "Error has acquired", str(e))
+
 
     def settings_clicked(self):
         self.QtStack.setCurrentIndex(3)
@@ -281,6 +284,11 @@ class Ui_Main(QtWidgets.QWidget):
         add_url_layout.addWidget(add_url_textbox)
         add_url_layout.addWidget(add)
 
+        # re crawl button
+        re_crawl_button = QtWidgets.QPushButton("Re-Crawl")
+        re_crawl_button.setGeometry(QtCore.QRect(150, 150, 100, 100))
+        re_crawl_button.clicked.connect(self.re_crawl_action)
+
         # buttons action
         sel.clicked.connect(lambda: self.selected_url_click())
         all_sel.clicked.connect(lambda: self.all_sel_click(data))
@@ -292,6 +300,7 @@ class Ui_Main(QtWidgets.QWidget):
         table_layout.addWidget(sel)
         table_layout.addWidget(all_sel)
         table_layout.addWidget(add_path)
+        #table_layout.addWidget(re_crawl_button)
 
         # if (not self.second_page_stack.layout()):
         self.second_page_stack.setLayout(table_layout)
@@ -303,6 +312,8 @@ class Ui_Main(QtWidgets.QWidget):
         for i in range(len(items)):
             selected.append(str(listWidget.selectedItems()[i].text()))
 
+    def re_crawl_action(self):
+        self.QtStack.setCurrentIndex(0)
     def selected_url_click(self):
         try:
             global selected

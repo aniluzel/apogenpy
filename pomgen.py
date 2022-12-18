@@ -213,8 +213,9 @@ class HTMLElement:
     def get_element_screenshot(self, url, patharray):  ## SELENIUM WEBDRIVER EXCEPTION HANDLING
         chromepath = utils.chromedriver_path_name()
         chromeoptions = Options()
+        chromeoptions.add_argument('--force-device-scale-factor=1')
         chromeoptions.add_argument("--headless")
-        chromeoptions.add_argument("--window-size=3200x10800")
+        chromeoptions.add_argument("--window-size=2000x4000")
         # driver = utils.webdriver.Chrome(chromepath, options=chromeoptions)
         # driver.get(url)
 
@@ -401,8 +402,9 @@ class HTMLElement:
 def get_page_screenshot(url):
     chromepath = utils.chromedriver_path_name()
     chromeoptions = Options()
+    chromeoptions.add_argument('--force-device-scale-factor=1')
     chromeoptions.add_argument("--headless")
-    chromeoptions.add_argument("--window-size=3200x10800")
+    chromeoptions.add_argument("--window-size=2000x4000")
     driver = utils.webdriver.Chrome(chromepath, options=chromeoptions)
 
     driver.get(url)

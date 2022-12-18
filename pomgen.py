@@ -1,154 +1,120 @@
 import os.path
+import sys
 from urllib.parse import urlparse
-#from Screenshot import Screenshot
-
+from selenium.common.exceptions import NoSuchElementException, ElementNotInteractableException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
-
 import utils
 import selenium
 from PIL import Image
 
 
 def file_gen(url, html_object_array):
-    invalid = '<>:"/\|?* -.'
+    invalid = '<>:"/\|?* -.&, …{}()'
+    parsed_url = utils.urlparse(url)
+    folder_path = utils.folder_name_changer(parsed_url[1]) + "_POM"
 
-    print("HTML OBJECT TEST\n")
+    for char in invalid:
+        folder_path = folder_path.replace(char, '_')
+    if not utils.os.path.exists(folder_path):
+        utils.os.mkdir(folder_path)
+    else:
+        print("Directory already exists, moving on")
+    
+    file_name = utils.file_name_changer(parsed_url[2])
+    if sys.platform.startswith('darwin') or sys.platform.startswith('linux'):
+        directory = folder_path + "/" + file_name
+    else:
+        directory = folder_path + "\\" + file_name
 
-    for html_object in html_object_array:
+    with open(directory + ".py", "w", encoding="utf-8") as f:
+        f.write("import testdriver\n\nurl = \"" + url + "\"\ndriver = testdriver.Driver.driver\n\n\ndef driver_goto("
+                                                        "):\n\tdriver.get(url)\n\ndef driver_quit():\n\tdriver.quit()")
 
-        # OBJECT DECODE
-        # html_object = HTMLElement()  # delete later
+        object_duplicates = []
+        name_duplicates = []
+        duplicate_id = []
+        duplicate_counter = []
 
-        object_name = html_object.object_name_picker()
-        object_params = html_object.object_param_picker()
-        object_comments = []
+        for html_object in html_object_array:
 
-        if "UNDEFINED_ELEMENT" in object_name:
-            object_comments.append("Undefined HTML object")
+            object_name = html_object.object_name_picker()
+            object_params = html_object.object_param_picker()
+            object_comments = []
 
-        if "class::" + str(html_object.classname) in object_params:
-
-            index_class = object_params.index("class::" + str(html_object.classname))
-            temp_class = []
-            try:
+            if "class::" + str(html_object.classname) in object_params:
+                index_class = object_params.index("class::" + str(html_object.classname))
                 temp_class = object_params[index_class].split("::")[1].split(" ")
-            except TypeError:
-                print("balon")
 
-            if len(temp_class) > 1:
-                object_comments.append("# Class names: " + ", ".join(temp_class))
-                object_params[index_class] = "class::" + str(max(temp_class, key=len))
+                if len(temp_class) > 1:
+                    object_comments.append("# Class names: " + ", ".join(temp_class))
+                    object_params[index_class] = "class::" + str(max(temp_class, key=len))
 
-        if len(html_object.list_text) > 1:
-            object_comments.append("# List values: " + str(html_object.list_text))
+            if len(html_object.list_text) > 1:
+                object_comments.append("# List values: " + str(html_object.list_text))
 
-        for char in invalid:
-            object_name = object_name.replace(char, '_')
+            for char in invalid:
+                object_name = object_name.replace(char, '_')
 
-        object_param_value_default = object_params[0].split("::")[1]
-        object_param_type_default = object_params[0].split("::")[0]
-        if "text" in object_param_type_default:
-            object_param_type_default = "normalize-space(text())"
-        else:
-            object_param_type_default = "@" + object_param_type_default
-        object_param_tag = object_params[object_params.index("tag::" + html_object.tag)].split("::")[1]
+            object_param_value_default = object_params[0].split("::")[1]
+            object_param_type_default = object_params[0].split("::")[0]
 
-        print("OBJECT ID: " + str(html_object.html_id))
-        print("OBJECT NAME: " + object_name)
-        print("OBJECT PARAM ARRAY: " + str(object_params))
-        print("OBJECT PARAM VALUE DEFAULT: " + object_param_value_default)
-        print("OBJECT PARAM TYPE DEFAULT: " + object_param_type_default)
-        print("OBJECT PARAM TAG: " + object_param_tag)
-        print("OBJECT COMMENTS:" + str(object_comments))
-        print("EXAMPLE XPATH: driver.find_element(By.XPATH, \"//{}[{}='{}']\")".format(object_param_tag,
-                                                                                       object_param_type_default,
-                                                                                       object_param_value_default) + "\n")
+            if object_name == "":
+                object_name = str(html_object.tag) + "_" + object_param_type_default
 
-    print("END\n")
+            if object_name[0].isdigit() or object_name[0] == "_":
+                object_name = object_name[1:]
+                object_name += str(html_object.tag) + "_" + object_param_type_default + "_" + object_name
+                while object_name[0].isdigit():
+                    object_name = object_name[1:]
 
-    # parsed_url = utils.urlparse(url)
-    # folder_path = utils.folder_name_changer(parsed_url[1]) + "_POM"
-    #
-    # for char in invalid:
-    #     folder_path = folder_path.replace(char, '_')
-    # if not utils.os.path.exists(folder_path):
-    #     utils.os.mkdir(folder_path)
-    # else:
-    #     print("Directory already exists, moving on")
-    #
-    # file_name = utils.file_name_changer(parsed_url[2])
-    #
-    # with open(folder_path + "\\" + file_name + ".py", "a") as f:
-    #     f.write("import testdriver\n\nurl = \"" + url + "\"\ndriver = testdriver.Driver.driver\n\n\ndef GoTo("
-    #                                                     "):\n\tdriver.get(url)\n\n")
+            if object_name[0] == "_":
+                while object_name[0] == "_":
+                    object_name = object_name[1:]
 
-    # object_duplicates = []
+            if "text" in object_param_type_default:
+                object_param_type_default = "normalize-space(text())"
+            else:
+                object_param_type_default = "@" + object_param_type_default
+            object_param_tag = object_params[object_params.index("tag::" + html_object.tag)].split("::")[1]
 
-    # print("HTML OBJECT TEST\n")
-    #
-    # for html_object in html_object_array:
-    #
-    #     # OBJECT DECODE
-    #     # html_object = HTMLElement()  # delete later
-    #
-    #     object_name = html_object.object_name_picker()
-    #     object_params = html_object.object_param_picker()
-    #     object_comments = []
-    #
-    #     if "UNDEFINED_ELEMENT" in object_name:
-    #         object_comments.append("Undefined HTML object")
-    #
-    #     if "multi_class_" in object_name:
-    #         temp = object_name.removeprefix("multi_class_")
-    #         temp = object_name.split(" ")
-    #         object_comments.append("# Class names: " + ", ".join(temp))
-    #         index = object_params.index("class::" + html_object.classname)
-    #         object_params[index] = max(temp, key=len)
-    #
-    #     if "list_first_elem_" in object_name:
-    #         object_comments.append("# List values: " + str(html_object.list_text))
-    #
-    #     for char in invalid:
-    #         object_name = object_name.replace(char, '_')
-    #
-    #     object_param_value_default = object_params[0].split("::")[1]
-    #     object_param_type_default = object_params[0].split("::")[0]
-    #     object_param_tag = object_params[object_params.index("tag::" + html_object.tag)].split("::")[1]
-    #
-    #     print("OBJECT ID: " + html_object.html_id)
-    #     print("OBJECT NAME: " + object_name)
-    #     print("OBJECT PARAM ARRAY: " + str(object_params))
-    #     print("OBJECT PARAM VALUE DEFAULT: " + object_param_value_default)
-    #     print("OBJECT PARAM TYPE DEFAULT: " + object_param_type_default)
-    #     print("OBJECT PARAM TAG: " + object_param_tag)
-    #     print("OBJECT COMMENTS:" + str(object_comments) + "\n")
-    #
-    # print("END\n")
+            combined_object = "{},{},{}".format(object_param_tag, object_param_type_default, object_param_value_default)
 
-    # f.write("\ndef " + object_name + "(input=\"\", timeout=0.5):\n\ttestdriver.selenium(\'" + elem_tmp +
-    # "\', input, timeout, driver, \"" + elem.type + "\")\n\n")
+            if object_name in name_duplicates:
+                object_comments.append("# Method name is assigned an ID to avoid problems. "
+                                       "You are free to change method names.")
+                object_name += "_" + str(html_object.html_id)
+            else:
+                name_duplicates.append(object_name)
 
-    # if '>' and '<' in elem.data: elem_tmp = (elem.data.split(">"))[1].split("<")[0] if (len(elem_tmp) > 1):
-    # elem_tmp = "//button[text()=\\\'" + elem_tmp + "\\\']" f.write( "\ndef " + elem.name + "(input=\"\",
-    # timeout=0.5):\n\ttestdriver.selenium(\'" + elem_tmp + "\', input, timeout, driver, \"" + elem.type + "\")\n\n")
-    # else: f.write( "\ndef " + elem.name + "(input=\"\", timeout=0.5):\n\ttestdriver.selenium(\"" + elem.data + "\",
-    # input, timeout, driver, \"" + elem.type + "\")\n\n")
-    #
-    # with open("TEST_FILE_" + folder_path.removesuffix("_POM") + ".py", "a") as f:
-    #     f.write("import " + folder_path + "." + file_name + " as " + file_name + "\n# GoTo")
-    #     for elem in elems:
-    #         elem_tmp2 = elem.data
-    #
-    #         if '>' and '<' in elem_tmp2:
-    #             elem_tmp2 = (elem_tmp2.split(">"))[1].split("<")[0]
-    #             if (len(elem_tmp2) > 1):
-    #                 elem_name = elem_tmp2.replace(' ', '_')
-    #         else:
-    #             elem_name = elem_tmp2.replace('-', '_')
-    #             elem_name = elem_tmp2.replace(" ", "_")
-    #         f.write(", " + elem_name)
-    #     f.write("\n")
+            duplicate_index = 0
+
+            if combined_object in object_duplicates:
+                object_comments.append("# Duplicate method found. Consider manually changing object type and value.")
+
+                if object_duplicates.index(combined_object) in duplicate_id:
+                    index = duplicate_id.index(object_duplicates.index(combined_object))
+                    duplicate_counter[index] += 1
+                    duplicate_index = duplicate_counter[index]
+
+                else:
+                    duplicate_id.append(object_duplicates.index(combined_object))
+                    duplicate_counter.append(1)
+                    duplicate_index = 1
+
+            else:
+                object_duplicates.append(combined_object)
+
+            if len(object_params) > 1:
+                object_comments.append("# You can change the tag and value parameter of the method from the list below")
+                object_comments.append("# List of alternative object tags and parameters: " + str(object_params))
+
+            f.write("\n\n# html_id_{}\ndef {}(input=\"\", timeout=0.5):\n\ttestdriver.selenium(driver, input, timeout, '{}', '{}',"
+                    " '{}', {})\n\t".format(str(html_object.html_id), object_name, object_param_tag, object_param_type_default,
+                                        object_param_value_default, duplicate_index) + "\n\t".join(object_comments) + "\n")
+
+    with open("TEST_FILE_" + folder_path.removesuffix("_POM") + ".py", "a") as f:
+        f.write("import " + folder_path + "." + file_name + " as " + file_name + "\n")
 
 
 def valid_url(to_validate: str) -> bool:
@@ -251,10 +217,23 @@ class HTMLElement:
         chromeoptions.add_argument("--window-size=3200x10800")
         # driver = utils.webdriver.Chrome(chromepath, options=chromeoptions)
         # driver.get(url)
-        driver = patharray[2]
-        if self.id is not None:
 
-            elem = driver.find_element(By.ID, self.id)
+        object_params = self.object_param_picker()
+
+        object_param_value_default = object_params[0].split("::")[1]
+        object_param_type_default = object_params[0].split("::")[0]
+
+        if "text" in object_param_type_default:
+            object_param_type_default = "normalize-space(text())"
+        else:
+            object_param_type_default = "@" + object_param_type_default
+        object_param_tag = object_params[object_params.index("tag::" + self.tag)].split("::")[1]
+
+        try:
+            driver = patharray[2]
+
+            ## TRY CATCH FOR SELENIUM EXCEPTION AND IMAGE NOT FOUND FILE NOT FOUND
+            elem = driver.find_element(By.XPATH, "//{}[{}='{}']".format(object_param_tag, object_param_type_default, object_param_value_default))
             loc = elem.location
             size = elem.size
             x = loc['x']
@@ -268,13 +247,9 @@ class HTMLElement:
             # ob = Screenshot.Screenshot()
             # img_url = ob.get_element(driver,elem, save_location=patharray[1],image_name=str(self.html_id) + ".png")
 
-        elif self.text is not None:
-            print("text")
-        elif self.href is not None:
-            print("href")
 
-        elif self.classname is not None:
-            print("classname")
+        except (NoSuchElementException, FileNotFoundError, ElementNotInteractableException) as error:
+            print(error)
 
         return img_path
 
@@ -311,7 +286,7 @@ class HTMLElement:
             gui_string_array.append("ID: " + self.id)
         if self.classname is not None:
             gui_string_array.append("Classname: " + self.classname)
-        if self.text is not None  and len(self.text) > 0:
+        if self.text is not None and len(self.text) > 0:
             gui_string_array.append("Text: " + self.text)
         if self.name is not None:
             gui_string_array.append("Name: " + self.name)
@@ -383,7 +358,7 @@ class HTMLElement:
             index = object_name_array.index("classname::") + 1
             object_name = "class_" + object_name_array[index]
             if " " in object_name:
-                object_name = "multi_" + object_name
+                object_name = "multi_" + object_name.split(" ")[0]
         elif "type::" in object_name_array:
             index = object_name_array.index("type::") + 1
             object_name = "type_" + object_name_array[index]
@@ -442,8 +417,14 @@ def get_page_screenshot(url):
         abspath = os.path.abspath(folder_path)
 
     png_file_name = utils.file_name_changer(parsed_url[2]) + ".png"
-    screen_shot_loc = [f"{abspath}" + "\\" + png_file_name,
-                       f"{abspath}" + "\\" + utils.file_name_changer(parsed_url[2]), driver]
+    if sys.platform.startswith('darwin') or sys.platform.startswith('linux'):
+        screen_shot_loc = [f"{abspath}" + "/" + png_file_name,
+                           f"{abspath}" + "/" + utils.file_name_changer(parsed_url[2]), driver]
+    else:
+        screen_shot_loc = [f"{abspath}" + "\\" + png_file_name,
+                           f"{abspath}" + "\\" + utils.file_name_changer(parsed_url[2]), driver]
+
+
     ##ob = Screenshot.Screenshot()
     # img_url = ob.full_Screenshot(driver, save_path= folder_path, image_name=png_file_name )
     driver.save_screenshot(screen_shot_loc[0])

@@ -48,53 +48,52 @@ class Filter(QObject):
 
 
 def crawl_filter_func(textbox):
-    global filtered_data
-    import crawl
-    if default_settings[8] == True:
-        #future_update
-        c = crawl.CrawlerProcess({})
-        # c.crawl(crawl.ScrapySpider)
-        # c.start()
-    else:
-        if default_settings[5] is None:
+        global filtered_data
+        import crawl
+        if default_settings[8] == True:
+            #future_update
             c = crawl.CrawlerProcess({})
-            crawl.CrawlingSpider.set_sett(default_settings[12])
-            c.crawl(crawl.CrawlingSpider, start_urls=[textbox.text()], allowed_domains=default_settings[5])
+            # c.crawl(crawl.ScrapySpider)
+            # c.start()
         else:
-            c = crawl.CrawlerProcess({})
-            c.crawl(crawl.CrawlingSpider, start_urls=[textbox.text()], allowed_domains=[urlparse(default_settings[5]).netloc])
-        c.start()
-
-        url_data = adv.url_to_df(textbox.text())
-        domain = url_data["scheme"] + "://" + url_data["netloc"]
-
-
-        tmp = []
-        chrome_options = Options()
-        chrome_options.add_argument("--headless")
-        chrome_driver_path = utils.chromedriver_path_name()
-        # print(chrome_driver_path)
-        driver = webdriver.Chrome(executable_path=chrome_driver_path, options=chrome_options)
-        if default_settings[6]:
             if default_settings[5] is None:
-                tmp = crawl.looping(crawl.crawl_one(textbox.text(), domain[0], driver), domain[0], driver,
-                                    limit=default_settings[13])
+                c = crawl.CrawlerProcess({})
+                crawl.CrawlingSpider.set_sett(default_settings[12])
+                c.crawl(crawl.CrawlingSpider, start_urls=[textbox.text()], allowed_domains=default_settings[5])
             else:
-                tmp = crawl.looping(crawl.crawl_one(textbox.text(), default_settings[5], driver),
-                                    default_settings[5], driver,
-                                    limit=default_settings[13])
+                c = crawl.CrawlerProcess({})
+                c.crawl(crawl.CrawlingSpider, start_urls=[textbox.text()], allowed_domains=[urlparse(default_settings[5]).netloc])
+            c.start()
 
-        driver.quit()
+            url_data = adv.url_to_df(textbox.text())
+            domain = url_data["scheme"] + "://" + url_data["netloc"]
 
-        for i in tmp:
-            if i not in crawl.crawled_links:
-                if domain[0] in str(i):
-                    crawl.crawled_links.append(i)
+            tmp = []
+            chrome_options = Options()
+            chrome_options.add_argument("--headless")
+            chrome_driver_path = utils.chromedriver_path_name()
+            # print(chrome_driver_path)
+            driver = webdriver.Chrome(executable_path=chrome_driver_path, options=chrome_options)
+            if default_settings[6]:
+                if default_settings[5] is None:
+                    tmp = crawl.looping(crawl.crawl_one(textbox.text(), domain[0], driver), domain[0], driver,
+                                        limit=default_settings[13])
+                else:
+                    tmp = crawl.looping(crawl.crawl_one(textbox.text(), default_settings[5], driver),
+                                        default_settings[5], driver,
+                                        limit=default_settings[13])
 
-        filtered_data = crawl.sim_check(data=crawl.crawled_links, check_sim=default_settings[0],
-                                        check_url_sim=default_settings[1], param=default_settings[2],
-                                        web_page_similarity_percentage=default_settings[3],
-                                        web_path_similarity_percentage=default_settings[4])
+            driver.quit()
+            for i in tmp:
+                if i not in crawl.crawled_links:
+                    if domain[0] in str(i):
+                        crawl.crawled_links.append(i)
+
+            filtered_data = crawl.sim_check(data=crawl.crawled_links, check_sim=default_settings[0],
+                                            check_url_sim=default_settings[1], param=default_settings[2],
+                                            web_page_similarity_percentage=default_settings[3],
+                                            web_path_similarity_percentage=default_settings[4])
+
 
 
 class SearchPanel(QtWidgets.QWidget):
@@ -135,8 +134,6 @@ class SearchPanel(QtWidgets.QWidget):
         if self.case_button.isChecked():
             flag |= QtWebEngineWidgets.QWebEnginePage.FindCaseSensitively
         self.searched.emit(self.search_le.text(), flag)
-
-    # self.searched.emit("ERROR", flag)
 
     @QtCore.pyqtSlot()
     def text_fi(self, text, direction=QtWebEngineWidgets.QWebEnginePage.FindFlags()):
@@ -241,14 +238,17 @@ class Ui_Main(QtWidgets.QWidget):
         self.QtStack.setCurrentIndex(3)
 
     def con_crawl_action(self):
-        file, check = QFileDialog.getOpenFileNames(None, "QFileDialog.getOpenFileName()",
-                                                   "", "All Files (*);;Html files (*.html)")
-        if check:
-            for i in file:
-                self.htmls_arr.append(i)
+        try:
+            file, check = QFileDialog.getOpenFileNames(None, "QFileDialog.getOpenFileName()",
+                                                       "", "All Files (*);;Html files (*.html)")
+            if check:
+                for i in file:
+                    self.htmls_arr.append(i)
 
-            self.second_page()
-            self.QtStack.setCurrentIndex(1)
+                self.second_page()
+                self.QtStack.setCurrentIndex(1)
+        except Exception as e:
+            QMessageBox.about(self, "Error has acquired", str(e))
 
     # First pages end
 
@@ -306,14 +306,18 @@ class Ui_Main(QtWidgets.QWidget):
         self.second_page_stack.setLayout(table_layout)
 
     def add_selected(self, listWidget):
-        items = listWidget.selectedItems()
-        global selected
-        selected = []
-        for i in range(len(items)):
-            selected.append(str(listWidget.selectedItems()[i].text()))
+        try:
+            items = listWidget.selectedItems()
+            global selected
+            selected = []
+            for i in range(len(items)):
+                selected.append(str(listWidget.selectedItems()[i].text()))
+        except Exception as e:
+            QMessageBox.about(self, "Error has acquired", str(e))
 
     def re_crawl_action(self):
         self.QtStack.setCurrentIndex(0)
+
     def selected_url_click(self):
         try:
             global selected
@@ -326,11 +330,14 @@ class Ui_Main(QtWidgets.QWidget):
             QMessageBox.about(self, "Generated", "No links were selected")
 
     def all_sel_click(self, data):
-        if (len(data) != 0):
-            self.third_page(data)
-            self.QtStack.setCurrentIndex(2)
-        else:
-            QMessageBox.about(self, "Generated", "No link are in the list")
+        try:
+            if (len(data) != 0):
+                self.third_page(data)
+                self.QtStack.setCurrentIndex(2)
+            else:
+                QMessageBox.about(self, "Generated", "No link are in the list")
+        except Exception as e:
+            QMessageBox.about(self, "Error has acquired", str(e))
 
     def update_table(self, table, data):
         table.addItem(data)
@@ -344,11 +351,14 @@ class Ui_Main(QtWidgets.QWidget):
             self.update_table(table, data)
 
     def dialog(self, table):
-        file, check = QFileDialog.getOpenFileName(None, "QFileDialog.getOpenFileName()",
-                                                  "", "All Files (*);;Html files (*.html)")
-        if check:
-            table.addItem(file)
-            table.repaint()
+        try:
+            file, check = QFileDialog.getOpenFileName(None, "QFileDialog.getOpenFileName()",
+                                                      "", "All Files (*);;Html files (*.html)")
+            if check:
+                table.addItem(file)
+                table.repaint()
+        except Exception as e:
+            QMessageBox.about(self, "Error has acquired", str(e))
 
     # second page end
 
@@ -453,9 +463,7 @@ class Ui_Main(QtWidgets.QWidget):
         tabs.addTab(similarity_tab,"Similariy")
         tabs.addTab(gen_tab,"Generation")
 
-
         similarity_combobox.setCurrentIndex(default_settings[2])
-
         save_button = QPushButton("Save and Close")
         save_button.clicked.connect(
             lambda: self.save_cliked(sim_check.isChecked(), url_sim.isChecked(), similarity_combobox.currentIndex(),
@@ -486,7 +494,6 @@ class Ui_Main(QtWidgets.QWidget):
         crawl_settings_layout.addWidget(deep_crawl_check)
         crawl_settings_layout.addLayout(comb_layout_crawl)
 
-
         #gen_layout
         generation_settings_layout.addWidget(gen_label)
 
@@ -495,9 +502,7 @@ class Ui_Main(QtWidgets.QWidget):
         similarity_tab.setLayout(similarity_settings_layout)
         gen_tab.setLayout(generation_settings_layout)
 
-
         #setings layout
-
         settings_layout.addWidget(tabs)
         settings_layout.addLayout(buttons_layout)
         self.settings_stack.setLayout(settings_layout)
@@ -508,7 +513,7 @@ class Ui_Main(QtWidgets.QWidget):
         chrome_version = utils.chromedriver_autoinstaller.get_chrome_version()
         QMessageBox.about(self, "driver", "Version " + chrome_version + " downloaded")
 
-    def save_cliked(self, sim, url, index, per_sim, per_url, dom, deep_crawl_check, log_crawl, login, password, lpage,crawl_limit,deep_limit):
+    def save_cliked(self, sim, url, index, per_sim, per_url, dom, deep_crawl_check, log_crawl, login, password, lpage, crawl_limit, deep_limit):
         default_settings[0] = sim
         default_settings[1] = url
         default_settings[2] = index
@@ -543,22 +548,28 @@ class Ui_Main(QtWidgets.QWidget):
                     QMessageBox.about(self, "Input error", "Input must be between 0.1 < 0.99")
 
             if dom != '':
-                # if self.valid_url(dom):
                 default_settings[5] = dom
-            # else:
-            #    all_correct = False
-            #    QMessageBox.about(self, "Error", "Url is not valid")
+
             if all_correct:
-                print(default_settings)
+                self.write_save(default_settings)
                 self.QtStack.setCurrentIndex(0)
             else:
                 self.QtStack.setCurrentIndex(3)
-        except Exception:
-            QMessageBox.about(self, "Error", "Not valid input")
+        except Exception as e:
+            QMessageBox.about(self, "Error", "Not valid input"+str(e))
 
     def valid_url(self, to_validate: str) -> bool:
         o = urlparse(to_validate)
         return True if o.scheme and o.netloc else False
+
+    def write_save(self,defaultsettings):
+        try:
+            with open("settings.py", "w", encoding="utf-8") as f:
+                strl = "\'\'"
+                f.write("default_settings = ["+str(defaultsettings[0])+", "+str(defaultsettings[1])+", "+str(defaultsettings[2])+", "+str(defaultsettings[3])+", "+str(defaultsettings[4])+", None, "+str(defaultsettings[6])+", "+str(defaultsettings[7])+", "+str(defaultsettings[8])+", "+strl+", "+strl+", "+strl+", "+str(defaultsettings[12])+", "+str(defaultsettings[13])+"]")
+            f.close()
+        except Exception as e:
+            QMessageBox.about(self, "Error has acquired", str(e))
 
     # settings end
 
@@ -663,48 +674,56 @@ class Ui_Main(QtWidgets.QWidget):
 
 
     def printItemText(self, listWidget):
-        items = listWidget.findItems("*", Qt.MatchWildcard)
-        s_item = listWidget.selectedItems()
-        for i in range(len(items)):
-            for t in self.all_objects:
-                # higliht
-                if len(s_item) != 0:
-                    if t.GUI_window_adder() == s_item[0].text():
-                        self.web._search_panel.text_fi(t.GUI_highlight_info())
-                # if checked
-                if items[i].checkState() == 2 and items[i].text() == t.GUI_window_adder() and t not in self.selected_objects:
-                    self.selected_objects.append(t)
-                    print(self.selected_objects)
-                elif items[i].checkState() == 0 and t in self.selected_objects and items[i].text() == t.GUI_window_adder():
-                    self.selected_objects.remove(t)
+        try:
+            items = listWidget.findItems("*", Qt.MatchWildcard)
+            s_item = listWidget.selectedItems()
+            for i in range(len(items)):
+                for t in self.all_objects:
+                    # higliht
+                    if len(s_item) != 0:
+                        if t.GUI_window_adder() == s_item[0].text():
+                            self.web._search_panel.text_fi(t.GUI_highlight_info())
+                    # if checked
+                    if items[i].checkState() == 2 and items[i].text() == t.GUI_window_adder() and t not in self.selected_objects:
+                        self.selected_objects.append(t)
+                        print(self.selected_objects)
+                    elif items[i].checkState() == 0 and t in self.selected_objects and items[i].text() == t.GUI_window_adder():
+                        self.selected_objects.remove(t)
+        except Exception as e:
+            QMessageBox.about(self, "Error has acquired", str(e))
 
 
     def table_add_obejct(self, widget, x):
-        self.all_objects.append(x)
-        item = QListWidgetItem(x.GUI_window_adder())
-        item.setCheckState(Qt.Unchecked)
-        widget.addItem(item)
-        widget.repaint()
+        try:
+            self.all_objects.append(x)
+            item = QListWidgetItem(x.GUI_window_adder())
+            item.setCheckState(Qt.Unchecked)
+            widget.addItem(item)
+            widget.repaint()
+        except Exception as e:
+            QMessageBox.about(self, "Error has acquired", str(e))
 
     def update_web_combo(self,combobox,web,button,url,listWidget):
-        print(combobox.currentIndex())
-        self.counter = combobox.currentIndex()
-        if self.counter == len(url) - 1:
-            button.hide()
-        elif button.isHidden() == True and self.counter < len(url):
-            button.show()
-        if self.valid_url(url[self.counter]):
-            web._view.load(QUrl(url[self.counter]))
-        else:
-            web._view.load(QtCore.QUrl.fromLocalFile(str(url[self.counter])))
+        try:
+            self.counter = combobox.currentIndex()
+            if self.counter == len(url) - 1:
+                button.hide()
+            elif button.isHidden() == True and self.counter < len(url):
+                button.show()
+            if self.valid_url(url[self.counter]):
+                web._view.load(QUrl(url[self.counter]))
+            else:
+                web._view.load(QtCore.QUrl.fromLocalFile(str(url[self.counter])))
 
-        listWidget.clear()
-        object_array = pomgen.HTMLFilterer(url[self.counter], pomgen.html_tags)
-        for x in object_array:
-            self.table_add_obejct(listWidget, x)
-        self.selected_objects.clear()
-        self.abspath.clear()
-        self.abspath = pomgen.get_page_screenshot(url[self.counter])
+            listWidget.clear()
+            object_array = pomgen.HTMLFilterer(url[self.counter], pomgen.html_tags)
+            for x in object_array:
+                self.table_add_obejct(listWidget, x)
+            self.selected_objects.clear()
+            self.abspath.clear()
+            self.abspath = pomgen.get_page_screenshot(url[self.counter])
+        except Exception as e:
+            QMessageBox.about(self, "Error has acquired", str(e))
 
 
     def update_counter(self, val):
@@ -713,52 +732,58 @@ class Ui_Main(QtWidgets.QWidget):
         return self.counter
 
     def table_cleaner(self, web, button, url, listWidget, combo_box):
-        self.all_objects.clear()
-        self.counter += 1
-        combo_box.setCurrentIndex(self.counter)
-        if self.counter == len(url) - 1:
-            button.hide()
-        if self.valid_url(url[self.counter]):
-            web._view.load(QUrl(url[self.counter]))
-        else:
-            web._view.load(QtCore.QUrl.fromLocalFile(str(url[self.counter])))
+        try:
+            self.all_objects.clear()
+            self.counter += 1
+            combo_box.setCurrentIndex(self.counter)
+            if self.counter == len(url) - 1:
+                button.hide()
+            if self.valid_url(url[self.counter]):
+                web._view.load(QUrl(url[self.counter]))
+            else:
+                web._view.load(QtCore.QUrl.fromLocalFile(str(url[self.counter])))
 
-        listWidget.clear()
-        object_array = pomgen.HTMLFilterer(url[self.counter], pomgen.html_tags)
-        for x in object_array:
-            self.table_add_obejct(listWidget, x)
-        self.selected_objects.clear()
-        self.abspath.clear()
-        self.abspath = pomgen.get_page_screenshot(url[self.counter])
+            listWidget.clear()
+            object_array = pomgen.HTMLFilterer(url[self.counter], pomgen.html_tags)
+            for x in object_array:
+                self.table_add_obejct(listWidget, x)
+            self.selected_objects.clear()
+            self.abspath.clear()
+            self.abspath = pomgen.get_page_screenshot(url[self.counter])
+        except Exception as e:
+            QMessageBox.about(self, "Error has acquired", str(e))
 
     def item_info_action(self, listWidget, url,abspath):
-        s_item = listWidget.selectedItems()
-        info_layout = QVBoxLayout()
-        if len(s_item) != 0:
-            for i in self.all_objects:
-                if (s_item[0].text() == i.GUI_window_adder()):
-                    msg = QMessageBox()
-                    msg.setText(i.GUI_window_more_info())
-                    screenshot_loc = i.get_element_screenshot(url, abspath)
-                    msg.setWindowTitle("Element Info " + i.GUI_window_adder())
+        try:
+            s_item = listWidget.selectedItems()
+            info_layout = QVBoxLayout()
+            if len(s_item) != 0:
+                for i in self.all_objects:
+                    if (s_item[0].text() == i.GUI_window_adder()):
+                        msg = QMessageBox()
+                        msg.setText(i.GUI_window_more_info())
+                        screenshot_loc = i.get_element_screenshot(url, abspath)
+                        msg.setWindowTitle("Element Info " + i.GUI_window_adder())
 
-                    label = QLabel()
+                        label = QLabel()
 
-                    # loading image
-                    pixmap = QPixmap(screenshot_loc)
+                        # loading image
+                        pixmap = QPixmap(screenshot_loc)
 
-                    # adding image to label
-                    label.setPixmap(pixmap)
+                        # adding image to label
+                        label.setPixmap(pixmap)
 
-                    # Optional, resize label to image size
-                    label.resize(pixmap.width(),
-                                      pixmap.height())
-                    info_layout.addWidget(label)
-                    msg.setLayout(info_layout)
-                    msg.setIconPixmap(pixmap)
-                    msg.resize(pixmap.width()+100,pixmap.height()+10)
-                    print(screenshot_loc) ## CANNOT FIND FILE EXCEPTION HANDLING
-                    returnValue = msg.exec()
+                        # Optional, resize label to image size
+                        label.resize(pixmap.width(),
+                                          pixmap.height())
+                        info_layout.addWidget(label)
+                        msg.setLayout(info_layout)
+                        msg.setIconPixmap(pixmap)
+                        msg.resize(pixmap.width()+100,pixmap.height()+10)
+                        print(screenshot_loc) ## CANNOT FIND FILE EXCEPTION HANDLING
+                        returnValue = msg.exec()
+        except Exception as e:
+            QMessageBox.about(self, "Error has acquired", str(e))
 
     def generate_for_selected_button_action(self, url):
         try:
@@ -778,9 +803,11 @@ class Ui_Main(QtWidgets.QWidget):
             QMessageBox.about(self, "Generated", "Generated for selected")
 
     def generate_all_button_click(self, url):
-        print(self.all_objects)
-        pomgen.file_gen(url, self.all_objects)
-        QMessageBox.about(self, "Generated", "Generated for all")
+        try:
+            pomgen.file_gen(url, self.all_objects)
+            QMessageBox.about(self, "Generated", "Generated for all")
+        except Exception as e:
+            QMessageBox.about(self, "Error has acquired", str(e))
 
 
 class Browser(QtWidgets.QMainWindow, ):

@@ -8,7 +8,9 @@ from selenium.webdriver.support.ui import Select
 from selenium.webdriver.chrome.service import Service
 import logging
 
-log= logging.getLogger()
+log = logging.getLogger()
+
+
 class ChromeDriver:
     def __init__(self):
         service = Service(utils.chromedriver_path_name())
@@ -19,9 +21,11 @@ def selenium(driver, input, timeout, tag, type, value, index):
 
     try:
         path = driver.find_elements(By.XPATH, "//{}[{}='{}']".format(tag, type, value))[index]
+
     except IndexError:
         log.warning("You are trying to access element which is not on the list, replacing index with 0")
         path = driver.find_elements(By.XPATH, "//{}[{}='{}']".format(tag, type, value))[0]
+
     try:
         utils.time.sleep(timeout)
 
@@ -29,6 +33,7 @@ def selenium(driver, input, timeout, tag, type, value, index):
             path.click()
         else:
             path.send_keys(input)
+
     except (NoSuchElementException, ElementNotInteractableException) as e:
         if e == ElementNotInteractableException:
             log.warning("Element not interactable")

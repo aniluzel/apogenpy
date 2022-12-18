@@ -412,7 +412,7 @@ def get_page_screenshot(url):
     height = driver.execute_script("return document.documentElement.scrollHeight")
     print(height)
     size = "--window-size=1920x{}".format(height)
-    driver.set_window_size(2000,height)
+    driver.set_window_size(1920,height)
     parsed_url = utils.urlparse(url)
     folder_path = utils.folder_name_changer(parsed_url[1]) + "_screenshots"
     if not os.path.exists(folder_path):

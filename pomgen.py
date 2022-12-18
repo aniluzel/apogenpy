@@ -215,7 +215,7 @@ class HTMLElement:
         chromeoptions = Options()
         chromeoptions.add_argument('--force-device-scale-factor=1')
         chromeoptions.add_argument("--headless")
-        chromeoptions.add_argument("--window-size=2000x4000")
+        chromeoptions.add_argument(f"--window-size=1920x{patharray[3]}")
         # driver = utils.webdriver.Chrome(chromepath, options=chromeoptions)
         # driver.get(url)
 
@@ -404,11 +404,15 @@ def get_page_screenshot(url):
     chromeoptions = Options()
     chromeoptions.add_argument('--force-device-scale-factor=1')
     chromeoptions.add_argument("--headless")
-    chromeoptions.add_argument("--window-size=2000x4000")
+    #chromeoptions.add_argument("--window-size=2000x4000")
     driver = utils.webdriver.Chrome(chromepath, options=chromeoptions)
 
     driver.get(url)
     driver.maximize_window()
+    height = driver.execute_script("return document.documentElement.scrollHeight")
+    print(height)
+    size = "--window-size=1920x{}".format(height)
+    driver.set_window_size(2000,height)
     parsed_url = utils.urlparse(url)
     folder_path = utils.folder_name_changer(parsed_url[1]) + "_screenshots"
     if not os.path.exists(folder_path):
@@ -421,10 +425,10 @@ def get_page_screenshot(url):
     png_file_name = utils.file_name_changer(parsed_url[2]) + ".png"
     if sys.platform.startswith('darwin') or sys.platform.startswith('linux'):
         screen_shot_loc = [f"{abspath}" + "/" + png_file_name,
-                           f"{abspath}" + "/" + utils.file_name_changer(parsed_url[2]), driver]
+                           f"{abspath}" + "/" + utils.file_name_changer(parsed_url[2]), driver, height]
     else:
         screen_shot_loc = [f"{abspath}" + "\\" + png_file_name,
-                           f"{abspath}" + "\\" + utils.file_name_changer(parsed_url[2]), driver]
+                           f"{abspath}" + "\\" + utils.file_name_changer(parsed_url[2]), driver,height]
 
 
     ##ob = Screenshot.Screenshot()

@@ -3,19 +3,17 @@ from urllib.parse import urlparse
 from PyQt5.QtCore import QUrl, QCoreApplication, Qt, QThread, pyqtSignal, QObject, QEvent, QRect
 from PyQt5.QtGui import QPainter, QColor, QPixmap
 from PyQt5.QtWidgets import QApplication, QMainWindow, QLineEdit, QVBoxLayout, QPushButton, QListWidget, \
-    QAbstractItemView, QHBoxLayout, QCheckBox, QComboBox, QMessageBox, QFileDialog, QListWidgetItem, QWidget
+    QAbstractItemView, QHBoxLayout, QCheckBox, QComboBox, QMessageBox, QFileDialog, QListWidgetItem, QWidget, QTabWidget
 from PyQt5.QtWidgets import QLabel
 import sys
-import crawl
 import pomgen
 import advertools as adv
 from selenium.webdriver.chrome.options import Options
 from selenium import webdriver
 from PyQt5 import QtCore, QtGui, QtWidgets, QtWebEngineWidgets
 import utils
+from settings import default_settings
 
-
-default_settings = [False, False, 1, 0.92, 0.88, None, False, 2, False, "", "", ""]
 filtered_data = []
 
 
@@ -51,23 +49,26 @@ class Filter(QObject):
 
 def crawl_filter_func(textbox):
     global filtered_data
-    c = crawl.CrawlerProcess({})
+    import crawl
     if default_settings[8] == True:
-        print("here")
-        c.crawl(crawl.ScrapySpider)
-        c.start()
+        #future_update
+        c = crawl.CrawlerProcess({})
+        # c.crawl(crawl.ScrapySpider)
+        # c.start()
     else:
         if default_settings[5] is None:
+            c = crawl.CrawlerProcess({})
+            crawl.CrawlingSpider.set_sett(default_settings[12])
             c.crawl(crawl.CrawlingSpider, start_urls=[textbox.text()], allowed_domains=default_settings[5])
         else:
-            c.crawl(crawl.CrawlingSpider, start_urls=[textbox.text()], allowed_domains=[default_settings[5]])
+            c = crawl.CrawlerProcess({})
+            c.crawl(crawl.CrawlingSpider, start_urls=[textbox.text()], allowed_domains=[urlparse(default_settings[5]).netloc])
         c.start()
-        # self.pbar.setValue(30)
         url_data = adv.url_to_df(textbox.text())
         domain = url_data["scheme"] + "://" + url_data["netloc"]
-        # print(domain[0],"<- domain")
+
+
         tmp = []
-        # self.pbar.setValue(50)
         chrome_options = Options()
         chrome_options.add_argument("--headless")
         chrome_driver_path = utils.chromedriver_path_name()
@@ -76,11 +77,11 @@ def crawl_filter_func(textbox):
         if default_settings[6]:
             if default_settings[5] is None:
                 tmp = crawl.looping(crawl.crawl_one(textbox.text(), domain[0], driver), domain[0], driver,
-                                    limit=50)
+                                    limit=default_settings[13])
             else:
                 tmp = crawl.looping(crawl.crawl_one(textbox.text(), default_settings[5], driver),
                                     default_settings[5], driver,
-                                    limit=50)
+                                    limit=default_settings[13])
 
         driver.quit()
 
@@ -139,12 +140,6 @@ class SearchPanel(QtWidgets.QWidget):
     @QtCore.pyqtSlot()
     def text_fi(self, text, direction=QtWebEngineWidgets.QWebEnginePage.FindFlags()):
         flag = direction
-        # print(flag)
-        # flag |= QtWebEngineWidgets.QWebEnginePage.FindCaseSensitively
-        # for i in flag:
-        # print(self.searched.)
-
-        # self.searched.emit("ERROR", flag)
         self.searched.emit(text, flag)
 
     def showEvent(self, event):
@@ -349,15 +344,22 @@ class Ui_Main(QtWidgets.QWidget):
     # settings page start
     def settings_page(self):
         test_mode = False
-        settings_layout = QVBoxLayout()
-        search_bars = QVBoxLayout()
-        text_layout = QVBoxLayout()
-        comb_layout = QHBoxLayout()
+        settings_layout = QHBoxLayout()
+        crawl_settings_layout = QVBoxLayout()
+        similarity_settings_layout = QVBoxLayout()
+        generation_settings_layout = QVBoxLayout()
+        buttons_layout = QVBoxLayout()
+        search_bars_sim = QVBoxLayout()
+        text_layout_sim = QVBoxLayout()
+        comb_layout_sim = QHBoxLayout()
+
+        search_bars_crawl = QVBoxLayout()
+        text_layout_crawl = QVBoxLayout()
+        comb_layout_crawl = QHBoxLayout()
         # performing sim similarity check
-        checkbox_layout = QHBoxLayout()
         sim_check = QCheckBox("Html Structure Similarity Check")
         sim_check.setChecked(default_settings[0])
-        checkbox_layout.addWidget(sim_check)
+
         # chrome driver button
         chrome_driver_down = QPushButton("Download latest chrome driver")
         chrome_driver_down.clicked.connect(self.chorme_dr_down)
@@ -365,30 +367,45 @@ class Ui_Main(QtWidgets.QWidget):
         # perfroming url similarity check
         url_sim = QCheckBox("URL Similarity Check")
         url_sim.setChecked(default_settings[1])
-        checkbox_layout.addWidget(url_sim)
-        # advanced crawl
-        add_crawl = QCheckBox("Deep crawling")
-        add_crawl.setChecked(default_settings[6])
-        checkbox_layout.addWidget(add_crawl)
+
+        # deep crawl
+        deep_crawl_check = QCheckBox("Deep crawling")
+        deep_crawl_check.setChecked(default_settings[6])
+
         # use login crawl
         log_crawl = QCheckBox("Login when crawl")
         log_crawl.setChecked(default_settings[8])
+        #crawl laebl
+        crawl_label = QLabel("Crawl settings")
+        crawl_label.resize(50,10)
 
         #
         percentage_sim_label = QLabel("Html Similarity percentage value")
         percentage_sim_textbox = QLineEdit()
-        text_layout.addWidget(percentage_sim_label)
-        search_bars.addWidget(percentage_sim_textbox)
+        text_layout_sim.addWidget(percentage_sim_label)
+        search_bars_sim.addWidget(percentage_sim_textbox)
         #
         percentage_url_label = QLabel("Url Similarity percentage value")
         percentage_url_textbox = QLineEdit()
-        text_layout.addWidget(percentage_url_label)
-        search_bars.addWidget(percentage_url_textbox)
+        text_layout_sim.addWidget(percentage_url_label)
+        search_bars_sim.addWidget(percentage_url_textbox)
 
+        #crawl limit setter
+        limit_crawl_label = QLabel("Set depth of the crawler")
+        limit_crawl_textbox = QLineEdit()
+        text_layout_crawl.addWidget(limit_crawl_label)
+        search_bars_crawl.addWidget(limit_crawl_textbox)
+        #deep crawl limit
+        limit_deep_label = QLabel("Set depth of the deep crawler")
+        limit_deep_textbox = QLineEdit()
+        text_layout_crawl.addWidget(limit_deep_label)
+        search_bars_crawl.addWidget(limit_deep_textbox)
+
+        #domian init
         domain_label = QLabel("Enter domain ")
         domain_textbox = QLineEdit()
-        text_layout.addWidget(domain_label)
-        search_bars.addWidget(domain_textbox)
+        text_layout_crawl.addWidget(domain_label)
+        search_bars_crawl.addWidget(domain_textbox)
         #
         lpage_label = QLabel("Enter login page url")
         lpage_textbox = QLineEdit()
@@ -399,36 +416,79 @@ class Ui_Main(QtWidgets.QWidget):
         pass_label = QLabel("Enter password")
         pass_textbox = QLineEdit()
 
+        gen_label = QLabel("File generation settings")
+
         if test_mode:
-            checkbox_layout.addWidget(log_crawl)
-            search_bars.addWidget(lpage_textbox)
-            text_layout.addWidget(lpage_label)
-            search_bars.addWidget(login_textbox)
-            text_layout.addWidget(login_label)
-            search_bars.addWidget(pass_textbox)
-            text_layout.addWidget(pass_label)
+            crawl_settings_layout.addWidget(log_crawl)
+            search_bars_crawl.addWidget(lpage_textbox)
+            text_layout_crawl.addWidget(lpage_label)
+            search_bars_crawl.addWidget(login_textbox)
+            text_layout_crawl.addWidget(login_label)
+            search_bars_crawl.addWidget(pass_textbox)
+            text_layout_crawl.addWidget(pass_label)
 
-        combobox1 = QComboBox()
-        combobox1.addItem('Joint similarity')
-        combobox1.addItem('Structural similarity')
-        combobox1.addItem('Style similarity')
+        similarity_label = QLabel("Similarity settings")
+        similarity_combobox = QComboBox()
+        similarity_combobox.addItem('Joint similarity')
+        similarity_combobox.addItem('Structural similarity')
+        similarity_combobox.addItem('Style similarity')
 
-        combobox1.setCurrentIndex(default_settings[2])
+        #tab
+        tabs = QTabWidget()
+        crawl_tab = QWidget()
+        similarity_tab = QWidget()
+        gen_tab = QWidget()
+        tabs.addTab(crawl_tab,"Crawl")
+        tabs.addTab(similarity_tab,"Similariy")
+        tabs.addTab(gen_tab,"Generation")
+
+
+        similarity_combobox.setCurrentIndex(default_settings[2])
 
         save_button = QPushButton("Save and Close")
         save_button.clicked.connect(
-            lambda: self.save_cliked(sim_check.isChecked(), url_sim.isChecked(), combobox1.currentIndex(),
+            lambda: self.save_cliked(sim_check.isChecked(), url_sim.isChecked(), similarity_combobox.currentIndex(),
                                      percentage_sim_textbox.text(), percentage_url_textbox.text(),
-                                     domain_textbox.text(), add_crawl.isChecked(), log_crawl.isChecked(),
-                                     login_textbox.text(), pass_textbox.text(), lpage_textbox.text()))
+                                     domain_textbox.text(), deep_crawl_check.isChecked(), log_crawl.isChecked(),
+                                     login_textbox.text(), pass_textbox.text(), lpage_textbox.text(),limit_crawl_textbox.text(),limit_deep_textbox.text()))
+        #button layout setup
+        buttons_layout.addWidget(save_button)
+        buttons_layout.addWidget(chrome_driver_down)
 
-        settings_layout.addLayout(checkbox_layout)
-        comb_layout.addLayout(text_layout)
-        comb_layout.addLayout(search_bars)
-        settings_layout.addLayout(comb_layout)
-        settings_layout.addWidget(combobox1)
-        settings_layout.addWidget(save_button)
-        settings_layout.addWidget(chrome_driver_down)
+        #combo_sim
+        comb_layout_sim.addLayout(text_layout_sim)
+        comb_layout_sim.addLayout(search_bars_sim)
+
+        #combo crawl
+        comb_layout_crawl.addLayout(text_layout_crawl)
+        comb_layout_crawl.addLayout(search_bars_crawl)
+
+        #similarity layout
+        similarity_settings_layout.addWidget(similarity_label)
+        similarity_settings_layout.addWidget(url_sim)
+        similarity_settings_layout.addWidget(sim_check)
+        similarity_settings_layout.addLayout(comb_layout_sim)
+        similarity_settings_layout.addWidget(similarity_combobox)
+
+        #crawl layout
+        crawl_settings_layout.addWidget(crawl_label)
+        crawl_settings_layout.addWidget(deep_crawl_check)
+        crawl_settings_layout.addLayout(comb_layout_crawl)
+
+
+        #gen_layout
+        generation_settings_layout.addWidget(gen_label)
+
+        #tabs setup
+        crawl_tab.setLayout(crawl_settings_layout)
+        similarity_tab.setLayout(similarity_settings_layout)
+        gen_tab.setLayout(generation_settings_layout)
+
+
+        #setings layout
+
+        settings_layout.addWidget(tabs)
+        settings_layout.addLayout(buttons_layout)
         self.settings_stack.setLayout(settings_layout)
 
     def chorme_dr_down(self):
@@ -437,15 +497,20 @@ class Ui_Main(QtWidgets.QWidget):
         chrome_version = utils.chromedriver_autoinstaller.get_chrome_version()
         QMessageBox.about(self, "driver", "Version " + chrome_version + " downloaded")
 
-    def save_cliked(self, sim, url, index, per_sim, per_url, dom, add_crawl, log_crawl, login, password, lpage):
+    def save_cliked(self, sim, url, index, per_sim, per_url, dom, deep_crawl_check, log_crawl, login, password, lpage,crawl_limit,deep_limit):
         default_settings[0] = sim
         default_settings[1] = url
         default_settings[2] = index
-        default_settings[6] = add_crawl
+        default_settings[6] = deep_crawl_check
         default_settings[8] = log_crawl
         default_settings[11] = lpage
         all_correct = True;
         try:
+            if (crawl_limit !=""):
+                default_settings[12] = int(crawl_limit)
+            if (deep_limit !=""):
+                default_settings[13] = int(deep_limit)
+
             if (log_crawl == True):
                 if login == "" or password == "":
                     all_correct = False
@@ -473,6 +538,7 @@ class Ui_Main(QtWidgets.QWidget):
             #    all_correct = False
             #    QMessageBox.about(self, "Error", "Url is not valid")
             if all_correct:
+                print(default_settings)
                 self.QtStack.setCurrentIndex(0)
             else:
                 self.QtStack.setCurrentIndex(3)

@@ -1,6 +1,6 @@
 import os.path
 from urllib.parse import urlparse
-from Screenshot import Screenshot
+#from Screenshot import Screenshot
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options

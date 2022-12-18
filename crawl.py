@@ -1,7 +1,6 @@
-import scrapy
 import selenium
 from scrapy.crawler import CrawlerProcess
-from scrapy import Item, Field, FormRequest
+from scrapy import Item, Field
 from scrapy.spidermiddlewares import offsite
 from scrapy.spiders import CrawlSpider, Rule
 from scrapy.linkextractors import LinkExtractor
@@ -12,14 +11,9 @@ import jellyfish
 from bs4 import BeautifulSoup
 from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.wait import WebDriverWait
 import re
-import scrapy
-from scrapy import Spider
-from scrapy.http import FormRequest
-import gui
 from urllib.parse import urljoin
+from settings import default_settings
 
 crawled_links = []
 # Define Browser Options
@@ -62,92 +56,13 @@ def crawl_one(page_url, domain, driver):
             if urljoin(driver.current_url, link['href']) not in checked:
                 if urljoin(driver.current_url, link['href']) not in general:
                     general.append(urljoin(driver.current_url, link['href']))
-            # if driver.current_url[len(driver.current_url)-1] == '/' and link.get('href')[0] == '/':
-            #     new_link =driver.current_url + link.get('href')[1:]
-            # print("newgen")
-            # print(new_link)
-           # general.append(new_link)
-            # if link.get('class') is not None:
-            #
-            #     if link.get('class')[0] == "btn":
-            #
-            #         if driver.current_url + link.get('href') not in checked:
-            #             if driver.current_url + link.get('href') not in general:
-            #                 if driver.current_url + "/" + link.get('href') not in checked:
-            #                     if driver.current_url + "/" + link.get('href') not in general:
-            #                         prev = driver.current_url
-            #                         bt = WebDriverWait(driver, 10).until(
-            #                             EC.element_to_be_clickable((By.XPATH, '//a[@href="' + link.get('href') + '"]')))
-            #                         bt.click()
-            #                         #print(driver.current_url + " == btn")
-            #                         #if(domain in str(driver.current_url) ):
-            #                         general.append(driver.current_url)
-            #                         driver.get(prev)
-            #
-            #
-            #     # navlink parsing
-            #     elif link.get('class')[0] == "nav-link":
-            #         if domain + link.get('href') not in checked:
-            #             if domain + link.get('href') not in general:
-            #                 #print(domain + link.get('href') + " == navlink")
-            #                 #if(domain in str(domain + link.get('href'))):
-            #                 general.append(domain + link.get('href'))
-            #
-            #     else:
-            #         tmp3 = link.get('href')
-            #         tmp3 = tmp3.split("/", 1)
-            #
-            #         if link.get('class')[0] == "fa":
-            #             if domain + link.get('href') not in checked:
-            #                 if domain + link.get('href') not in general:
-            #                     #print(domain + link.get('href') + " == forward")
-            #                     #if(domain in str(domain + link.get('href'))):
-            #                     general.append(domain + link.get('href'))
-            #
-            #         elif driver.current_url + link.get('href') not in checked:
-            #             if driver.current_url + link.get('href') not in general:
-            #                 if(len(tmp3) >= 2):
-            #                     if tmp3[1] != "":
-            #                         if driver.current_url + "/" + tmp3[1] not in checked:
-            #                             if driver.current_url + "/" + tmp3[1] not in general:
-            #                                 #print(driver.current_url + "/" + tmp3[1] + " == not btn")
-            #                                 #print(str(driver.current_url + "/" + tmp3[1]),"sd;fasdfsdf")
-            #                                 #print(domain,'dsfasdfs')
-            #                                 #if(domain in str(driver.current_url + "/" + tmp3[1])):
-            #                                 general.append(driver.current_url + "/" + tmp3[1])
-            #
-            # else:
-            #     tmp2 = link.get('href')
-            #     tmp2 = tmp2.split("/", 1)
-            #
-            #     if driver.current_url + link.get('href') not in checked:
-            #         if driver.current_url + link.get('href') not in general:
-            #             if len(tmp2) >=2:
-            #                 if driver.current_url + "/" + tmp2[1] not in checked:
-            #                     if driver.current_url + "/" + tmp2[1] not in general:
-            #                         prev1 = driver.current_url
-            #                         # print(driver.current_url + " ==  current page")
-            #                         # press = driver.find_element(By.PARTIAL_LINK_TEXT, element[0].lstrip(" ") + " " + element[1].lstrip(" "))
-            #                         press = WebDriverWait(driver, 30).until(
-            #                             EC.element_to_be_clickable((By.XPATH, '//a[@href="' + link.get('href') + '"]')))
-            #                         press.click()
-            #                         #print(driver.current_url + " == no class")
-            #                         #if(domain in str(driver.current_url)):
-            #                         general.append(driver.current_url)
-            #                         driver.get(prev1)
-
-
 
         for button_case in soup.find_all("button", type='submit'):
-            #if button_case.get('class')[1] == "btn-primary":
                 button = driver.find_element(By.CLASS_NAME, button_case.get("class")[1])
                 button.click()
                 item = driver.current_url
-
                 if item not in checked:
                     if item not in general:
-                        #print(item + " == submit button")
-                        #if(domain in str(item)):
                         general.append(item)
 
     except (selenium.common.exceptions.TimeoutException, WebDriverException, NameError,
@@ -157,7 +72,7 @@ def crawl_one(page_url, domain, driver):
 
 
 counter = 0
-def looping(array,domain,driver,limit=20000):
+def looping(array,domain,driver,limit=10):
     global counter
     for i in array:
         if i not in checked:
@@ -191,92 +106,78 @@ class OffsiteMiddleware(offsite.OffsiteMiddleware):
 
 
 
-
-# class LoginSpider(Spider):
+# class ScrapySpider(CrawlSpider):
 #     name = 'login'
 #     allowed_domains = ['quotes.toscrape.com']
-#     start_urls = [gui.default_settings[11]]
-# def parse(self,response):
-#     fetch("url")
-#     response.xpath('//*[@name='csrf_token']/@value').extract_first()
-#         csrf_token = response.xpath('//*[@name='csrf_token']/@value').extract_first()
+#     start_urls = ['http://quotes.toscrape.com/login']
 #
-#         yield FormRequest.from_response(response, formdata={'csrf_token': csrf_token, 'user':gui.default_settings[9], 'pass':gui.default_settings[10]}, callback=self.parse_after_login)
-# def parse_after_login(self,response):
-#     pass
-
-class ScrapySpider(CrawlSpider):
-    name = 'login'
-    allowed_domains = ['quotes.toscrape.com']
-    start_urls = ['http://quotes.toscrape.com/login']
-
-    def parse(self, response):
-        inputs = response.css('form input')
-        print(inputs)
-
-        formdata = {}
-        for input in inputs:
-            name = input.css('::attr(type)').get()
-            value = input.css('::attr(value)').get()
-            formdata[name] = value
-        print("asdfalsdmfgklasmdf")
-        print(gui.default_settings[9])
-        print(gui.default_settings[10])
-        formdata['username'] = 'YOUR_USERNAME'
-        formdata['password'] = 'YOUR_PASSWORD'
-
-        return scrapy.FormRequest.from_response(
-            response,
-            formdata=formdata,
-            callback=self.parse_after_login
-        )
-
-    def parse_after_login(self, response):
-        crawled_links.append(response.url)
-        print(response.xpath('.//div[@class = "col-md-4"]/p/a/text()').get())
+#     def parse(self, response):
+#         inputs = response.css('form input')
+#         print(inputs)
+#
+#         formdata = {}
+#         for input in inputs:
+#             name = input.css('::attr(type)').get()
+#             value = input.css('::attr(value)').get()
+#             formdata[name] = value
+#         print("asdfalsdmfgklasmdf")
+#         print(default_settings[9])
+#         print(default_settings[10])
+#         formdata['username'] = 'YOUR_USERNAME'
+#         formdata['password'] = 'YOUR_PASSWORD'
+#
+#         return scrapy.FormRequest.from_response(
+#             response,
+#             formdata=formdata,
+#             callback=self.parse_after_login
+#         )
+#
+#     def parse_after_login(self, response):
+#         crawled_links.append(response.url)
+#         print(response.xpath('.//div[@class = "col-md-4"]/p/a/text()').get())
 
 
-class HiddenDataLoginSpider(Spider):
-    name = 'hidden_data_login'
-
-    def start_requests(self):
-        #print(gui.default_settings[11])
-        login_url = gui.default_settings[11]
-        return scrapy.Request(login_url, callback=self.login)
-
-    def login(self, response):
-        print(response)
-        print(gui.default_settings[10])
-        print(gui.default_settings[9])
-        token = response.css("form input[name=csrf_token]::attr(value)").extract_first()
-        return FormRequest.from_response(response,
-                                         formdata={'csrf_token': token,
-                                                   'password': gui.default_settings[10],
-                                                   'username': gui.default_settings[9]},
-                                         callback=self.start_scraping)
-
-    def start_scraping(self, response):
-        ## Insert code to start scraping pages once logged in
-        #print(response)
-        crawled_links.append(response.url)
-
-        pass
+# class HiddenDataLoginSpider(Spider):
+#     name = 'hidden_data_login'
+#
+#     def start_requests(self):
+#         #print(gui.default_settings[11])
+#         login_url = default_settings[11]
+#         return scrapy.Request(login_url, callback=self.login)
+#
+#     def login(self, response):
+#         print(response)
+#         print(gui.default_settings[10])
+#         print(gui.default_settings[9])
+#         token = response.css("form input[name=csrf_token]::attr(value)").extract_first()
+#         return FormRequest.from_response(response,
+#                                          formdata={'csrf_token': token,
+#                                                    'password': gui.default_settings[10],
+#                                                    'username': gui.default_settings[9]},
+#                                          callback=self.start_scraping)
+#
+#     def start_scraping(self, response):
+#         ## Insert code to start scraping pages once logged in
+#         #print(response)
+#         crawled_links.append(response.url)
+#
+#         pass
 
 
 class CrawlingSpider(CrawlSpider):
     name = 'Kraken'
-
-    custom_settings = {
-        "DEPTH_LIMIT": 50,
-        "SPIDER_MIDDLEWARES":{"scrapy.spidermiddlewares.offsite.OffsiteMiddleware": None,
-        OffsiteMiddleware: 500,},
-        "LOG_ENABLED": False,
-        "AJAXCRAWL_ENABLED": True,
-        "COOKIES_ENABLED": False
-    }
+    def set_sett(val):
+        custom_settings = {
+            "DEPTH_LIMIT": val,
+            "SPIDER_MIDDLEWARES": {"scrapy.spidermiddlewares.offsite.OffsiteMiddleware": None,
+                                   OffsiteMiddleware: 500, },
+            "LOG_ENABLED": False,
+            "AJAXCRAWL_ENABLED": True,
+            "COOKIES_ENABLED": False
+        }
+        return custom_settings
 
     def __init__(self, allowed_domains=None, start_urls=None):
-
         super().__init__()
         if allowed_domains is None:
             self.allowed_domains = []
@@ -288,9 +189,9 @@ class CrawlingSpider(CrawlSpider):
         else:
             self.start_urls = start_urls
 
+    custom_settings = set_sett(default_settings[12])
 
     rules = [Rule(LinkExtractor(), callback='parse_pageinfo', follow=True)]
-
 
     def parse_pageinfo(self, response):
         crawled_links.append(response.url)

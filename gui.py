@@ -624,7 +624,7 @@ class Ui_Main(QtWidgets.QWidget):
             url_combo.addItem(i)
 
         url_combo.setCurrentIndex(self.counter)
-        url_combo.activated.connect(lambda: self.update_web_combo(url_combo,self.web,next_button,url,listWidget,current_url_label))
+        url_combo.activated.connect(lambda: self.update_web_combo(url_combo,self.web,next_button,url,listWidget))
 
 
         object_array = pomgen.HTMLFilterer(url[self.counter], pomgen.html_tags)
@@ -727,7 +727,6 @@ class Ui_Main(QtWidgets.QWidget):
 
 
     def update_counter(self, val):
-        # global self.counter
         self.counter = val
         return self.counter
 

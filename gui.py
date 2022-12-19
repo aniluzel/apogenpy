@@ -16,37 +16,6 @@ from settings import default_settings
 
 filtered_data = []
 
-
-class Overlay(QWidget):
-    def __init__(self, parent=None):
-        QWidget.__init__(self, parent)
-        self.setAttribute(Qt.WA_NoSystemBackground)
-        self.setAttribute(Qt.WA_TransparentForMouseEvents)
-
-    def paintEvent(self, event):
-        QPainter(self).fillRect(self.rect(), QColor(80, 80, 255, 128))
-
-
-class Filter(QObject):
-    def __init__(self, parent=None):
-        QObject.__init__(self, parent)
-        self.m_overlay = None
-        self.m_overlayOn = None
-
-    def eventFilter(self, w, event):
-        if w.isWidgetType():
-            if event.type() == QEvent.MouseButtonPress:
-                if not self.m_overlay:
-                    self.m_overlay = Overlay(w.parentWidget());
-                    self.m_overlay.setGeometry(w.geometry());
-                    self.m_overlayOn = w;
-                    self.m_overlay.show();
-            elif event.type() == QEvent.Resize:
-                if self.m_overlay and self.m_overlayOn is w:
-                    self.m_overlay.setGeometry(w.geometry());
-        return False
-
-
 def crawl_filter_func(textbox):
         global filtered_data
         import crawl
@@ -199,6 +168,12 @@ class Ui_Main(QtWidgets.QWidget):
         # continue without crawling
         con_craw = QtWidgets.QPushButton("Select Multiple Files")
         con_craw.clicked.connect(self.con_crawl_action)
+        #single url button
+        single_url_button = QtWidgets.QPushButton()
+        single_url_button.setText("Continue with single url")
+        single_url_button.setGeometry(QtCore.QRect(150, 150, 100, 100))
+        single_url_button.clicked.connect(lambda: self.single_url_action(textbox.text()))
+
         # exit button#
         exit_button = QtWidgets.QPushButton()
         exit_button.setText("Exit")
@@ -213,6 +188,7 @@ class Ui_Main(QtWidgets.QWidget):
         layout.addWidget(label1)
         layout.addWidget(textbox)
         layout.addWidget(crawl_button)
+        layout.addWidget(single_url_button)
         layout.addWidget(con_craw)
         layout.addWidget(setting_button)
         layout.addWidget(exit_button)
@@ -233,7 +209,10 @@ class Ui_Main(QtWidgets.QWidget):
         except TypeError as e:
             QMessageBox.about(self, "Error has acquired", str(e))
 
+    def single_url_action(self,url):
 
+        self.third_page([url])
+        self.QtStack.setCurrentIndex(2)
     def settings_clicked(self):
         self.QtStack.setCurrentIndex(3)
 
@@ -602,9 +581,6 @@ class Ui_Main(QtWidgets.QWidget):
         self.counter = 0
         self.web = Browser()
         self.web.show()
-        filter = Filter()
-        self.web.installEventFilter(filter)
-
         self.all_objects = []
         self.selected_objects = []
         self.web.resize(1200, 900)
@@ -705,23 +681,24 @@ class Ui_Main(QtWidgets.QWidget):
 
     def update_web_combo(self,combobox,web,button,url,listWidget):
         try:
-            self.counter = combobox.currentIndex()
-            if self.counter == len(url) - 1:
-                button.hide()
-            elif button.isHidden() == True and self.counter < len(url):
-                button.show()
-            if self.valid_url(url[self.counter]):
-                web._view.load(QUrl(url[self.counter]))
-            else:
-                web._view.load(QtCore.QUrl.fromLocalFile(str(url[self.counter])))
+            if self.counter != combobox.currentIndex():
+                self.counter = combobox.currentIndex()
+                if self.counter == len(url) - 1:
+                    button.hide()
+                elif button.isHidden() == True and self.counter < len(url):
+                    button.show()
+                if self.valid_url(url[self.counter]):
+                    web._view.load(QUrl(url[self.counter]))
+                else:
+                    web._view.load(QtCore.QUrl.fromLocalFile(str(url[self.counter])))
 
-            listWidget.clear()
-            object_array = pomgen.HTMLFilterer(url[self.counter], pomgen.html_tags)
-            for x in object_array:
-                self.table_add_obejct(listWidget, x)
-            self.selected_objects.clear()
-            self.abspath.clear()
-            self.abspath = pomgen.get_page_screenshot(url[self.counter])
+                listWidget.clear()
+                object_array = pomgen.HTMLFilterer(url[self.counter], pomgen.html_tags)
+                for x in object_array:
+                    self.table_add_obejct(listWidget, x)
+                self.selected_objects.clear()
+                self.abspath.clear()
+                self.abspath = pomgen.get_page_screenshot(url[self.counter])
         except Exception as e:
             QMessageBox.about(self, "Error has acquired", str(e))
 
@@ -786,20 +763,16 @@ class Ui_Main(QtWidgets.QWidget):
 
     def generate_for_selected_button_action(self, url):
         try:
-            # for x in self.selected_objects:
-            #     print(x.GUI_window_adder)
-
             if len(self.selected_objects) != 0:
                 pomgen.file_gen(url, self.selected_objects)
-                # print("called generate for selected")
+                QMessageBox.about(self, "Generated", "Generated for selected")
             else:
                 QMessageBox.about(self, "Generated", "No elements were selected")
 
         except NameError:
             QMessageBox.about(self, "Generated", "Error")
 
-        else:
-            QMessageBox.about(self, "Generated", "Generated for selected")
+
 
     def generate_all_button_click(self, url):
         try:

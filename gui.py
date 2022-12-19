@@ -686,7 +686,7 @@ class Ui_Main(QtWidgets.QWidget):
                     # if checked
                     if items[i].checkState() == 2 and items[i].text() == t.GUI_window_adder() and t not in self.selected_objects:
                         self.selected_objects.append(t)
-                        print(self.selected_objects)
+                        # print(self.selected_objects)
                     elif items[i].checkState() == 0 and t in self.selected_objects and items[i].text() == t.GUI_window_adder():
                         self.selected_objects.remove(t)
         except Exception as e:
@@ -786,12 +786,12 @@ class Ui_Main(QtWidgets.QWidget):
 
     def generate_for_selected_button_action(self, url):
         try:
-            for x in self.selected_objects:
-                print(x.GUI_window_adder)
+            # for x in self.selected_objects:
+            #     print(x.GUI_window_adder)
 
             if len(self.selected_objects) != 0:
                 pomgen.file_gen(url, self.selected_objects)
-                print("called generate for selected")
+                # print("called generate for selected")
             else:
                 QMessageBox.about(self, "Generated", "No elements were selected")
 

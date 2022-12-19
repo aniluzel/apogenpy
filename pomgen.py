@@ -10,18 +10,37 @@ from PIL import Image
 
 
 def file_gen(url, html_object_array):
-    invalid = '<>:"/\|?* -.&, …{}()'
+    invalid = '<>:"/\|?* -..&, …{}()\'@’[]+“”!;'
     parsed_url = utils.urlparse(url)
     folder_path = utils.folder_name_changer(parsed_url[1]) + "_POM"
+    file_name = utils.file_name_changer(parsed_url[2])
+
+    if not valid_url(url):
+        url_temp = url
+        temp = url_temp.split("/")
+        file_name = temp[len(temp) - 1]
+        folder_path = temp[len(temp) - 1] + "_POM"
+
+        # if sys.platform.startswith('darwin') or sys.platform.startswith('linux'):
+        #     url_temp = url
+        #     temp = url_temp.split("/")
+        #     file_name = temp[len(temp) - 1]
+        #     folder_path = temp[len(temp) - 1] + "_POM"
+        # else:
+        #     url_temp = url
+        #     temp = url_temp.split("\\")
+        #     file_name = temp[len(temp) - 1]
+        #     folder_path = temp[len(temp) - 1] + "_POM"
 
     for char in invalid:
         folder_path = folder_path.replace(char, '_')
+        file_name = file_name.replace(char, '_')
+
     if not utils.os.path.exists(folder_path):
         utils.os.mkdir(folder_path)
     else:
-        print("Directory already exists, moving on")
-    
-    file_name = utils.file_name_changer(parsed_url[2])
+        print("Directory already exists")
+
     if sys.platform.startswith('darwin') or sys.platform.startswith('linux'):
         directory = folder_path + "/" + file_name
     else:
@@ -29,7 +48,7 @@ def file_gen(url, html_object_array):
 
     with open(directory + ".py", "w", encoding="utf-8") as f:
         f.write("import testdriver\n\nurl = \"" + url + "\"\ndriver = testdriver.Driver.driver\n\n\ndef driver_goto("
-                                                        "):\n\tdriver.get(url)\n\ndef driver_quit():\n\tdriver.quit()")
+                                                        "):\n\tdriver.get(url)\n\n\ndef driver_quit():\n\tdriver.quit()\n")
 
         object_duplicates = []
         name_duplicates = []
@@ -109,12 +128,13 @@ def file_gen(url, html_object_array):
                 object_comments.append("# You can change the tag and value parameter of the method from the list below")
                 object_comments.append("# List of alternative object tags and parameters: " + str(object_params))
 
-            f.write("\n\n# html_id_{}\ndef {}(input=\"\", timeout=0.5):\n\ttestdriver.selenium(driver, input, timeout, '{}', '{}',"
+            f.write("\n\n# html_id_{}\ndef {}(input=\"\", timeout=0.25):\n\ttestdriver.selenium(driver, input, timeout, '{}', '{}',"
                     " '{}', {})\n\t".format(str(html_object.html_id), object_name, object_param_tag, object_param_type_default,
                                         object_param_value_default, duplicate_index) + "\n\t".join(object_comments) + "\n")
 
     with open("TEST_FILE_" + folder_path.removesuffix("_POM") + ".py", "a") as f:
-        f.write("import " + folder_path + "." + file_name + " as " + file_name + "\n")
+        f.write("import " + folder_path + "." + file_name + " as " + file_name + "\n# Start testing by typing in"
+                " {}.driver_goto() or choose from available methods inside {}.py\n".format(file_name, file_name))
 
 
 def valid_url(to_validate: str) -> bool:
@@ -129,7 +149,7 @@ def htmlsoup(url):
         page_html = utils.requests.get(url).text
         soup = utils.BeautifulSoup(page_html, "html.parser")
     else:
-        page_html = open(url, "r")
+        page_html = open(url, "r", encoding="utf-8")
         soup = utils.BeautifulSoup(page_html, "html.parser")
 
     return soup
@@ -210,7 +230,7 @@ class HTMLElement:
     def get_html_id(self):
         return self.html_id
 
-    def get_element_screenshot(self, url, patharray):  ## SELENIUM WEBDRIVER EXCEPTION HANDLING
+    def get_element_screenshot(self, url, patharray):
         chromepath = utils.chromedriver_path_name()
         chromeoptions = Options()
         chromeoptions.add_argument('--force-device-scale-factor=1')
@@ -247,7 +267,6 @@ class HTMLElement:
             img_path = patharray[1] + str(self.html_id) + ".png"
             # ob = Screenshot.Screenshot()
             # img_url = ob.get_element(driver,elem, save_location=patharray[1],image_name=str(self.html_id) + ".png")
-
 
         except (NoSuchElementException, FileNotFoundError, ElementNotInteractableException) as error:
             print(error)
@@ -410,11 +429,30 @@ def get_page_screenshot(url):
     driver.get(url)
     driver.maximize_window()
     height = driver.execute_script("return document.documentElement.scrollHeight")
-    print(height)
+    # print(height)
     size = "--window-size=1920x{}".format(height)
     driver.set_window_size(1920,height)
     parsed_url = utils.urlparse(url)
+
     folder_path = utils.folder_name_changer(parsed_url[1]) + "_screenshots"
+    png_file_name = utils.file_name_changer(parsed_url[2]) + ".png"
+
+    if not valid_url(url):
+        if not valid_url(url):
+            url_temp = url
+            temp = url_temp.split("/")
+            folder_path = temp[len(temp) - 1] + "_screenshots"
+            png_file_name = temp[len(temp) - 1] + ".png"
+
+            # if sys.platform.startswith('darwin') or sys.platform.startswith('linux'):
+            #     url_temp = url
+            #     temp = url_temp.split("/")
+            #     folder_path = temp[len(temp) - 1] + "_screenshots"
+            # else:
+            #     url_temp = url
+            #     temp = url_temp.split("\\")
+            #     folder_path = temp[len(temp) - 1] + "_screenshots"
+
     if not os.path.exists(folder_path):
         os.mkdir(folder_path)
         abspath = os.path.abspath(folder_path)
@@ -422,7 +460,7 @@ def get_page_screenshot(url):
     else:
         abspath = os.path.abspath(folder_path)
 
-    png_file_name = utils.file_name_changer(parsed_url[2]) + ".png"
+
     if sys.platform.startswith('darwin') or sys.platform.startswith('linux'):
         screen_shot_loc = [f"{abspath}" + "/" + png_file_name,
                            f"{abspath}" + "/" + utils.file_name_changer(parsed_url[2]), driver, height]

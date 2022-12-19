@@ -265,8 +265,8 @@ def sim_check(data=[], web_page_similarity_percentage=0.92, web_path_similarity_
             for rev in reversed(result_final):
                 # print(path, "  ", rev, " =", jellyfish.jaro_distance(path, rev))
                 if path != rev:
-                    if  jellyfish.jaro_distance(path, rev) > float(web_path_similarity_percentage):
-                        print(path, "  ", rev, " =", jellyfish.jaro_distance(path, rev))
+                    if jellyfish.jaro_distance(path, rev) > float(web_path_similarity_percentage):
+                        print(path, "  ", rev, " = ", jellyfish.jaro_distance(path, rev))
                         # empty_arr.append(path)
                         result_final.remove(rev)
         # adding root of domain
@@ -277,6 +277,5 @@ def sim_check(data=[], web_page_similarity_percentage=0.92, web_path_similarity_
     if check_sim == False and check_url_sim == False:
         for i in data:
             result_final.append(i)
-
 
     return result_final

@@ -1,1 +1,1 @@
-default_settings = [False, False, 1, 0.92, 0.88, None, False, 2, False, "", "", "",50,50]
+default_settings = [False, False, 1, 0.92, 0.88, None, False, 2, False, '', '', '', 50, 50]

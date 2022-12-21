@@ -1,4 +1,5 @@
 import os.path
+import random
 import sys
 from urllib.parse import urlparse
 from selenium.common.exceptions import NoSuchElementException, ElementNotInteractableException
@@ -10,7 +11,7 @@ from PIL import Image
 
 
 def file_gen(url, html_object_array):
-    invalid = '<>:"/\|?* -..&, …{}()\'@’[]+“”!;'
+    invalid = '<>:"/\|?* -..&, …{}()\'@’[]+“”!;™​'
     parsed_url = utils.urlparse(url)
     folder_path = utils.folder_name_changer(parsed_url[1]) + "_POM"
     file_name = utils.file_name_changer(parsed_url[2])
@@ -31,6 +32,9 @@ def file_gen(url, html_object_array):
         #     temp = url_temp.split("\\")
         #     file_name = temp[len(temp) - 1]
         #     folder_path = temp[len(temp) - 1] + "_POM"
+
+    if file_name == "":
+        file_name = folder_path + "_" + str(random.randint(0, 1000))
 
     for char in invalid:
         folder_path = folder_path.replace(char, '_')
@@ -262,7 +266,7 @@ class HTMLElement:
             height = y + size['height']
             width = x + size['width']
             img = Image.open(patharray[0])
-            img_cropped = img.crop((int(x) - 25, int(y) - 25, int(width) + 50, int(height) + 50))
+            img_cropped = img.crop((int(x) - 20, int(y) - 20, int(width) + 20, int(height) + 20))
             img_cropped.save(patharray[1] + str(self.html_id) + ".png")
             img_path = patharray[1] + str(self.html_id) + ".png"
             # ob = Screenshot.Screenshot()

@@ -654,6 +654,7 @@ class Ui_Main(QtWidgets.QWidget):
                     # higliht
                     if len(s_item) != 0:
                         if t.GUI_window_adder() == s_item[0].text():
+                            #some multiple view
                             self.web._search_panel.text_fi(t.GUI_highlight_info())
                     # if checked
                     if items[i].checkState() == 2 and items[i].text() == t.GUI_window_adder() and t not in self.selected_objects:

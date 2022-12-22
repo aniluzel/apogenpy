@@ -64,6 +64,7 @@ def crawl_one(page_url, driver):
 counter = 0
 def looping(array,domain,driver,limit=10):
     global counter
+    #
     for i in array:
         if i not in checked:
             if str(domain) in str(i):

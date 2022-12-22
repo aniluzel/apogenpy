@@ -16,27 +16,17 @@ from urllib.parse import urljoin
 from settings import default_settings
 
 crawled_links = []
-# Define Browser Options
-  # Hides the browser window
-# Reference the local Chromedriver instance
-#chrome_path = r'C:\chromedriver.exe'
-#chrome_path = r'/Users/denis/Documents/CS401/apogenpyfolder/apogenpy/106/chromedriver'
-
-# Run the Webdriver, save page an quit browser
-#driver.get("http://localhost:8080/owners/find")
-
 general = []
-
 checked = []
 
-
-def crawl_one(page_url, domain, driver):
-    general = []
-    # global general
-    driver.get(page_url)
-    # Scroll page to load whole content
-    last_height = driver.execute_script("return document.body.scrollHeight")
+def crawl_one(page_url, driver):
     try:
+        general = []
+        # global general
+        driver.get(page_url)
+        # Scroll page to load whole content
+        last_height = driver.execute_script("return document.body.scrollHeight")
+
         while True:
             # Scroll down to the bottom.
             driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
@@ -81,18 +71,9 @@ def looping(array,domain,driver,limit=10):
                     break
                 checked.append(i)
                 counter += 1
-                looping(crawl_one(i, domain,driver),domain,driver,limit)
+                looping(crawl_one(i,driver),domain,driver,limit)
     return checked
 
-
-
-# chrome_options = Options()
-# chrome_options.add_argument("--headless")
-# chrome_driver_path = utils.chromedriver_path_name()
-# #print(chrome_driver_path)
-# driver = webdriver.Chrome(executable_path=chrome_driver_path, options=chrome_options)
-# print(len(looping(["http://localhost:8080"],"http://localhost:8080",driver,20000)))
-# driver.quit()
 class PageInfoItem(Item):
     URL = Field()
     pass
@@ -103,65 +84,6 @@ class OffsiteMiddleware(offsite.OffsiteMiddleware):
         # Remove optional .* (any subdomains) from regex
         regex = regex.pattern.replace("(.*\.)?", "(www\.)?", 1)
         return re.compile(regex)
-
-
-
-# class ScrapySpider(CrawlSpider):
-#     name = 'login'
-#     allowed_domains = ['quotes.toscrape.com']
-#     start_urls = ['http://quotes.toscrape.com/login']
-#
-#     def parse(self, response):
-#         inputs = response.css('form input')
-#         print(inputs)
-#
-#         formdata = {}
-#         for input in inputs:
-#             name = input.css('::attr(type)').get()
-#             value = input.css('::attr(value)').get()
-#             formdata[name] = value
-#         print("asdfalsdmfgklasmdf")
-#         print(default_settings[9])
-#         print(default_settings[10])
-#         formdata['username'] = 'YOUR_USERNAME'
-#         formdata['password'] = 'YOUR_PASSWORD'
-#
-#         return scrapy.FormRequest.from_response(
-#             response,
-#             formdata=formdata,
-#             callback=self.parse_after_login
-#         )
-#
-#     def parse_after_login(self, response):
-#         crawled_links.append(response.url)
-#         print(response.xpath('.//div[@class = "col-md-4"]/p/a/text()').get())
-
-
-# class HiddenDataLoginSpider(Spider):
-#     name = 'hidden_data_login'
-#
-#     def start_requests(self):
-#         #print(gui.default_settings[11])
-#         login_url = default_settings[11]
-#         return scrapy.Request(login_url, callback=self.login)
-#
-#     def login(self, response):
-#         print(response)
-#         print(gui.default_settings[10])
-#         print(gui.default_settings[9])
-#         token = response.css("form input[name=csrf_token]::attr(value)").extract_first()
-#         return FormRequest.from_response(response,
-#                                          formdata={'csrf_token': token,
-#                                                    'password': gui.default_settings[10],
-#                                                    'username': gui.default_settings[9]},
-#                                          callback=self.start_scraping)
-#
-#     def start_scraping(self, response):
-#         ## Insert code to start scraping pages once logged in
-#         #print(response)
-#         crawled_links.append(response.url)
-#
-#         pass
 
 
 class CrawlingSpider(CrawlSpider):

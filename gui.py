@@ -1,7 +1,6 @@
-import time
 from urllib.parse import urlparse
-from PyQt5.QtCore import QUrl, QCoreApplication, Qt, QThread, pyqtSignal, QObject, QEvent, QRect
-from PyQt5.QtGui import QPainter, QColor, QPixmap
+from PyQt5.QtCore import QUrl, QCoreApplication, Qt
+from PyQt5.QtGui import  QPixmap
 from PyQt5.QtWidgets import QApplication, QMainWindow, QLineEdit, QVBoxLayout, QPushButton, QListWidget, \
     QAbstractItemView, QHBoxLayout, QCheckBox, QComboBox, QMessageBox, QFileDialog, QListWidgetItem, QWidget, QTabWidget
 from PyQt5.QtWidgets import QLabel
@@ -41,22 +40,20 @@ def crawl_filter_func(textbox):
             chrome_options = Options()
             chrome_options.add_argument("--headless")
             chrome_driver_path = utils.chromedriver_path_name()
-            # print(chrome_driver_path)
             driver = webdriver.Chrome(executable_path=chrome_driver_path, options=chrome_options)
             if default_settings[6]:
                 if default_settings[5] is None:
-                    tmp = crawl.looping(crawl.crawl_one(textbox.text(), domain[0], driver), domain[0], driver,
+                    tmp = crawl.looping(crawl.crawl_one(textbox.text(), driver), domain[0], driver,
                                         limit=default_settings[13])
                 else:
-                    tmp = crawl.looping(crawl.crawl_one(textbox.text(), default_settings[5], driver),
-                                        default_settings[5], driver,
+                    tmp = crawl.looping(crawl.crawl_one(textbox.text(), driver),
+                                        urlparse(default_settings[5]), driver,
                                         limit=default_settings[13])
 
             driver.quit()
             for i in tmp:
                 if i not in crawl.crawled_links:
-                    if domain[0] in str(i):
-                        crawl.crawled_links.append(i)
+                    crawl.crawled_links.append(i)
 
             filtered_data = crawl.sim_check(data=crawl.crawled_links, check_sim=default_settings[0],
                                             check_url_sim=default_settings[1], param=default_settings[2],
@@ -107,6 +104,7 @@ class SearchPanel(QtWidgets.QWidget):
     @QtCore.pyqtSlot()
     def text_fi(self, text, direction=QtWebEngineWidgets.QWebEnginePage.FindFlags()):
         flag = direction
+        flag |= QtWebEngineWidgets.QWebEnginePage.FindCaseSensitively
         self.searched.emit(text, flag)
 
     def showEvent(self, event):
@@ -154,14 +152,11 @@ class Ui_Main(QtWidgets.QWidget):
         crawl_button = QtWidgets.QPushButton()
         crawl_button.setText("Start crawling")
         crawl_button.setGeometry(QtCore.QRect(10, 10, 100, 100))
-        #        self.loadingUI()
         crawl_button.clicked.connect(lambda: self.crawl_button_action(textbox))
-
         # settings button#
         setting_button = QtWidgets.QPushButton()
         setting_button.setText("Settings")
         self.settings_page()
-        # self.loadingUI()
         setting_button.setGeometry(QtCore.QRect(150, 150, 100, 100))
         setting_button.clicked.connect(self.settings_clicked)
         self.loadingUI()
@@ -587,9 +582,12 @@ class Ui_Main(QtWidgets.QWidget):
         self.web.setMaximumWidth(1200)
         # self.third_page_stack.resize(1000, 800)
         if self.valid_url(url[self.counter]):
+            self.web._view.loadFinished.connect(self.web.onLoadFinished)
             self.web._view.load(QUrl(url[self.counter]))
+
         else:
             self.web._view.load(QtCore.QUrl.fromLocalFile(str(url[self.counter])))
+
 
         listWidget = QListWidget()
         # listWidget.setFlags(QtCore.Qt.ItemIsUserCheckable)
@@ -606,10 +604,8 @@ class Ui_Main(QtWidgets.QWidget):
         object_array = pomgen.HTMLFilterer(url[self.counter], pomgen.html_tags)
 
         for x in object_array:
-            # listWidget.addItem(x.GUI_window_adder())
             self.table_add_obejct(listWidget, x)
 
-        # listWidget.setSelectionMode(QAbstractItemView.MultiSelection)
         listWidget.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
         listWidget.itemClicked.connect(lambda: self.printItemText(listWidget))
         next_button = QPushButton('Next page')
@@ -662,7 +658,6 @@ class Ui_Main(QtWidgets.QWidget):
                     # if checked
                     if items[i].checkState() == 2 and items[i].text() == t.GUI_window_adder() and t not in self.selected_objects:
                         self.selected_objects.append(t)
-                        # print(self.selected_objects)
                     elif items[i].checkState() == 0 and t in self.selected_objects and items[i].text() == t.GUI_window_adder():
                         self.selected_objects.remove(t)
         except Exception as e:
@@ -756,8 +751,10 @@ class Ui_Main(QtWidgets.QWidget):
                         msg.setLayout(info_layout)
                         msg.setIconPixmap(pixmap)
                         msg.resize(pixmap.width()+100,pixmap.height()+10)
-                        print(screenshot_loc) ## CANNOT FIND FILE EXCEPTION HANDLING
+                        #print(screenshot_loc) ## CANNOT FIND FILE EXCEPTION HANDLING
                         returnValue = msg.exec()
+            else:
+                QMessageBox.about(self, "No element were selected")
         except Exception as e:
             QMessageBox.about(self, "Error has acquired", str(e))
 
@@ -773,7 +770,6 @@ class Ui_Main(QtWidgets.QWidget):
             QMessageBox.about(self, "Generated", "Error")
 
 
-
     def generate_all_button_click(self, url):
         try:
             pomgen.file_gen(url, self.all_objects)
@@ -786,10 +782,9 @@ class Browser(QtWidgets.QMainWindow, ):
     def __init__(self, parent=None):
         super(Browser, self).__init__(parent)
         self._view = QtWebEngineWidgets.QWebEngineView()
-        #filter = Filter()
-        #self._view.installEventFilter(filter)
         self.setCentralWidget(self._view)
-        # self._view.load(QtCore.QUrl())
+        #self._view.load(QtCore.QUrl())
+        self._view.show()
         self._search_panel = SearchPanel()
         self.search_toolbar = QtWidgets.QToolBar()
         self.search_toolbar.addWidget(self._search_panel)
@@ -798,19 +793,25 @@ class Browser(QtWidgets.QMainWindow, ):
         self._search_panel.closed.connect(self.search_toolbar.hide)
         self.search_toolbar.hide()
         self.create_menus()
+        self.loaded_bool = False
 
     @QtCore.pyqtSlot(str, QtWebEngineWidgets.QWebEnginePage.FindFlag)
     def on_searched(self, text, flag):
-        def callback(found):
-            if text and not found:
-                # print(text)
-                self.statusBar().show()
-                self.statusBar().showMessage('Not found')
-            else:
-                self.statusBar().hide()
+        print("here")
+        # def callback(found):
+        #     if text and not found:
+        #         # print(text)
+        #         self.statusBar().show()
+        #         self.statusBar().showMessage('Not found')
+        #     else:
+        #         self.statusBar().hide()
+        #
+        self._view.findText(text)
 
-        self._view.findText(text, flag, callback)
-
+    @QtCore.pyqtSlot(bool)
+    def onLoadFinished(self, ok):
+        print("Finished loading: ", ok)
+        self.loaded_bool = ok
 
     def create_menus(self):
         menubar = self.menuBar()

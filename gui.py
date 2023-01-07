@@ -434,7 +434,7 @@ class Ui_Main(QtWidgets.QWidget):
         similarity_tab = QWidget()
         gen_tab = QWidget()
         tabs.addTab(crawl_tab,"Crawl")
-        tabs.addTab(similarity_tab,"Similariy")
+        tabs.addTab(similarity_tab,"Similarity")
         tabs.addTab(gen_tab,"Generation")
 
         similarity_combobox.setCurrentIndex(default_settings[2])

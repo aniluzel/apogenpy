@@ -136,34 +136,19 @@ def sim_check(data=[], web_page_similarity_percentage=0.92, web_path_similarity_
                 # Link 2 text
                 req2 = up[1]
 
-                # print("structural sim", structural_similarity(req1, req2))
-
                 if param ==1:
                     if req1 != req2:
                         if structural_similarity(req1, req2) >= float(web_page_similarity_percentage):
-                            print("similarity ratio is = ", (structural_similarity(req1, req2)), " first link = ",
-                                  down[0], " second link = ", up[0])
                             html_text.remove(up)
-
-
-                # if param == 1:
-                #     #
-                #     if down[0] != up[0]:
-                #         if structural_similarity(req1, req2) > float(web_page_similarity_percentage):
-                #             #print("similarity ratio is = ",(structural_similarity(req1, req2))," first link = ", down[0]," second link = ",up[0])
-                #             html_text.remove(up)
-
 
                 elif param == 2:
                     if down[0] != up[0]:
                         if style_similarity(req1, req2) > float(web_page_similarity_percentage):
-                            #print("similarity ratio is = ",(style_similarity(req1, req2))," first link = ", down[0]," second link = ",up[0])
                             html_text.remove(up)
 
                 elif param == 0:
                     if down[0] != up[0]:
                         if similarity(req1, req2, 0.3) > float(web_page_similarity_percentage):
-                            #print("similarity ratio is = ",(similarity(req1, req2,0.3))," first link = ", down[0]," second link = ",up[0])
                             html_text.remove(up)
 
         # adds filtered urls
@@ -183,14 +168,10 @@ def sim_check(data=[], web_page_similarity_percentage=0.92, web_path_similarity_
         for i in url_data["path"]:
             result_final.append(domain[0] + i)
 
-        # empty_arr = []
         for path in result_final:
             for rev in reversed(result_final):
-                # print(path, "  ", rev, " =", jellyfish.jaro_distance(path, rev))
                 if path != rev:
                     if jellyfish.jaro_distance(path, rev) > float(web_path_similarity_percentage):
-                        print(path, "  ", rev, " = ", jellyfish.jaro_distance(path, rev))
-                        # empty_arr.append(path)
                         result_final.remove(rev)
         # adding root of domain
         result_final.append(domain[0] + "/")

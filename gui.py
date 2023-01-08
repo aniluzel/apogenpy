@@ -234,8 +234,8 @@ class Ui_Main(QtWidgets.QWidget):
         all_sel = QPushButton('All')
         add = QPushButton('Add url')
         add_path = QPushButton('Select file')
-
         self.second_page_stack.resize(700, 400)
+
         data = filtered_data
         for i in self.htmls_arr:
             if i not in data:
@@ -599,7 +599,6 @@ class Ui_Main(QtWidgets.QWidget):
 
         url_combo.setCurrentIndex(self.counter)
         url_combo.activated.connect(lambda: self.update_web_combo(url_combo,self.web,next_button,url,listWidget))
-
 
         object_array = pomgen.HTMLFilterer(url[self.counter], pomgen.html_tags)
 

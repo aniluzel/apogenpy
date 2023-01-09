@@ -11,7 +11,7 @@ from PIL import Image
 
 
 def file_gen(url, html_object_array):
-    invalid = '<>:"/\|?* -..&, …{}()\'@’[]+“”!#;™​'
+    invalid = '<>:"/\|?* -..&, …{}()\'@’[]+“”!#;™​—'
     parsed_url = utils.urlparse(url)
     folder_path = utils.folder_name_changer(parsed_url[1]) + "_POM"
     file_name = utils.file_name_changer(parsed_url[2])

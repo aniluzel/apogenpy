@@ -797,7 +797,7 @@ class Browser(QtWidgets.QMainWindow, ):
 
     @QtCore.pyqtSlot(str, QtWebEngineWidgets.QWebEnginePage.FindFlag)
     def on_searched(self, text, flag):
-        print("here")
+        # print("here")
         # def callback(found):
         #     if text and not found:
         #         # print(text)
@@ -810,7 +810,7 @@ class Browser(QtWidgets.QMainWindow, ):
 
     @QtCore.pyqtSlot(bool)
     def onLoadFinished(self, ok):
-        print("Finished loading: ", ok)
+        # print("Finished loading: ", ok)
         self.loaded_bool = ok
 
     def create_menus(self):

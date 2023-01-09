@@ -11,7 +11,7 @@ from PIL import Image
 
 
 def file_gen(url, html_object_array):
-    invalid = '<>:"/\|?* -..&, …{}()\'@’[]+“”!;™​'
+    invalid = '<>:"/\|?* -..&, …{}()\'@’[]+“”!#;™​'
     parsed_url = utils.urlparse(url)
     folder_path = utils.folder_name_changer(parsed_url[1]) + "_POM"
     file_name = utils.file_name_changer(parsed_url[2])
@@ -132,7 +132,7 @@ def file_gen(url, html_object_array):
                 object_comments.append("# You can change the tag and value parameter of the method from the list below")
                 object_comments.append("# List of alternative object tags and parameters: " + str(object_params))
 
-            f.write("\n\n# html_id_{}\ndef {}(input=\"\", timeout=0.25):\n\ttestdriver.selenium(driver, input, timeout, '{}', '{}',"
+            f.write("\n\n# html_id_{}\ndef {}(input=\"\", timeout=0.35):\n\ttestdriver.selenium(driver, input, timeout, '{}', '{}',"
                     " '{}', {})\n\t".format(str(html_object.html_id), object_name, object_param_tag, object_param_type_default,
                                         object_param_value_default, duplicate_index) + "\n\t".join(object_comments) + "\n")
 
